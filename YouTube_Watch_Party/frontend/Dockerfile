@@ -1,9 +1,21 @@
+# =========================================================================
+# Multi-Stage Dockerfile for React + Vite Frontend
+# =========================================================================
+
+# Stage 1: Build production bundle
+FROM node:20-alpine AS builder
+WORKDIR /build
+
+COPY package*.json ./
+RUN npm install
+
+COPY . ./
+RUN npm run build
+
+# Stage 2: Serve with lightweight Nginx
 FROM nginx:alpine
 
-# Copy built production assets
-COPY dist /usr/share/nginx/html
-
-# Copy custom Nginx configuration
+COPY --from=builder /build/dist /usr/share/nginx/html
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80

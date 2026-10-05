@@ -1,9 +1,9 @@
-# Multi-stage Dockerfile for Spring Boot Backend
+# Multi-stage Dockerfile for YouTube Watch Party Backend (Render Cloud Build)
 FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
 WORKDIR /build
 
-COPY pom.xml ./
-COPY src ./src
+COPY YouTube_Watch_Party/backend/pom.xml ./
+COPY YouTube_Watch_Party/backend/src ./src
 
 RUN mvn clean package -DskipTests
 
