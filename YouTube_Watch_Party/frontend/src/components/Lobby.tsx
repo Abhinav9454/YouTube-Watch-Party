@@ -7,25 +7,18 @@ import {
   Lock,
   Mic,
   Gift,
-  HelpCircle,
-  Sliders,
-  Subtitles,
-  BarChart3,
-  Play,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   Zap,
-  Volume2,
-  ArrowRight,
-  Film,
   Flame,
   Check,
-  X as XIcon,
 } from 'lucide-react';
 import type { RoomEntityDto } from '../types/party';
 import { listRecentRoomsApi } from '../services/api';
 import { soundEffects } from '../services/soundEffects';
+import { extractYouTubeVideoId } from '../utils/youtube';
+import { cleanRoomCode } from '../utils/room';
 
 interface LobbyProps {
   initialRoomCode?: string;
@@ -33,19 +26,12 @@ interface LobbyProps {
   onCreateRoom: (roomName: string, username: string, videoId: string, passcode?: string) => void;
 }
 
-const FEATURED_VIDEOS = [
-  { title: 'Lofi Hip Hop Radio - Beats to Relax/Study', id: 'jfKfPfyJRdk', badge: 'Music', duration: '24/7 Live' },
-  { title: 'Big Buck Bunny (4K Animation Classic)', id: 'aqz-KE-bpKQ', badge: 'Movie', duration: '9:56' },
-  { title: 'Cyberpunk Synthwave 80s Chill Mix', id: '4xDzrJKXOOY', badge: 'Mix', duration: '1:02:14' },
-  { title: 'Relaxing Jazz Coffee Shop Ambience', id: 'Dx5qFachd3A', badge: 'Ambient', duration: '3:15:00' },
+const PRESET_VIDEOS = [
+  { title: 'Lofi Chill Beats', id: 'jfKfPfyJRdk', tag: '🎵 Music' },
+  { title: 'Big Buck Bunny (4K)', id: 'aqz-KE-bpKQ', tag: '🍿 Animation' },
+  { title: 'Cyberpunk Synthwave', id: '4xDzrJKXOOY', tag: '🌆 Synth' },
+  { title: 'Relaxing Nature (4K)', id: 'Dx5qFachd3A', tag: '🌿 Ambient' },
 ];
-
-import { extractYouTubeVideoId } from '../utils/youtube';
-import { cleanRoomCode } from '../utils/room';
-
-function extractYouTubeId(urlOrId: string): string {
-  return extractYouTubeVideoId(urlOrId);
-}
 
 export const Lobby: React.FC<LobbyProps> = ({
   initialRoomCode = '',
@@ -58,7 +44,7 @@ export const Lobby: React.FC<LobbyProps> = ({
   );
 
   const [roomName, setRoomName] = useState('Epic Movie Night');
-  const [selectedVideo, setSelectedVideo] = useState(FEATURED_VIDEOS[0].id);
+  const [selectedVideo, setSelectedVideo] = useState(PRESET_VIDEOS[0].id);
   const [customVideoUrl, setCustomVideoUrl] = useState('');
   const [createPasscode, setCreatePasscode] = useState('');
   const [requirePasscode, setRequirePasscode] = useState(false);
@@ -68,13 +54,13 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [persistedRooms, setPersistedRooms] = useState<RoomEntityDto[]>([]);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
 
-  // Interactive Live Demo simulation state
-  const [demoPlaying, setDemoPlaying] = useState(true);
-  const [demoReaction, setDemoReaction] = useState<string | null>(null);
-
   const activeVideoId = useMemo(() => {
-    return extractYouTubeId(customVideoUrl.trim() || selectedVideo);
+    return extractYouTubeVideoId(customVideoUrl.trim() || selectedVideo);
   }, [customVideoUrl, selectedVideo]);
+
+  const detectedJoinCode = useMemo(() => {
+    return cleanRoomCode(joinCode);
+  }, [joinCode]);
 
   useEffect(() => {
     if (initialRoomCode) {
@@ -109,7 +95,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 
   const handleJoinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const finalCode = cleanRoomCode(joinCode);
+    const finalCode = detectedJoinCode;
     if (!finalCode) return;
     soundEffects.play('join');
     const finalPasscode = joinPasscode.trim() ? joinPasscode.trim() : undefined;
@@ -127,52 +113,33 @@ export const Lobby: React.FC<LobbyProps> = ({
     }
   };
 
-  const triggerDemoReaction = (emoji: string) => {
-    soundEffects.play('reaction');
-    setDemoReaction(emoji);
-    setTimeout(() => setDemoReaction(null), 1500);
-  };
-
-  const scrollToLauncher = (desiredTab: 'create' | 'join') => {
-    setTab(desiredTab);
-    document.getElementById('launcher-card')?.scrollIntoView({ behavior: 'smooth' });
-  };
-
   const faqs = [
     {
-      q: 'Do my friends need to create an account or install browser extensions?',
-      a: 'No! Zero downloads, extensions, or software installations are needed. Friends simply click your party link on any modern browser (Chrome, Firefox, Safari, Edge) on PC, Mac, Android, or iOS to join immediately with instant sync.',
+      q: 'Do friends need to download apps or install extensions to join?',
+      a: 'No downloads, extensions, or accounts needed. Friends simply open your watch party link on Chrome, Firefox, Safari, or Edge on mobile or desktop to join immediately with instant sync.',
     },
     {
-      q: 'How does SyncWave achieve sub-second (<15ms) playback synchronization?',
-      a: 'SyncWave uses an authoritative timestamp consensus model powered by Spring Boot WebSockets and high-frequency drift correction. When the host plays, pauses, or seeks, state is broadcasted over STOMP WebSockets within milliseconds to all connected clients.',
+      q: 'How does playback stay in exact millisecond synchronization?',
+      a: 'SyncWave uses an authoritative timestamp consensus model powered by WebSockets. Whenever someone plays, pauses, seeks, or changes speed, the exact position is synchronized across all viewers in <15 milliseconds.',
     },
     {
       q: 'Can we talk and see each other while watching?',
-      a: 'Yes! SyncWave has a built-in WebRTC Mesh voice and video call grid with speaking indicator glow. It also includes automatic YouTube audio ducking: when someone speaks, the video volume softly lowers so voices are crystal clear.',
+      a: 'Yes! SyncWave has a built-in WebRTC Mesh voice and video call grid. It also includes automatic YouTube audio ducking: when someone speaks, the video volume softly lowers so voices remain crystal clear.',
     },
     {
       q: 'What are Virtual Flying Snacks and Synchronized Trivia?',
-      a: 'You can toss animated 3D popcorn, pizza, soda, and party confetti across everyone’s screens with spatial audio cues. Hosts can also trigger 15-second timed trivia quizzes to challenge friends, earn XP, and climb the room leaderboard in real time.',
-    },
-    {
-      q: 'Can I upload custom subtitles for videos in different languages?',
-      a: 'Yes! You can drag and drop any local .SRT or .VTT subtitle file or paste text directly into the room. Captions synchronize in real time with the video timeline, complete with font scaling and sync delay offset slider.',
-    },
-    {
-      q: 'Is SyncWave Party free to use?',
-      a: 'SyncWave Party is 100% free and open-source under the MIT license, backed by Java 21, Spring Boot 3, and MongoDB Atlas. No subscription or credit card required.',
+      a: 'You can toss animated 3D popcorn, pizza, soda, and confetti across everyone’s screens. Hosts can also trigger 15-second timed trivia quizzes to challenge friends and climb the party leaderboard.',
     },
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '80px', paddingBottom: '60px' }}>
-      {/* 1. HERO SECTION */}
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '64px', paddingBottom: '60px' }}>
+      {/* 1. HERO SECTION WITH INTEGRATED LAUNCHER */}
       <section
         style={{
           position: 'relative',
-          padding: '60px 24px 20px 24px',
-          maxWidth: '1240px',
+          padding: '48px 20px 10px 20px',
+          maxWidth: '1200px',
           margin: '0 auto',
           width: '100%',
           display: 'flex',
@@ -181,13 +148,14 @@ export const Lobby: React.FC<LobbyProps> = ({
           textAlign: 'center',
         }}
       >
+        {/* Ambient Top Glow */}
         <div
           style={{
             position: 'absolute',
             top: '0',
             left: '50%',
             transform: 'translateX(-50%)',
-            width: '600px',
+            width: '650px',
             height: '350px',
             background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.22) 0%, rgba(168, 85, 247, 0.12) 40%, transparent 70%)',
             filter: 'blur(60px)',
@@ -196,34 +164,35 @@ export const Lobby: React.FC<LobbyProps> = ({
           }}
         />
 
+        {/* Badge */}
         <div
           style={{
             display: 'inline-flex',
             alignItems: 'center',
             gap: '8px',
-            padding: '6px 16px',
+            padding: '5px 14px',
             borderRadius: '9999px',
             background: 'rgba(99, 102, 241, 0.12)',
             border: '1px solid rgba(99, 102, 241, 0.3)',
-            marginBottom: '24px',
-            boxShadow: '0 0 20px rgba(99, 102, 241, 0.2)',
+            marginBottom: '20px',
           }}
         >
-          <Sparkles size={15} color="#818cf8" />
+          <Sparkles size={14} color="#818cf8" />
           <span style={{ fontSize: '13px', fontWeight: 600, color: '#c7d2fe' }}>
-            Next-Gen YouTube Watch Party • WebRTC Voice & Video • 100% Free
+            Next-Gen YouTube Watch Party • Zero Install • 100% Free
           </span>
         </div>
 
+        {/* Main Headline */}
         <h1
           style={{
-            fontSize: 'clamp(2.5rem, 5.5vw, 4.2rem)',
+            fontSize: 'clamp(2.4rem, 5vw, 3.8rem)',
             fontWeight: 800,
-            lineHeight: 1.12,
+            lineHeight: 1.15,
             letterSpacing: '-1.5px',
             color: '#fff',
-            maxWidth: '920px',
-            margin: '0 0 20px 0',
+            maxWidth: '850px',
+            margin: '0 0 16px 0',
           }}
         >
           Watch YouTube Together.{' '}
@@ -234,369 +203,52 @@ export const Lobby: React.FC<LobbyProps> = ({
               WebkitTextFillColor: 'transparent',
             }}
           >
-            Feel Like You're in the Same Room.
+            In Real-Time Sync.
           </span>
         </h1>
 
+        {/* Subhead */}
         <p
           style={{
-            fontSize: 'clamp(1rem, 1.8vw, 1.25rem)',
+            fontSize: 'clamp(0.95rem, 1.6vw, 1.15rem)',
             color: '#94a3b8',
-            maxWidth: '740px',
+            maxWidth: '650px',
             margin: '0 0 36px 0',
             lineHeight: 1.6,
           }}
         >
-          Experience cinema-grade synchronization (&lt;15ms drift), peer-to-peer WebRTC voice & video calls, floating 3D virtual gifts, synchronized subtitles, and interactive trivia quizzes.
+          Connect with friends anywhere. Sub-second video synchronization, WebRTC voice & video, live emoji reactions, and trivia battles.
         </p>
 
-        {/* Live Community Activity Simulation Ticker */}
+        {/* 2. THE LAUNCHER CARD (FRONT & CENTER) */}
         <div
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '7px 16px',
-            background: 'rgba(0, 0, 0, 0.45)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '9999px',
-            fontSize: '12px',
-            color: '#94a3b8',
-            marginBottom: '32px',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
-          }}
-        >
-          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 10px #f43f5e' }} />
-          <span>
-            <strong style={{ color: '#fff' }}>Live Activity:</strong> Room <span style={{ color: '#818cf8', fontWeight: 700 }}>#RETRO-SYNTH</span> synced with 6 viewers • <strong style={{ color: '#38bdf8' }}>Maya</strong> answered trivia (+100 XP)
-          </span>
-        </div>
-
-        <div
-          style={{
-            display: 'flex',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '16px',
-            marginBottom: '48px',
-          }}
-        >
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => scrollToLauncher('create')}
-            style={{
-              padding: '14px 32px',
-              fontSize: '1rem',
-              fontWeight: 700,
-              gap: '10px',
-              boxShadow: '0 0 30px rgba(99, 102, 241, 0.45)',
-            }}
-          >
-            <PlusCircle size={20} />
-            <span>Create a Watch Party</span>
-          </button>
-
-          <button
-            type="button"
-            className="btn-secondary"
-            onClick={() => scrollToLauncher('join')}
-            style={{
-              padding: '14px 28px',
-              fontSize: '1rem',
-              fontWeight: 600,
-              gap: '10px',
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-            }}
-          >
-            <LogIn size={20} color="#38bdf8" />
-            <span>Join With Room Code</span>
-          </button>
-        </div>
-
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-            gap: '16px',
-            maxWidth: '880px',
-            width: '100%',
-            padding: '18px 24px',
-            background: 'rgba(18, 24, 38, 0.65)',
-            backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '16px',
-            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.4)',
-            marginBottom: '40px',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#38bdf8' }}>&lt; 15 ms</span>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Sync Precision Drift</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981' }}>100% Free</span>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Zero Install / No Extensions</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#a855f7' }}>WebRTC Mesh</span>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>P2P Voice & Video Grid</span>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f59e0b' }}>MongoDB Atlas</span>
-            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Cloud-Secured Backbone</span>
-          </div>
-        </div>
-
-        {/* Live Demo Simulation Showcase */}
-        <div
-          style={{
-            maxWidth: '820px',
-            width: '100%',
-            background: 'rgba(15, 20, 32, 0.85)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
-            borderRadius: '20px',
-            padding: '20px',
-            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 35px rgba(99, 102, 241, 0.25)',
-            position: 'relative',
-            overflow: 'hidden',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: '14px',
-              paddingBottom: '12px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444' }} />
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#f59e0b' }} />
-              <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981' }} />
-              <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 600, marginLeft: '8px' }}>
-                Room #FRIDAY-VIBES • Live Sync Simulation
-              </span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span
-                style={{
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#10b981',
-                  background: 'rgba(16, 185, 129, 0.15)',
-                  padding: '3px 8px',
-                  borderRadius: '6px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px',
-                }}
-              >
-                <Radio size={12} /> 4 Viewers Synced
-              </span>
-            </div>
-          </div>
-
-          <div
-            style={{
-              height: '240px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%)',
-              position: 'relative',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
-            }}
-          >
-            <img
-              src={`https://img.youtube.com/vi/${FEATURED_VIDEOS[0].id}/hqdefault.jpg`}
-              alt="Lofi Beats Preview"
-              style={{
-                position: 'absolute',
-                inset: 0,
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                opacity: 0.35,
-                filter: 'brightness(0.7) blur(1px)',
-              }}
-            />
-
-            {demoReaction && (
-              <div
-                className="animate-pop-up"
-                style={{
-                  position: 'absolute',
-                  fontSize: '48px',
-                  zIndex: 20,
-                  filter: 'drop-shadow(0 0 15px rgba(255, 255, 255, 0.5))',
-                }}
-              >
-                {demoReaction}
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setDemoPlaying(!demoPlaying)}
-              style={{
-                width: '56px',
-                height: '56px',
-                borderRadius: '50%',
-                background: 'rgba(99, 102, 241, 0.85)',
-                border: '2px solid rgba(255, 255, 255, 0.5)',
-                color: '#fff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                boxShadow: '0 0 30px rgba(99, 102, 241, 0.6)',
-                zIndex: 10,
-                transition: 'all 0.2s',
-              }}
-            >
-              <Play size={24} fill="#fff" style={{ marginLeft: demoPlaying ? '0' : '3px' }} />
-            </button>
-
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                padding: '12px 16px',
-                background: 'linear-gradient(0deg, rgba(0, 0, 0, 0.9) 0%, transparent 100%)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                zIndex: 10,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>
-                  Lofi Hip Hop Radio - Beats to Relax/Study
-                </span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                {['🍿', '🔥', '🎉', '❤️'].map((emoji) => (
-                  <button
-                    key={emoji}
-                    type="button"
-                    onClick={() => triggerDemoReaction(emoji)}
-                    title={`Send test ${emoji} reaction`}
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.1)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      borderRadius: '8px',
-                      padding: '4px 8px',
-                      fontSize: '14px',
-                      cursor: 'pointer',
-                      transition: 'transform 0.15s',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.2)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-                  >
-                    {emoji}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: '12px',
-              padding: '8px 12px',
-              background: 'rgba(255, 255, 255, 0.03)',
-              borderRadius: '10px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                {[
-                  { name: 'Alex (Host)', color: '#6366f1', speaking: true },
-                  { name: 'Sarah', color: '#ec4899', speaking: false },
-                  { name: 'David', color: '#10b981', speaking: false },
-                  { name: 'Maya', color: '#f59e0b', speaking: false },
-                ].map((user, idx) => (
-                  <div
-                    key={idx}
-                    title={user.name}
-                    style={{
-                      width: '32px',
-                      height: '32px',
-                      borderRadius: '50%',
-                      background: user.color,
-                      border: user.speaking ? '2px solid #38bdf8' : '2px solid #0f172a',
-                      boxShadow: user.speaking ? '0 0 10px #38bdf8' : 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      color: '#fff',
-                      marginLeft: idx > 0 ? '-8px' : '0',
-                    }}
-                  >
-                    {user.name[0]}
-                  </div>
-                ))}
-              </div>
-              <span style={{ fontSize: '12px', color: '#94a3b8' }}>
-                <strong style={{ color: '#38bdf8' }}>Alex</strong> is speaking • YouTube audio auto-ducked
-              </span>
-            </div>
-
-            <span style={{ fontSize: '11px', color: '#64748b' }}>Try clicking emojis above!</span>
-          </div>
-        </div>
-      </section>
-
-      {/* 2. PARTY LAUNCHER PANEL */}
-      <section
-        id="launcher-card"
-        style={{
-          maxWidth: '680px',
-          width: '100%',
-          margin: '0 auto',
-          padding: '0 20px',
-        }}
-      >
-        <div
+          id="launcher-card"
           className="glass-panel"
           style={{
-            padding: '32px',
-            borderRadius: '24px',
-            border: '1px solid rgba(99, 102, 241, 0.35)',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(99, 102, 241, 0.2)',
-            background: 'rgba(15, 20, 32, 0.92)',
+            maxWidth: '560px',
+            width: '100%',
+            padding: '28px',
+            borderRadius: '20px',
+            border: '1px solid rgba(99, 102, 241, 0.32)',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(99, 102, 241, 0.15)',
+            background: 'rgba(15, 20, 32, 0.94)',
+            textAlign: 'left',
           }}
         >
+          {/* Identity Row */}
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              marginBottom: '24px',
-              paddingBottom: '16px',
+              marginBottom: '20px',
+              paddingBottom: '14px',
               borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             }}
           >
             <div>
               <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#818cf8', fontWeight: 700, letterSpacing: '0.5px' }}>
-                Your Party Identity
+                Your Screen Name
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
                 <input
@@ -612,7 +264,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                     color: '#fff',
                     fontWeight: 700,
                     fontSize: '14px',
-                    width: '180px',
+                    width: '190px',
                   }}
                 />
               </div>
@@ -620,8 +272,8 @@ export const Lobby: React.FC<LobbyProps> = ({
 
             <div
               style={{
-                width: '42px',
-                height: '42px',
+                width: '38px',
+                height: '38px',
                 borderRadius: '50%',
                 background: 'linear-gradient(135deg, #6366f1, #a855f7)',
                 display: 'flex',
@@ -629,7 +281,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                 justifyContent: 'center',
                 color: '#fff',
                 fontWeight: 800,
-                fontSize: '16px',
+                fontSize: '15px',
                 boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)',
               }}
             >
@@ -637,13 +289,14 @@ export const Lobby: React.FC<LobbyProps> = ({
             </div>
           </div>
 
+          {/* Tab Switcher */}
           <div
             style={{
               display: 'flex',
               background: 'rgba(0, 0, 0, 0.35)',
               padding: '4px',
               borderRadius: '12px',
-              marginBottom: '26px',
+              marginBottom: '22px',
               border: '1px solid rgba(255, 255, 255, 0.06)',
             }}
           >
@@ -652,13 +305,13 @@ export const Lobby: React.FC<LobbyProps> = ({
               onClick={() => setTab('create')}
               style={{
                 flex: 1,
-                padding: '10px',
+                padding: '9px',
                 border: 'none',
                 borderRadius: '8px',
                 background: tab === 'create' ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'transparent',
                 color: tab === 'create' ? '#fff' : '#94a3b8',
                 fontWeight: 700,
-                fontSize: '0.92rem',
+                fontSize: '0.9rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -667,20 +320,20 @@ export const Lobby: React.FC<LobbyProps> = ({
                 transition: 'all 0.2s',
               }}
             >
-              <PlusCircle size={16} /> Create Watch Party
+              <PlusCircle size={16} /> Create Party
             </button>
             <button
               type="button"
               onClick={() => setTab('join')}
               style={{
                 flex: 1,
-                padding: '10px',
+                padding: '9px',
                 border: 'none',
                 borderRadius: '8px',
                 background: tab === 'join' ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'transparent',
                 color: tab === 'join' ? '#fff' : '#94a3b8',
                 fontWeight: 700,
-                fontSize: '0.92rem',
+                fontSize: '0.9rem',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
@@ -694,9 +347,9 @@ export const Lobby: React.FC<LobbyProps> = ({
           </div>
 
           {tab === 'create' ? (
-            <form onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleCreateSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e0', marginBottom: '6px', fontWeight: 600 }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e0', marginBottom: '6px', fontWeight: 600 }}>
                   Party Title
                 </label>
                 <input
@@ -704,17 +357,17 @@ export const Lobby: React.FC<LobbyProps> = ({
                   className="input-field"
                   value={roomName}
                   onChange={(e) => setRoomName(e.target.value)}
-                  placeholder="e.g. Friday Movie Night, Chill Beats Session..."
-                  style={{ width: '100%', padding: '11px 14px', borderRadius: '10px' }}
+                  placeholder="e.g. Friday Movie Night, Chill Beats..."
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px' }}
                 />
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e0', marginBottom: '8px', fontWeight: 600 }}>
-                  Choose Starting Video
+                <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e0', marginBottom: '8px', fontWeight: 600 }}>
+                  Starting YouTube Video
                 </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '10px', marginBottom: '12px' }}>
-                  {FEATURED_VIDEOS.map((vid) => {
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '10px' }}>
+                  {PRESET_VIDEOS.map((vid) => {
                     const isSelected = selectedVideo === vid.id && !customVideoUrl;
                     return (
                       <div
@@ -724,66 +377,34 @@ export const Lobby: React.FC<LobbyProps> = ({
                           setCustomVideoUrl('');
                         }}
                         style={{
-                          padding: '10px 12px',
+                          padding: '8px 10px',
                           background: isSelected ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255, 255, 255, 0.04)',
                           border: isSelected ? '1px solid #6366f1' : '1px solid rgba(255, 255, 255, 0.08)',
-                          borderRadius: '10px',
+                          borderRadius: '8px',
                           cursor: 'pointer',
                           transition: 'all 0.2s',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
                         }}
                       >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                          <span style={{ fontSize: '10px', color: '#818cf8', fontWeight: 700, textTransform: 'uppercase' }}>
-                            {vid.badge} • {vid.duration}
-                          </span>
-                          {isSelected && <CheckCircle2 size={13} color="#6366f1" />}
-                        </div>
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {vid.title}
-                        </div>
+                        <span style={{ fontSize: '12px', fontWeight: 600, color: isSelected ? '#fff' : '#cbd5e1' }}>
+                          {vid.tag} {vid.title}
+                        </span>
+                        {isSelected && <CheckCircle2 size={13} color="#818cf8" />}
                       </div>
                     );
                   })}
                 </div>
 
-                <div>
-                  <input
-                    type="text"
-                    className="input-field"
-                    value={customVideoUrl}
-                    onChange={(e) => setCustomVideoUrl(e.target.value)}
-                    placeholder="Or paste any YouTube URL, <iframe> embed code, or ID..."
-                    style={{ width: '100%', padding: '11px 14px', borderRadius: '10px' }}
-                  />
-                </div>
-
-                {activeVideoId && (
-                  <div
-                    style={{
-                      marginTop: '12px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '8px 12px',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      borderRadius: '10px',
-                      border: '1px solid rgba(255, 255, 255, 0.06)',
-                    }}
-                  >
-                    <img
-                      src={`https://img.youtube.com/vi/${activeVideoId}/default.jpg`}
-                      alt="Thumbnail Preview"
-                      style={{ width: '60px', height: '45px', objectFit: 'cover', borderRadius: '6px' }}
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
-                    <div>
-                      <div style={{ fontSize: '11px', color: '#818cf8', fontWeight: 700 }}>VALID YOUTUBE TARGET</div>
-                      <div style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: 500 }}>ID: {activeVideoId}</div>
-                    </div>
-                  </div>
-                )}
+                <input
+                  type="text"
+                  className="input-field"
+                  value={customVideoUrl}
+                  onChange={(e) => setCustomVideoUrl(e.target.value)}
+                  placeholder="Or paste YouTube link / ID..."
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '13px' }}
+                />
               </div>
 
               <div
@@ -791,30 +412,30 @@ export const Lobby: React.FC<LobbyProps> = ({
                   background: 'rgba(255, 255, 255, 0.03)',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
                   borderRadius: '10px',
-                  padding: '12px 14px',
+                  padding: '10px 14px',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Lock size={15} color={requirePasscode ? '#38bdf8' : '#94a3b8'} />
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#e2e8f0' }}>Require Passcode / PIN</span>
+                    <Lock size={14} color={requirePasscode ? '#38bdf8' : '#94a3b8'} />
+                    <span style={{ fontSize: '12px', fontWeight: 600, color: '#e2e8f0' }}>Passcode Protect Room</span>
                   </div>
                   <input
                     type="checkbox"
                     checked={requirePasscode}
                     onChange={(e) => setRequirePasscode(e.target.checked)}
-                    style={{ cursor: 'pointer', width: '16px', height: '16px', accentColor: '#6366f1' }}
+                    style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#6366f1' }}
                   />
                 </div>
 
                 {requirePasscode && (
-                  <div style={{ marginTop: '10px' }}>
+                  <div style={{ marginTop: '8px' }}>
                     <input
                       type="password"
                       className="input-field"
                       value={createPasscode}
                       onChange={(e) => setCreatePasscode(e.target.value)}
-                      placeholder="Set room passcode (optional, leave blank for open room)"
+                      placeholder="Set room password..."
                       style={{ width: '100%', padding: '8px 12px', borderRadius: '8px', fontSize: '13px' }}
                     />
                   </div>
@@ -825,54 +446,58 @@ export const Lobby: React.FC<LobbyProps> = ({
                 type="submit"
                 className="btn-primary"
                 style={{
-                  padding: '14px',
-                  fontSize: '1rem',
+                  padding: '13px',
+                  fontSize: '0.96rem',
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '10px',
-                  marginTop: '6px',
+                  gap: '8px',
+                  marginTop: '4px',
                   boxShadow: '0 0 25px rgba(99, 102, 241, 0.4)',
                 }}
               >
-                <Sparkles size={18} />
+                <Sparkles size={17} />
                 <span>Launch Watch Party Now</span>
               </button>
             </form>
           ) : (
-            <form onSubmit={handleJoinSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <form onSubmit={handleJoinSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e0', marginBottom: '6px', fontWeight: 600 }}>
-                  Enter Room Code or Paste Invite Link
+                <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e0', marginBottom: '6px', fontWeight: 600 }}>
+                  Enter Room Code or Paste Party Link
                 </label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type="text"
-                    className="input-field"
-                    value={joinCode}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      const cleaned = cleanRoomCode(val);
-                      setJoinCode(cleaned || val.toUpperCase());
-                    }}
-                    placeholder="e.g. 7X9K2P or paste invite link"
-                    style={{
-                      width: '100%',
-                      padding: '12px 14px',
-                      borderRadius: '10px',
-                      fontSize: '1.15rem',
-                      letterSpacing: '2px',
-                      fontWeight: 700,
-                      textTransform: 'uppercase',
-                      textAlign: 'center',
-                    }}
-                  />
-                </div>
+                <input
+                  type="text"
+                  className="input-field"
+                  value={joinCode}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    const cleaned = cleanRoomCode(val);
+                    setJoinCode(cleaned || val.toUpperCase());
+                  }}
+                  placeholder="e.g. 7X9K2P or paste invite link"
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    borderRadius: '10px',
+                    fontSize: '1.15rem',
+                    letterSpacing: '2px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    textAlign: 'center',
+                  }}
+                />
+                {detectedJoinCode && detectedJoinCode.length >= 4 && (
+                  <div style={{ marginTop: '6px', fontSize: '12px', color: '#4ade80', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <Check size={13} />
+                    <span>Ready to join room: <strong>{detectedJoinCode}</strong></span>
+                  </div>
+                )}
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e0', marginBottom: '6px', fontWeight: 600 }}>
+                <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e0', marginBottom: '6px', fontWeight: 600 }}>
                   Room Passcode (If required by host)
                 </label>
                 <input
@@ -881,27 +506,27 @@ export const Lobby: React.FC<LobbyProps> = ({
                   value={joinPasscode}
                   onChange={(e) => setJoinPasscode(e.target.value)}
                   placeholder="Enter passcode if protected..."
-                  style={{ width: '100%', padding: '11px 14px', borderRadius: '10px' }}
+                  style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', fontSize: '13px' }}
                 />
               </div>
 
               <button
                 type="submit"
                 className="btn-primary"
-                disabled={!joinCode.trim()}
+                disabled={!detectedJoinCode}
                 style={{
-                  padding: '14px',
-                  fontSize: '1rem',
+                  padding: '13px',
+                  fontSize: '0.96rem',
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: '10px',
-                  marginTop: '8px',
-                  opacity: joinCode.trim() ? 1 : 0.6,
+                  gap: '8px',
+                  marginTop: '4px',
+                  opacity: detectedJoinCode ? 1 : 0.6,
                 }}
               >
-                <LogIn size={18} />
+                <LogIn size={17} />
                 <span>Enter Room Now</span>
               </button>
             </form>
@@ -909,60 +534,86 @@ export const Lobby: React.FC<LobbyProps> = ({
         </div>
       </section>
 
-      {/* 3. ACTIVE PUBLIC WATCH PARTIES SHOWCASE */}
+      {/* 3. PLATFORM HIGHLIGHT STATS */}
       <section
-        id="public-parties"
         style={{
-          maxWidth: '1240px',
+          maxWidth: '960px',
           margin: '0 auto',
-          padding: '0 24px',
+          padding: '0 20px',
           width: '100%',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            padding: '18px 24px',
+            background: 'rgba(18, 24, 38, 0.65)',
+            backdropFilter: 'blur(16px)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '16px',
+          }}
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#38bdf8' }}>&lt; 15 ms</span>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Sync Precision Drift</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#10b981' }}>100% Free</span>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Zero Downloads or Extensions</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#a855f7' }}>WebRTC Mesh</span>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Live Voice & Video Calls</span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f59e0b' }}>Instant Share</span>
+            <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Link & Phone Camera QR</span>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. ACTIVE PUBLIC WATCH PARTIES (IF ANY) */}
+      {persistedRooms && persistedRooms.length > 0 && (
+        <section
+          id="public-parties"
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            padding: '0 24px',
+            width: '100%',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Flame size={18} color="#f43f5e" />
-              <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: '#fff', margin: 0 }}>
-                Live Public Watch Parties
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                Active Public Rooms
               </h2>
             </div>
-            <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-              Join active community rooms currently streaming videos right now.
-            </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => scrollToLauncher('create')}
-            className="btn-secondary"
-            style={{ padding: '8px 16px', fontSize: '13px', gap: '6px' }}
-          >
-            <PlusCircle size={15} /> Host Your Own
-          </button>
-        </div>
-
-        {persistedRooms && persistedRooms.length > 0 ? (
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: '20px',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: '16px',
             }}
           >
-            {persistedRooms.slice(0, 6).map((room) => (
+            {persistedRooms.slice(0, 4).map((room) => (
               <div
                 key={room.roomId}
                 className="glass-panel glass-panel-interactive"
                 style={{
-                  borderRadius: '16px',
+                  borderRadius: '14px',
                   overflow: 'hidden',
                   display: 'flex',
                   flexDirection: 'column',
                   border: '1px solid rgba(255, 255, 255, 0.08)',
                 }}
               >
-                <div style={{ height: '140px', position: 'relative', overflow: 'hidden' }}>
+                <div style={{ height: '130px', position: 'relative', overflow: 'hidden' }}>
                   <img
                     src={`https://img.youtube.com/vi/${room.currentVideoId || 'jfKfPfyJRdk'}/mqdefault.jpg`}
                     alt={room.name}
@@ -971,13 +622,12 @@ export const Lobby: React.FC<LobbyProps> = ({
                   <div
                     style={{
                       position: 'absolute',
-                      top: '10px',
-                      left: '10px',
+                      top: '8px',
+                      left: '8px',
                       background: 'rgba(0, 0, 0, 0.75)',
-                      backdropFilter: 'blur(6px)',
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      fontSize: '11px',
+                      padding: '2px 7px',
+                      borderRadius: '5px',
+                      fontSize: '10px',
                       fontWeight: 700,
                       color: '#fff',
                       display: 'flex',
@@ -985,739 +635,200 @@ export const Lobby: React.FC<LobbyProps> = ({
                       gap: '4px',
                     }}
                   >
-                    <Radio size={11} color="#10b981" /> LIVE
+                    <Radio size={10} color="#10b981" /> LIVE
                   </div>
-
-                  {room.passcode && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        right: '10px',
-                        background: 'rgba(0, 0, 0, 0.75)',
-                        padding: '4px',
-                        borderRadius: '6px',
-                        color: '#38bdf8',
-                      }}
-                      title="Passcode Protected Room"
-                    >
-                      <Lock size={12} />
-                    </div>
-                  )}
                 </div>
 
-                <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, gap: '10px' }}>
+                <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', flex: 1, gap: '8px' }}>
                   <div>
-                    <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', margin: '0 0 4px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <h3 style={{ fontSize: '14px', fontWeight: 700, color: '#fff', margin: '0 0 2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {room.name}
                     </h3>
-                    <div style={{ fontSize: '12px', color: '#94a3b8' }}>
+                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>
                       Host: <strong style={{ color: '#c7d2fe' }}>{room.creatorUsername}</strong>
                     </div>
                   </div>
 
-                  <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
+                  <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
                     <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#818cf8', fontWeight: 700 }}>
                       #{room.roomId}
                     </span>
                     <button
                       type="button"
-                      onClick={() => handleQuickJoinRoom(room.roomId, Boolean(room.passcode))}
-                      className="btn-primary"
-                      style={{ padding: '6px 14px', fontSize: '12px', fontWeight: 600, gap: '4px' }}
+                      onClick={() => handleQuickJoinRoom(room.roomId, !!room.passcode)}
+                      style={{
+                        padding: '5px 12px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        borderRadius: '6px',
+                        border: '1px solid #6366f1',
+                        background: 'rgba(99, 102, 241, 0.15)',
+                        color: '#c7d2fe',
+                        cursor: 'pointer',
+                      }}
                     >
-                      Join <ArrowRight size={13} />
+                      Join Room
                     </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
-        ) : (
-          <div
-            className="glass-panel"
-            style={{
-              padding: '40px',
-              textAlign: 'center',
-              borderRadius: '16px',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '12px',
-            }}
-          >
-            <Film size={36} color="#818cf8" />
-            <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              No Public Watch Parties Running Right Now
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, maxWidth: '420px' }}>
-              Be the first host to start a room! Launch a party above and invite friends or leave it open for others to discover.
-            </p>
-            <button
-              type="button"
-              className="btn-primary"
-              onClick={() => scrollToLauncher('create')}
-              style={{ marginTop: '8px', padding: '10px 22px', fontSize: '13px' }}
-            >
-              Start First Party
-            </button>
-          </div>
-        )}
-      </section>
+        </section>
+      )}
 
-      {/* 4. HOW IT WORKS */}
-      <section
-        id="how-it-works"
-        style={{
-          maxWidth: '1240px',
-          margin: '0 auto',
-          padding: '0 24px',
-          width: '100%',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#818cf8', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Frictionless Setup
-          </span>
-          <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', margin: '6px 0 10px 0' }}>
-            How SyncWave Works in 3 Simple Steps
-          </h2>
-          <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-            No browser extensions to download, no accounts mandated. Pure web-standard magic.
-          </p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '28px',
-              borderRadius: '20px',
-              position: 'relative',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
-          >
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                background: 'rgba(99, 102, 241, 0.15)',
-                border: '1px solid rgba(99, 102, 241, 0.3)',
-                color: '#818cf8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '18px',
-                fontWeight: 800,
-              }}
-            >
-              1
-            </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Create or Pick Any Video
-            </h3>
-            <p style={{ fontSize: '13.5px', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-              Enter any public YouTube URL or select from our curated trending lists (Lofi, 4K Cinema, Synthwave, Chill Jazz). Add an optional room passcode if you want total privacy.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '28px',
-              borderRadius: '20px',
-              position: 'relative',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
-          >
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                background: 'rgba(56, 189, 248, 0.15)',
-                border: '1px solid rgba(56, 189, 248, 0.3)',
-                color: '#38bdf8',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '18px',
-                fontWeight: 800,
-              }}
-            >
-              2
-            </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Share Room Code / QR Link
-            </h3>
-            <p style={{ fontSize: '13.5px', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-              Send your friends the generated 6-character room code or instant URL. Friends join seamlessly from smartphones, tablets, laptops, or smart TVs without installing any apps.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '28px',
-              borderRadius: '20px',
-              position: 'relative',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-            }}
-          >
-            <div
-              style={{
-                width: '44px',
-                height: '44px',
-                borderRadius: '12px',
-                background: 'rgba(16, 185, 129, 0.15)',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                color: '#10b981',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: '18px',
-                fontWeight: 800,
-              }}
-            >
-              3
-            </div>
-            <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Sync, Talk, React & Play
-            </h3>
-            <p style={{ fontSize: '13.5px', color: '#94a3b8', lineHeight: 1.6, margin: 0 }}>
-              Enjoy cinema-level sync across play, pause, and seek. Talk over WebRTC voice/video with audio ducking, send floating 3D snacks, trigger trivia quizzes, and enjoy the party!
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 5. PREMIER FEATURE SHOWCASE */}
+      {/* 5. CORE FEATURES */}
       <section
         id="features"
         style={{
-          maxWidth: '1240px',
+          maxWidth: '1100px',
           margin: '0 auto',
           padding: '0 24px',
           width: '100%',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Built for the Ultimate Experience
-          </span>
-          <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', margin: '6px 0 10px 0' }}>
-            Packed With Industry-Leading Features
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '1.6rem', fontWeight: 800, color: '#fff', margin: '0 0 8px 0' }}>
+            Everything You Need For The Perfect Movie Night
           </h2>
           <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-            Everything you need for movie nights, anime marathons, and collaborative study groups.
-          </p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px' }}>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8' }}>
-              <Zap size={22} />
-            </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Sub-Second Timeline Sync
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-              Spring Boot WebSocket server continuously reconciles drift (&lt;15ms). When the host plays, pauses, or seeks, all viewers stay frame-accurate.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(56, 189, 248, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#38bdf8' }}>
-              <Mic size={22} />
-            </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              WebRTC Voice & Cam Grid
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-              Low-latency P2P mesh audio and video calls. Includes live speaking glow indicators and automatic YouTube audio ducking when someone speaks.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(244, 63, 94, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#f43f5e' }}>
-              <Gift size={22} />
-            </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Flying Snacks & Gifts
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-              Toss animated 3D popcorn, pizza, drinks, and confetti across everyone’s screens accompanied by spatial celebration chimes.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(168, 85, 247, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc' }}>
-              <HelpCircle size={22} />
-            </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Synchronized Live Trivia
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-              Host 15-second timed quiz battles. Everyone receives the question simultaneously, competing for +100 XP points on the room leaderboard.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(234, 179, 8, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#facc15' }}>
-              <Sliders size={22} />
-            </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              3D Cinema Equalizer & Looper
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-              Cinema 3D, Bass Boost, and Vocal Clarity EQ presets. Set custom Point A and Point B timestamps to seamlessly loop musical choruses.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(16, 185, 129, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#34d399' }}>
-              <Subtitles size={22} />
-            </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Custom Subtitle Sync (.SRT/.VTT)
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-              Drag and drop local subtitle files or paste captions. Subtitles render on top of the video player with font scaling and sync delay offset slider.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(249, 115, 22, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fb923c' }}>
-              <Volume2 size={22} />
-            </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Interactive Soundboard
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-              Trigger hilarious sound effects in real time (airhorn, applause, rimshot, fail chime, dramatic drumroll) to hype up memorable video scenes.
-            </p>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '12px',
-            }}
-          >
-            <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: 'rgba(99, 102, 241, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#818cf8' }}>
-              <BarChart3 size={22} />
-            </div>
-            <h3 style={{ fontSize: '17px', fontWeight: 700, color: '#fff', margin: 0 }}>
-              Host Moderation & Security
-            </h3>
-            <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.6 }}>
-              Assign moderators, kick disruptive users, pass-protect rooms, transfer host ownership, and lock queue permissions at any time.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 6. COMPARISON MATRIX */}
-      <section
-        id="comparison"
-        style={{
-          maxWidth: '1080px',
-          margin: '0 auto',
-          padding: '0 24px',
-          width: '100%',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Industry Benchmarks
-          </span>
-          <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', margin: '6px 0 10px 0' }}>
-            Why SyncWave Outperforms Other Solutions
-          </h2>
-          <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-            Compare SyncWave directly against traditional browser extensions and Discord streaming.
+            Modern features engineered for seamless video streaming with friends
           </p>
         </div>
 
         <div
-          className="glass-panel"
           style={{
-            borderRadius: '20px',
-            overflow: 'hidden',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+            gap: '20px',
           }}
         >
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', minWidth: '600px' }}>
-              <thead>
-                <tr style={{ background: 'rgba(255, 255, 255, 0.04)', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
-                  <th style={{ padding: '16px 20px', fontSize: '14px', color: '#94a3b8', fontWeight: 600 }}>Feature</th>
-                  <th style={{ padding: '16px 20px', fontSize: '14px', color: '#818cf8', fontWeight: 700, background: 'rgba(99, 102, 241, 0.1)' }}>
-                    SyncWave Party (Pro)
-                  </th>
-                  <th style={{ padding: '16px 20px', fontSize: '14px', color: '#94a3b8', fontWeight: 600 }}>Browser Extensions</th>
-                  <th style={{ padding: '16px 20px', fontSize: '14px', color: '#94a3b8', fontWeight: 600 }}>Discord Stream</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { feature: 'Zero Extension / App Install', us: true, ext: false, discord: false },
-                  { feature: 'Sub-Second (<15ms) Sync Accuracy', us: true, ext: false, discord: false },
-                  { feature: 'Built-in WebRTC Voice & Video Grid', us: true, ext: false, discord: true },
-                  { feature: 'Works on Mobile & Tablets', us: true, ext: false, discord: true },
-                  { feature: '3D Flying Snacks & Confetti', us: true, ext: false, discord: false },
-                  { feature: 'Synchronized Trivia Quizzes', us: true, ext: false, discord: false },
-                  { feature: 'Drag-and-Drop Subtitle Sync (.SRT)', us: true, ext: false, discord: false },
-                  { feature: '100% Free & Open Source', us: true, ext: false, discord: false },
-                ].map((row, idx) => (
-                  <tr
-                    key={idx}
-                    style={{
-                      borderBottom: '1px solid rgba(255, 255, 255, 0.05)',
-                      background: idx % 2 === 0 ? 'transparent' : 'rgba(255, 255, 255, 0.01)',
-                    }}
-                  >
-                    <td style={{ padding: '14px 20px', fontSize: '13.5px', color: '#cbd5e1', fontWeight: 500 }}>
-                      {row.feature}
-                    </td>
-                    <td style={{ padding: '14px 20px', background: 'rgba(99, 102, 241, 0.06)' }}>
-                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#34d399', fontWeight: 700, fontSize: '13px' }}>
-                        <Check size={16} color="#10b981" /> Yes
-                      </span>
-                    </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      {row.ext ? (
-                        <span style={{ color: '#94a3b8', fontSize: '13px' }}>Yes</span>
-                      ) : (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#f43f5e', fontSize: '13px' }}>
-                          <XIcon size={14} color="#f43f5e" /> No
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '14px 20px' }}>
-                      {row.discord ? (
-                        <span style={{ color: '#94a3b8', fontSize: '13px' }}>Yes</span>
-                      ) : (
-                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#f43f5e', fontSize: '13px' }}>
-                          <XIcon size={14} color="#f43f5e" /> No
-                        </span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* 6.5 COMMUNITY TESTIMONIALS */}
-      <section
-        style={{
-          maxWidth: '1240px',
-          margin: '0 auto',
-          padding: '0 24px',
-          width: '100%',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Loved by Communities
-          </span>
-          <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', margin: '6px 0 10px 0' }}>
-            Built for Real People Watching Together
-          </h2>
-          <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-            Here is how friends, clubs, and remote couples use SyncWave every day.
-          </p>
-        </div>
-
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', gap: '4px', color: '#fbbf24', fontSize: '16px' }}>
-              ★★★★★
-            </div>
-            <p style={{ fontSize: '13.5px', color: '#cbd5e1', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>
-              "The WebRTC voice with automatic YouTube audio ducking makes movie dates feel like we're on the same couch. No lag, no awkward countdowns!"
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #ec4899, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '12px' }}>
-                E&M
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Elena & Mark</div>
-                <div style={{ fontSize: '11px', color: '#94a3b8' }}>Long-Distance Movie Night (NYC & Berlin)</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', gap: '4px', color: '#fbbf24', fontSize: '16px' }}>
-              ★★★★★
-            </div>
-            <p style={{ fontSize: '13.5px', color: '#cbd5e1', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>
-              "We hosted a 35-person anime premiere party. The floating 3D gifts and live trivia quizzes made it 10x more engaging than standard screen shares."
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '12px' }}>
-                K
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Kenji Takahashi</div>
-                <div style={{ fontSize: '11px', color: '#94a3b8' }}>Organizer, AnimeSphere Club</div>
-              </div>
-            </div>
-          </div>
-
-          <div
-            className="glass-panel"
-            style={{
-              padding: '24px',
-              borderRadius: '18px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '14px',
-              border: '1px solid rgba(255, 255, 255, 0.08)',
-            }}
-          >
-            <div style={{ display: 'flex', gap: '4px', color: '#fbbf24', fontSize: '16px' }}>
-              ★★★★★
-            </div>
-            <p style={{ fontSize: '13.5px', color: '#cbd5e1', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>
-              "Our university coding group uses SyncWave daily. The 3D bass equalizer and subtitle sync for technical tutorials are pure engineering excellence."
-            </p>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
-              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '12px' }}>
-                P
-              </div>
-              <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Priya Sharma</div>
-                <div style={{ fontSize: '11px', color: '#94a3b8' }}>CS Senior & Study Group Lead</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 7. FAQ ACCORDION */}
-      <section
-        id="faq"
-        style={{
-          maxWidth: '840px',
-          margin: '0 auto',
-          padding: '0 24px',
-          width: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '14px',
-        }}
-      >
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, color: '#c084fc', textTransform: 'uppercase', letterSpacing: '1px' }}>
-            Got Questions?
-          </span>
-          <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', margin: '6px 0 10px 0' }}>
-            Frequently Asked Questions
-          </h2>
-          <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
-            Everything you need to know about setting up and running your watch party.
-          </p>
-        </div>
-
-        {faqs.map((faq, idx) => {
-          const isExpanded = expandedFaq === idx;
-          return (
+          {[
+            {
+              icon: <Zap size={22} color="#38bdf8" />,
+              title: 'Sub-Second Sync',
+              desc: 'Authoritative timestamp consensus maintains <15ms drift so everyone laughs at the exact same joke.',
+            },
+            {
+              icon: <Mic size={22} color="#a855f7" />,
+              title: 'WebRTC Voice & Cam',
+              desc: 'Talk and see your friends with built-in auto-ducking that lowers YouTube audio when someone speaks.',
+            },
+            {
+              icon: <Gift size={22} color="#f43f5e" />,
+              title: '3D Flying Snacks',
+              desc: 'Toss popcorn, pizza, soda, and party confetti across everyone’s screens with spatial sound effects.',
+            },
+            {
+              icon: <Sparkles size={22} color="#f59e0b" />,
+              title: 'Synchronized Trivia',
+              desc: 'Challenge the room with 15-second timed trivia questions, earn XP, and climb the live leaderboard.',
+            },
+          ].map((feat, idx) => (
             <div
               key={idx}
               className="glass-panel"
               style={{
-                borderRadius: '14px',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                overflow: 'hidden',
-                transition: 'all 0.2s',
+                padding: '22px',
+                borderRadius: '16px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
               }}
             >
-              <button
-                type="button"
-                onClick={() => setExpandedFaq(isExpanded ? null : idx)}
+              <div
                 style={{
-                  width: '100%',
-                  padding: '18px 22px',
-                  background: 'none',
-                  border: 'none',
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
                   display: 'flex',
-                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  color: '#fff',
-                  fontSize: '15px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  textAlign: 'left',
+                  justifyContent: 'center',
                 }}
               >
-                <span>{faq.q}</span>
-                {isExpanded ? <ChevronUp size={18} color="#38bdf8" /> : <ChevronDown size={18} color="#94a3b8" />}
-              </button>
-
-              {isExpanded && (
-                <div
-                  style={{
-                    padding: '0 22px 20px 22px',
-                    color: '#94a3b8',
-                    fontSize: '13.5px',
-                    lineHeight: 1.6,
-                    borderTop: '1px solid rgba(255, 255, 255, 0.04)',
-                    paddingTop: '14px',
-                  }}
-                >
-                  {faq.a}
-                </div>
-              )}
+                {feat.icon}
+              </div>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#fff', margin: 0 }}>
+                {feat.title}
+              </h3>
+              <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+                {feat.desc}
+              </p>
             </div>
-          );
-        })}
+          ))}
+        </div>
       </section>
 
-      {/* 8. CALL-TO-ACTION BANNER */}
+      {/* 6. FAQ ACCORDION */}
       <section
+        id="faq"
         style={{
-          maxWidth: '1240px',
+          maxWidth: '800px',
           margin: '0 auto',
           padding: '0 24px',
           width: '100%',
         }}
       >
-        <div
-          style={{
-            borderRadius: '24px',
-            background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.25) 0%, rgba(168, 85, 247, 0.2) 100%)',
-            border: '1px solid rgba(99, 102, 241, 0.4)',
-            padding: '50px 32px',
-            textAlign: 'center',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(99, 102, 241, 0.2)',
-          }}
-        >
-          <h2 style={{ fontSize: 'clamp(1.8rem, 3.5vw, 2.6rem)', fontWeight: 800, color: '#fff', margin: '0 0 14px 0' }}>
-            Ready to Stream With Your Friends?
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', margin: '0 0 6px 0' }}>
+            Frequently Asked Questions
           </h2>
-          <p style={{ fontSize: '15px', color: '#cbd5e1', maxWidth: '580px', margin: '0 0 30px 0', lineHeight: 1.6 }}>
-            Launch your room in less than 10 seconds. Free forever, no registration needed, sub-second sync on any device.
+          <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
+            Got questions? We’ve got answers.
           </p>
-          <button
-            type="button"
-            className="btn-primary"
-            onClick={() => scrollToLauncher('create')}
-            style={{
-              padding: '14px 36px',
-              fontSize: '1.05rem',
-              fontWeight: 700,
-              gap: '10px',
-              boxShadow: '0 0 30px rgba(99, 102, 241, 0.5)',
-            }}
-          >
-            <Sparkles size={20} />
-            <span>Start a Free Watch Party Now</span>
-          </button>
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {faqs.map((faq, idx) => {
+            const isOpen = expandedFaq === idx;
+            return (
+              <div
+                key={idx}
+                className="glass-panel"
+                style={{
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255, 255, 255, 0.07)',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setExpandedFaq(isOpen ? null : idx)}
+                  style={{
+                    width: '100%',
+                    padding: '14px 18px',
+                    background: 'transparent',
+                    border: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    color: '#fff',
+                    fontWeight: 600,
+                    fontSize: '14px',
+                  }}
+                >
+                  <span>{faq.q}</span>
+                  {isOpen ? <ChevronUp size={16} color="#818cf8" /> : <ChevronDown size={16} color="#94a3b8" />}
+                </button>
+                {isOpen && (
+                  <div
+                    style={{
+                      padding: '0 18px 14px 18px',
+                      fontSize: '13px',
+                      color: '#94a3b8',
+                      lineHeight: 1.6,
+                    }}
+                  >
+                    {faq.a}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </section>
     </div>

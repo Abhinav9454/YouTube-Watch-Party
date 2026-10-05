@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Tv,
-  LogOut,
-  LogIn,
-  UserPlus,
-  Menu,
-  X,
-  Sparkles,
-} from 'lucide-react';
-import type { Role } from '../types/party';
+import { Tv, LogOut, LogIn, Sparkles } from 'lucide-react';
 
 interface AuthUser {
   id: string;
@@ -18,16 +9,10 @@ interface AuthUser {
 }
 
 interface NavbarProps {
-  roomId?: string;
-  roomName?: string;
-  username?: string;
-  userRole?: Role;
-  isConnected?: boolean;
-  onLeaveRoom?: () => void;
   authUser?: AuthUser | null;
+  isConnected?: boolean;
   onOpenAuth?: (mode: 'signin' | 'signup') => void;
   onLogout?: () => void;
-  onBackToLobby?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -36,26 +21,21 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const scrollToSection = (sectionId: string) => {
-    setIsMobileMenuOpen(false);
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
+  const scrollToLauncher = () => {
+    const el = document.getElementById('launcher-card');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth' });
+    } else {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-  };
-
-  const scrollToTop = () => {
-    setIsMobileMenuOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <header
       style={{
-        height: '64px',
-        padding: '0 28px',
+        height: '60px',
+        padding: '0 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -66,150 +46,49 @@ export const Navbar: React.FC<NavbarProps> = ({
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.35)',
       }}
     >
-      {/* 1. BRAND LOGO & TITLE (LEFT) */}
+      {/* Brand */}
       <div
-        onClick={scrollToTop}
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         style={{
           cursor: 'pointer',
           display: 'flex',
           alignItems: 'center',
-          gap: '12px',
+          gap: '10px',
           userSelect: 'none',
         }}
-        title="SyncWave Home"
+        title="SyncWave - YouTube Watch Party"
       >
         <div
           style={{
-            width: '36px',
-            height: '36px',
+            width: '34px',
+            height: '34px',
             borderRadius: '10px',
             background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 18px rgba(99, 102, 241, 0.5)',
-            flexShrink: 0,
-            transition: 'transform 0.2s ease',
+            boxShadow: '0 0 15px rgba(99, 102, 241, 0.45)',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
-          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          <Tv size={20} color="#fff" />
+          <Tv size={18} color="#fff" />
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span
-            style={{
-              fontWeight: 800,
-              fontSize: '1.2rem',
-              letterSpacing: '-0.3px',
-              color: '#fff',
-            }}
-          >
-            SyncWave
-          </span>
-          <span
-            style={{
-              color: '#818cf8',
-              fontWeight: 700,
-              fontSize: '0.68rem',
-              background: 'rgba(99, 102, 241, 0.15)',
-              border: '1px solid rgba(99, 102, 241, 0.3)',
-              padding: '2px 7px',
-              borderRadius: '10px',
-              letterSpacing: '0.6px',
-            }}
-          >
-            PARTY
-          </span>
-        </div>
+        <span
+          style={{
+            fontWeight: 800,
+            fontSize: '1.2rem',
+            letterSpacing: '-0.3px',
+            color: '#fff',
+          }}
+        >
+          SyncWave
+        </span>
       </div>
 
-      {/* 2. CENTER SECTION: MINIMALIST NAVIGATION LINKS */}
-      <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="desktop-only">
-        <button
-          type="button"
-          onClick={() => scrollToSection('public-parties')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#94a3b8',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-            padding: '6px 0',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-        >
-          Live Parties
-        </button>
-
-        <button
-          type="button"
-          onClick={() => scrollToSection('features')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#94a3b8',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-            padding: '6px 0',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-        >
-          Features
-        </button>
-
-        <button
-          type="button"
-          onClick={() => scrollToSection('how-it-works')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#94a3b8',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-            padding: '6px 0',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-        >
-          How It Works
-        </button>
-
-        <button
-          type="button"
-          onClick={() => scrollToSection('faq')}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: '#94a3b8',
-            fontSize: '14px',
-            fontWeight: 600,
-            cursor: 'pointer',
-            transition: 'color 0.2s',
-            padding: '6px 0',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-        >
-          FAQ
-        </button>
-      </nav>
-
-      {/* 3. RIGHT SECTION: AUTHENTICATION CTAS */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      {/* Right Controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
         {authUser ? (
-          /* Logged In User Profile */
           <div style={{ position: 'relative' }}>
             <button
               type="button"
@@ -220,8 +99,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 gap: '8px',
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderRadius: '30px',
-                padding: '4px 12px 4px 6px',
+                borderRadius: '24px',
+                padding: '4px 12px 4px 8px',
                 color: '#fff',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
@@ -229,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)')}
             >
-              <span style={{ fontSize: '1.15rem' }}>{authUser.avatar || '🍿'}</span>
+              <span style={{ fontSize: '1rem' }}>{authUser.avatar || '🍿'}</span>
               <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{authUser.username}</span>
             </button>
 
@@ -237,21 +116,21 @@ export const Navbar: React.FC<NavbarProps> = ({
               <div
                 style={{
                   position: 'absolute',
-                  top: '120%',
+                  top: '125%',
                   right: 0,
-                  width: '210px',
+                  width: '180px',
                   background: 'rgba(16, 20, 32, 0.98)',
                   backdropFilter: 'blur(16px)',
                   border: '1px solid rgba(255, 255, 255, 0.12)',
                   borderRadius: '12px',
                   boxShadow: '0 15px 35px rgba(0, 0, 0, 0.7)',
-                  padding: '12px',
+                  padding: '10px',
                   zIndex: 100,
                 }}
               >
-                <div style={{ paddingBottom: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '10px' }}>
-                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>{authUser.username}</div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis' }}>{authUser.email}</div>
+                <div style={{ paddingBottom: '6px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{authUser.username}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis' }}>{authUser.email}</div>
                 </div>
 
                 {onLogout && (
@@ -263,7 +142,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }}
                     style={{
                       width: '100%',
-                      padding: '8px 10px',
+                      padding: '7px 10px',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
@@ -271,15 +150,12 @@ export const Navbar: React.FC<NavbarProps> = ({
                       border: '1px solid rgba(239, 68, 68, 0.25)',
                       borderRadius: '8px',
                       color: '#f87171',
-                      fontSize: '0.82rem',
+                      fontSize: '0.8rem',
                       fontWeight: 600,
                       cursor: 'pointer',
-                      transition: 'all 0.2s',
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
                   >
-                    <LogOut size={14} />
+                    <LogOut size={13} />
                     <span>Sign Out</span>
                   </button>
                 )}
@@ -287,8 +163,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
         ) : (
-          /* Guest / Not Logged In */
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             {onOpenAuth && (
               <button
                 type="button"
@@ -297,171 +172,56 @@ export const Navbar: React.FC<NavbarProps> = ({
                   background: 'none',
                   border: 'none',
                   color: '#cbd5e1',
-                  fontSize: '0.85rem',
+                  fontSize: '0.86rem',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  padding: '7px 12px',
+                  padding: '6px 12px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '5px',
+                  gap: '6px',
                   transition: 'color 0.2s',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
               >
-                <LogIn size={14} />
+                <LogIn size={15} />
                 <span>Sign In</span>
               </button>
             )}
 
-            {onOpenAuth ? (
-              <button
-                type="button"
-                onClick={() => onOpenAuth('signup')}
-                style={{
-                  padding: '7px 16px',
-                  fontSize: '0.84rem',
-                  fontWeight: 700,
-                  borderRadius: '20px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  boxShadow: '0 2px 14px rgba(99, 102, 241, 0.35)',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-1px)';
-                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.5)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 2px 14px rgba(99, 102, 241, 0.35)';
-                }}
-              >
-                <UserPlus size={14} />
-                <span>Get Started</span>
-              </button>
-            ) : (
-              <button
-                type="button"
-                onClick={() => scrollToSection('launcher-card')}
-                style={{
-                  padding: '7px 16px',
-                  fontSize: '0.84rem',
-                  fontWeight: 700,
-                  borderRadius: '20px',
-                  border: 'none',
-                  background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-                  color: '#fff',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                }}
-              >
-                <Sparkles size={14} />
-                <span>Start Party</span>
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={scrollToLauncher}
+              style={{
+                padding: '7px 16px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                borderRadius: '20px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                color: '#fff',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                boxShadow: '0 2px 14px rgba(99, 102, 241, 0.35)',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.5)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 14px rgba(99, 102, 241, 0.35)';
+              }}
+            >
+              <Sparkles size={14} />
+              <span>Start Party</span>
+            </button>
           </div>
         )}
-
-        {/* Mobile Hamburger Menu Toggle */}
-        <button
-          type="button"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className="mobile-only"
-          style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '8px',
-            padding: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            color: '#fff',
-            cursor: 'pointer',
-          }}
-          title="Toggle Menu"
-        >
-          {isMobileMenuOpen ? <X size={18} color="#f43f5e" /> : <Menu size={18} color="#818cf8" />}
-        </button>
       </div>
-
-      {/* Mobile Navigation Drawer */}
-      {isMobileMenuOpen && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '100%',
-            left: 0,
-            right: 0,
-            background: 'rgba(12, 16, 28, 0.98)',
-            backdropFilter: 'blur(20px)',
-            borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)',
-            padding: '20px 24px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '14px',
-            zIndex: 9999,
-          }}
-          className="animate-fade-in"
-        >
-          <button
-            type="button"
-            onClick={() => scrollToSection('launcher-card')}
-            style={{
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2))',
-              border: '1px solid rgba(99, 102, 241, 0.4)',
-              borderRadius: '8px',
-              padding: '10px 14px',
-              color: '#fff',
-              fontSize: '14px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              textAlign: 'left',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            <span>🚀</span>
-            <span>Create / Join Party</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollToSection('public-parties')}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
-          >
-            🔥 Live Public Parties
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollToSection('features')}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
-          >
-            💎 Platform Features
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollToSection('how-it-works')}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
-          >
-            ⚡ How It Works
-          </button>
-          <button
-            type="button"
-            onClick={() => scrollToSection('faq')}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
-          >
-            ❓ Frequently Asked Questions
-          </button>
-        </div>
-      )}
     </header>
   );
 };
