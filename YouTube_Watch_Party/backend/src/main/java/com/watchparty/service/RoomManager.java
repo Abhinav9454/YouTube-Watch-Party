@@ -437,38 +437,46 @@ public class RoomManager {
         }
         return sb.toString();
     }
+    private static final java.util.regex.Pattern YOUTUBE_REGEX = java.util.regex.Pattern.compile(
+
+            "(?:youtu\\.be/|youtube(?:-nocookie)?\\.com/(?:embed/|v/|shorts/|live/|watch\\?v=|watch\\?.+&v=))([a-zA-Z0-9_-]{11})",
+            java.util.regex.Pattern.CASE_INSENSITIVE
+    );
+
+    private static final java.util.regex.Pattern IFRAME_SRC_REGEX = java.util.regex.Pattern.compile(
+            "<iframe[^>]*\\s+src=[\"']([^\"']+)[\"']",
+            java.util.regex.Pattern.CASE_INSENSITIVE
+    );
 
     /**
-     * Extracts YouTube Video ID from full URLs or returns raw string if already ID.
+     * Extracts YouTube Video ID from full URLs, HTML <iframe> embed codes, or returns raw string if already ID.
      */
     public static String extractVideoId(String input) {
         if (input == null || input.trim().isEmpty()) {
             return "dQw4w9WgXcQ";
         }
-        input = input.trim();
-        if (input.contains("youtube.com/watch")) {
-            int idx = input.indexOf("v=");
-            if (idx != -1) {
-                String sub = input.substring(idx + 2);
-                int amp = sub.indexOf('&');
-                return amp != -1 ? sub.substring(0, amp) : sub;
-            }
-        } else if (input.contains("youtu.be/")) {
-            int idx = input.indexOf("youtu.be/");
-            String sub = input.substring(idx + 9);
-            int q = sub.indexOf('?');
-            return q != -1 ? sub.substring(0, q) : sub;
-        } else if (input.contains("youtube.com/embed/")) {
-            int idx = input.indexOf("embed/");
-            String sub = input.substring(idx + 6);
-            int q = sub.indexOf('?');
-            return q != -1 ? sub.substring(0, q) : sub;
-        } else if (input.contains("youtube.com/shorts/")) {
-            int idx = input.indexOf("shorts/");
-            String sub = input.substring(idx + 7);
-            int q = sub.indexOf('?');
-            return q != -1 ? sub.substring(0, q) : sub;
+        String trimmed = input.trim();
+        if (trimmed.matches("^[a-zA-Z0-9_-]{11}$")) {
+            return trimmed;
         }
-        return input;
+
+        // If an HTML <iframe> tag was provided, extract the src URL
+        java.util.regex.Matcher iframeMatcher = IFRAME_SRC_REGEX.matcher(trimmed);
+        if (iframeMatcher.find()) {
+            trimmed = iframeMatcher.group(1);
+        }
+
+        java.util.regex.Matcher matcher = YOUTUBE_REGEX.matcher(trimmed);
+        if (matcher.find()) {
+            return matcher.group(1);
+        }
+
+        // Fallback for query param or path
+        java.util.regex.Matcher fallback = java.util.regex.Pattern.compile("(?:embed/|v=|v/)([a-zA-Z0-9_-]{11})").matcher(trimmed);
+        if (fallback.find()) {
+            return fallback.group(1);
+        }
+
+        return trimmed;
     }
 }

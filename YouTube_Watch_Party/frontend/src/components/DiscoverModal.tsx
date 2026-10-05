@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import type { Role } from '../types/party';
 import { wsService } from '../services/websocket';
+import { extractYouTubeVideoId } from '../utils/youtube';
 
 interface DiscoverModalProps {
   isOpen: boolean;
@@ -88,14 +89,16 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({ isOpen, onClose, u
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!customInput.trim()) return;
+    const parsedId = extractYouTubeVideoId(customInput.trim());
     if (canPlayNow) {
-      wsService.changeVideo(customInput.trim());
+      wsService.changeVideo(parsedId);
     } else {
-      wsService.addToQueue(customInput.trim(), 'Custom YouTube Video');
+      wsService.addToQueue(parsedId, 'Custom YouTube Video');
     }
     setCustomInput('');
     onClose();
   };
+
 
   return (
     <div
@@ -171,7 +174,7 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({ isOpen, onClose, u
               type="text"
               value={customInput}
               onChange={(e) => setCustomInput(e.target.value)}
-              placeholder="Paste any YouTube URL, Shorts link, or Video ID..."
+              placeholder="Paste any YouTube URL, <iframe> embed code, or Video ID..."
               style={{
                 flex: 1,
                 background: 'rgba(255, 255, 255, 0.06)',

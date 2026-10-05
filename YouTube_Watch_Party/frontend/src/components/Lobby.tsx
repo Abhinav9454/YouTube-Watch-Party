@@ -40,14 +40,10 @@ const FEATURED_VIDEOS = [
   { title: 'Relaxing Jazz Coffee Shop Ambience', id: 'Dx5qFachd3A', badge: 'Ambient', duration: '3:15:00' },
 ];
 
+import { extractYouTubeVideoId } from '../utils/youtube';
+
 function extractYouTubeId(urlOrId: string): string {
-  if (!urlOrId) return 'jfKfPfyJRdk';
-  const trimmed = urlOrId.trim();
-  if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes('?')) {
-    return trimmed;
-  }
-  const match = trimmed.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([\w-]{11})/);
-  return match ? match[1] : trimmed;
+  return extractYouTubeVideoId(urlOrId);
 }
 
 export const Lobby: React.FC<LobbyProps> = ({
@@ -754,7 +750,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                     className="input-field"
                     value={customVideoUrl}
                     onChange={(e) => setCustomVideoUrl(e.target.value)}
-                    placeholder="Or paste any YouTube Video URL / ID..."
+                    placeholder="Or paste any YouTube URL, <iframe> embed code, or ID..."
                     style={{ width: '100%', padding: '11px 14px', borderRadius: '10px' }}
                   />
                 </div>

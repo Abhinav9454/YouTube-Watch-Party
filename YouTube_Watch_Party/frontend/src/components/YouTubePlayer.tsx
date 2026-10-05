@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Volume2, VolumeX, Maximize, Lock, Check, Hand, Gauge, Monitor, PictureInPicture } from 'lucide-react';
 import type { PlayState, Role } from '../types/party';
+import { extractYouTubeVideoId } from '../utils/youtube';
 
 declare global {
   interface Window {
@@ -278,7 +279,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   const handleVideoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (newVideoInput.trim()) {
-      onChangeVideo(newVideoInput.trim());
+      const parsedId = extractYouTubeVideoId(newVideoInput.trim());
+      onChangeVideo(parsedId);
       setNewVideoInput('');
       setShowUrlInput(false);
     }
@@ -756,7 +758,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           <input
             type="text"
             className="input-field"
-            placeholder="Paste YouTube URL (e.g., https://youtube.com/watch?v=... or ID)"
+            placeholder="Paste YouTube URL, <iframe> embed code, or Video ID..."
             value={newVideoInput}
             onChange={(e) => setNewVideoInput(e.target.value)}
             style={{ flex: 1 }}

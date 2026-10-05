@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ListPlus, Play, Trash2, Plus, Sparkles } from 'lucide-react';
 import type { QueueItem, Role } from '../types/party';
+import { extractYouTubeVideoId } from '../utils/youtube';
 
 interface PlaylistPanelProps {
   playlist: QueueItem[];
@@ -33,7 +34,8 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
   const handleAddSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (videoInput.trim()) {
-      onAddToQueue(videoInput.trim(), titleInput.trim() || undefined);
+      const parsedId = extractYouTubeVideoId(videoInput.trim());
+      onAddToQueue(parsedId, titleInput.trim() || undefined);
       setVideoInput('');
       setTitleInput('');
       setShowAddForm(false);
@@ -75,12 +77,13 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
           <input
             type="text"
             className="input-field"
-            placeholder="YouTube URL or Video ID..."
+            placeholder="YouTube URL, <iframe> embed, or Video ID..."
             value={videoInput}
             onChange={(e) => setVideoInput(e.target.value)}
             style={{ fontSize: '0.85rem', padding: '8px 10px' }}
             required
           />
+
           <input
             type="text"
             className="input-field"
