@@ -20,11 +20,8 @@ import {
   Star,
   Check,
   Users,
-  Volume2,
-  VolumeX,
   HelpCircle,
 } from 'lucide-react';
-import { soundEffects } from '../services/soundEffects';
 
 interface FooterProps {
   onOpenShortcuts?: () => void;
@@ -36,13 +33,6 @@ type ModalType = 'privacy' | 'terms' | 'fairuse' | 'docs' | 'hostguide' | 'feedb
 
 export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSection, isConnected = true }) => {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
-  const [isSfxMuted, setIsSfxMuted] = useState(() => soundEffects.isMuted());
-
-  const toggleSoundEffects = () => {
-    const nextState = !isSfxMuted;
-    soundEffects.setMuted(nextState);
-    setIsSfxMuted(nextState);
-  };
 
   // Feedback form state
   const [feedbackCategory, setFeedbackCategory] = useState<'feature' | 'bug' | 'question' | 'praise'>('feature');
@@ -68,7 +58,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
   const handleFeedbackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!feedbackText.trim()) return;
-    soundEffects.play('trivia_win');
     setFeedbackSubmitted(true);
     setTimeout(() => {
       setFeedbackSubmitted(false);
@@ -376,29 +365,6 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {/* Audio Effects Toggle (Moved from Header) */}
-            <button
-              type="button"
-              onClick={toggleSoundEffects}
-              style={{
-                background: 'rgba(255, 255, 255, 0.05)',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: isSfxMuted ? '#f87171' : '#34d399',
-                padding: '5px 10px',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                fontSize: '12px',
-                fontWeight: 500,
-                transition: 'all 0.2s',
-              }}
-              title={isSfxMuted ? 'Sound Effects Muted (Click to enable)' : 'Sound Effects Active (Click to mute)'}
-            >
-              {isSfxMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
-              <span>SFX: {isSfxMuted ? 'Muted' : 'On'}</span>
-            </button>
 
             {/* Keyboard Shortcuts Button (Moved from Header) */}
             {onOpenShortcuts && (

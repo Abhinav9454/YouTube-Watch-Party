@@ -8,6 +8,7 @@ interface TriviaModalProps {
   userRole: Role;
   userId: string;
   onClearResult: () => void;
+  showButton?: boolean;
 }
 
 const PRESET_QUESTIONS = [
@@ -39,6 +40,7 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
   userRole,
   userId,
   onClearResult,
+  showButton = true,
 }) => {
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(15);
@@ -331,7 +333,7 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
       )}
 
       {/* Host Trivia Launch Button & Modal */}
-      {canHostTrivia && (
+      {canHostTrivia && showButton && (
         <div style={{ position: 'relative' }}>
           <button
             type="button"

@@ -9,7 +9,6 @@ import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { wsService } from './services/websocket';
 import { webrtcService } from './services/webrtc';
-import { soundEffects } from './services/soundEffects';
 import { createRoomApi, getChatHistoryApi } from './services/api';
 import { cleanRoomCode, getRoomFromUrl } from './utils/room';
 import type {
@@ -27,7 +26,6 @@ import type {
   QueueUpdatedPayload,
   ReactionItem,
   Role,
-  SoundPlayedPayload,
   SyncStatePayload,
   UserJoinedPayload,
   UserLeftPayload,
@@ -328,13 +326,6 @@ export function App() {
       wsService.on('bookmarks_updated', (payload: BookmarksUpdatedPayload) => {
         if (payload.bookmarks) {
           setBookmarks(payload.bookmarks);
-        }
-      }),
-
-      wsService.on('sound_played', (payload: SoundPlayedPayload) => {
-        soundEffects.play(payload.soundId);
-        if (payload.senderName) {
-          showToast(`${payload.senderName} played a party sound! 🔊`, 'info');
         }
       }),
 

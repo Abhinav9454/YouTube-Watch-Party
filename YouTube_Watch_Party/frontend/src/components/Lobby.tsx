@@ -16,7 +16,6 @@ import {
 } from 'lucide-react';
 import type { RoomEntityDto } from '../types/party';
 import { listRecentRoomsApi } from '../services/api';
-import { soundEffects } from '../services/soundEffects';
 import { extractYouTubeVideoId } from '../utils/youtube';
 import { cleanRoomCode } from '../utils/room';
 
@@ -87,7 +86,6 @@ export const Lobby: React.FC<LobbyProps> = ({
 
   const handleCreateSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    soundEffects.play('join');
     const finalVideo = activeVideoId;
     const finalPasscode = requirePasscode && createPasscode.trim() ? createPasscode.trim() : undefined;
     onCreateRoom(roomName.trim() || 'Watch Party', username.trim() || 'Host', finalVideo, finalPasscode);
@@ -97,7 +95,6 @@ export const Lobby: React.FC<LobbyProps> = ({
     e.preventDefault();
     const finalCode = detectedJoinCode;
     if (!finalCode) return;
-    soundEffects.play('join');
     const finalPasscode = joinPasscode.trim() ? joinPasscode.trim() : undefined;
     onJoinRoom(finalCode, username.trim() || 'Viewer', finalPasscode);
   };
@@ -108,7 +105,6 @@ export const Lobby: React.FC<LobbyProps> = ({
       setTab('join');
       document.getElementById('launcher-card')?.scrollIntoView({ behavior: 'smooth' });
     } else {
-      soundEffects.play('join');
       onJoinRoom(roomId, username.trim() || 'Viewer');
     }
   };

@@ -22,16 +22,17 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [copiedDiscord, setCopiedDiscord] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
   const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  const [useLiveUrl, setUseLiveUrl] = useState<boolean>(false);
+  // Default to live hosted URL on localhost so scanning QR code from ANY phone camera connects immediately!
+  const [useLiveUrl, setUseLiveUrl] = useState<boolean>(true);
 
   const inviteUrl = useMemo(() => {
     const cleanId = (roomId || '').trim().toUpperCase();
-    if (useLiveUrl) {
+    if (useLiveUrl || isLocalhost) {
       return `https://youtube-watch-party-r2gl.onrender.com/?room=${encodeURIComponent(cleanId)}`;
     }
     const base = window.location.origin.replace(/\/+$/, '');
     return `${base}/?room=${encodeURIComponent(cleanId)}`;
-  }, [roomId, useLiveUrl]);
+  }, [roomId, useLiveUrl, isLocalhost]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -111,11 +112,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
         style={{
           width: '100%',
           maxWidth: '460px',
-          background: 'rgba(16, 20, 36, 0.98)',
-          border: '1px solid rgba(99, 102, 241, 0.35)',
+          background: 'rgba(14, 18, 28, 0.98)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '16px',
           padding: '24px',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(99, 102, 241, 0.2)',
+          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 25px rgba(239, 68, 68, 0.15)',
           display: 'flex',
           flexDirection: 'column',
           gap: '18px',
@@ -129,12 +130,12 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                background: 'linear-gradient(135deg, #ff2a2a, #e50914)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
-                boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)',
+                boxShadow: '0 2px 10px rgba(239, 68, 68, 0.4)',
               }}
             >
               <Share2 size={18} />

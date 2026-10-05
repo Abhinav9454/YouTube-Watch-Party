@@ -6,7 +6,6 @@ import {
   ShieldCheck,
   X,
   QrCode,
-  BarChart3,
   Megaphone,
   ArrowLeft,
   Copy,
@@ -14,28 +13,24 @@ import {
   Crown,
   Shield,
   HelpCircle,
-  Volume2,
-  VolumeX,
+  Sparkles,
 } from 'lucide-react';
 import { YouTubePlayer } from './YouTubePlayer';
 import { ParticipantList } from './ParticipantList';
 import { ChatPanel } from './ChatPanel';
 import { PlaylistPanel } from './PlaylistPanel';
 import { ReactionOverlay } from './ReactionOverlay';
-import { Soundboard } from './Soundboard';
 import { PollPanel } from './PollPanel';
 import { BookmarksPanel } from './BookmarksPanel';
 import { DiscoverModal } from './DiscoverModal';
 import { VoiceVideoOverlay } from './VoiceVideoOverlay';
 import { GiftsOverlay } from './GiftsOverlay';
 import { TriviaModal } from './TriviaModal';
-import { AudioEqualizer } from './AudioEqualizer';
-import { ABLoopControl } from './ABLoopControl';
 import { SubtitlesOverlay } from './SubtitlesOverlay';
 import { ShareModal } from './ShareModal';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
+import { PartyToolsModal } from './PartyToolsModal';
 import { wsService } from '../services/websocket';
-import { soundEffects } from '../services/soundEffects';
 import type { Bookmark, ChatMessage, ControlRequestedPayload, GiftItem, Participant, PlayState, Poll, QueueItem, ReactionItem, Role, TriviaEndedPayload, TriviaQuestion } from '../types/party';
 
 interface WatchPartyProps {
@@ -135,9 +130,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   const [isMiniPlayer, setIsMiniPlayer] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
+  const [isPartyToolsOpen, setIsPartyToolsOpen] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
-  const [isSfxMuted, setIsSfxMuted] = useState(() => soundEffects.isMuted());
 
   const handleCopyRoomCode = () => {
     const url = `${window.location.origin}?room=${roomId}`;
@@ -145,12 +140,6 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
     });
-  };
-
-  const toggleSoundEffects = () => {
-    const nextState = !isSfxMuted;
-    soundEffects.setMuted(nextState);
-    setIsSfxMuted(nextState);
   };
 
   useEffect(() => {
@@ -182,56 +171,45 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
         background: '#090c16',
       }}
     >
-      {/* Sleek Cinema Room Top Bar */}
+      {/* Clean Cinema Room Top Bar */}
       <header
+        className="watch-party-header"
         style={{
-          height: '52px',
-          minHeight: '52px',
+          height: '54px',
+          minHeight: '54px',
           padding: '0 16px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          background: 'rgba(12, 16, 28, 0.95)',
+          background: 'rgba(10, 13, 20, 0.96)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           zIndex: 40,
         }}
       >
-        {/* Left: Exit/Leave + Room Title + Room Code + Role */}
+        {/* Left: Exit/Leave + Room Title + Role + Room Code Chip */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {onLeaveRoom && (
             <button
               type="button"
               onClick={onLeaveRoom}
+              className="btn-danger"
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                background: 'rgba(239, 68, 68, 0.12)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
-                color: '#f87171',
                 padding: '6px 12px',
-                borderRadius: '8px',
                 fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'all 0.2s',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)';
-                e.currentTarget.style.color = '#ff6b6b';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
-                e.currentTarget.style.color = '#f87171';
               }}
               title="Leave Room & Return to Lobby"
             >
               <ArrowLeft size={14} />
-              <span>Leave Room</span>
+              <span className="hide-on-mobile">Leave</span>
             </button>
           )}
+
+          <div style={{ width: '1px', height: '18px', background: 'rgba(255, 255, 255, 0.1)' }} />
 
           {/* Room Name & Role */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -241,7 +219,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 fontWeight: 700,
                 color: '#fff',
                 letterSpacing: '-0.2px',
-                maxWidth: '220px',
+                maxWidth: '180px',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -260,10 +238,10 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 padding: '2px 8px',
                 borderRadius: '12px',
                 fontSize: '11px',
-                fontWeight: 600,
+                fontWeight: 700,
                 background:
                   currentUserRole === 'HOST'
-                    ? 'rgba(251, 191, 36, 0.15)'
+                    ? 'rgba(245, 158, 11, 0.15)'
                     : currentUserRole === 'MODERATOR'
                     ? 'rgba(56, 189, 248, 0.15)'
                     : 'rgba(255, 255, 255, 0.08)',
@@ -275,9 +253,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                     : '#94a3b8',
                 border: `1px solid ${
                   currentUserRole === 'HOST'
-                    ? 'rgba(251, 191, 36, 0.3)'
+                    ? 'rgba(245, 158, 11, 0.35)'
                     : currentUserRole === 'MODERATOR'
-                    ? 'rgba(56, 189, 248, 0.3)'
+                    ? 'rgba(56, 189, 248, 0.35)'
                     : 'rgba(255, 255, 255, 0.1)'
                 }`,
               }}
@@ -296,9 +274,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: copiedCode ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 255, 255, 0.06)',
-              border: copiedCode ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
-              color: copiedCode ? '#4ade80' : '#cbd5e1',
+              background: copiedCode ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+              border: copiedCode ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.1)',
+              color: copiedCode ? '#34d399' : '#cbd5e1',
               padding: '4px 10px',
               borderRadius: '6px',
               fontSize: '12px',
@@ -311,30 +289,58 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           >
             {copiedCode ? <Check size={12} /> : <Copy size={12} />}
             <span>{roomId}</span>
+            {copiedCode && <span style={{ fontSize: '10px', color: '#34d399' }}>Copied!</span>}
           </button>
         </div>
 
-        {/* Right: Sound FX, Shortcuts, Live Indicator */}
+        {/* Right: Videos + Share/Invite + Party Tools + Shortcuts + Live Indicator */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          {/* SFX Mute Toggle */}
+          {/* Quick Pick / Discover Videos Button */}
           <button
             type="button"
-            onClick={toggleSoundEffects}
+            onClick={() => setIsDiscoverOpen(true)}
+            className="btn-primary"
             style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              padding: '6px 10px',
-              color: isSfxMuted ? '#f87171' : '#cbd5e1',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '5px',
+              padding: '5px 12px',
               fontSize: '12px',
-              cursor: 'pointer',
+              gap: '5px',
             }}
-            title={isSfxMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+            title="Pick or search YouTube video"
           >
-            {isSfxMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+            <span>✨</span>
+            <span>Videos</span>
+          </button>
+
+          {/* Invite & QR Modal Button */}
+          <button
+            type="button"
+            onClick={() => setIsShareModalOpen(true)}
+            className="btn-secondary"
+            style={{
+              padding: '5px 11px',
+              fontSize: '12px',
+              gap: '5px',
+            }}
+            title="Share Room Link & QR Code"
+          >
+            <QrCode size={13} />
+            <span>Invite</span>
+          </button>
+
+          {/* Party Tools Modal Trigger */}
+          <button
+            type="button"
+            onClick={() => setIsPartyToolsOpen(true)}
+            className="btn-secondary"
+            style={{
+              padding: '5px 11px',
+              fontSize: '12px',
+              gap: '5px',
+            }}
+            title="Snacks, Trivia, Equalizer, Looper & Analytics"
+          >
+            <Sparkles size={13} color="#f59e0b" />
+            <span className="hide-on-mobile">Party Tools</span>
           </button>
 
           {/* Keyboard Shortcuts Button */}
@@ -346,12 +352,10 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
                 borderRadius: '8px',
-                padding: '6px 10px',
+                padding: '6px 9px',
                 color: '#cbd5e1',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '5px',
-                fontSize: '12px',
                 cursor: 'pointer',
               }}
               title="Keyboard Shortcuts (?)"
@@ -360,7 +364,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             </button>
           )}
 
-          {/* Connection Status Pill */}
+          {/* Connection Status / Live Pill */}
           <div
             style={{
               display: 'flex',
@@ -368,36 +372,29 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
               gap: '6px',
               padding: '4px 10px',
               borderRadius: '12px',
-              background: isConnected ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
-              border: `1px solid ${isConnected ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              background: isConnected ? 'rgba(16, 185, 129, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+              border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
               fontSize: '11px',
               fontWeight: 700,
-              color: isConnected ? '#4ade80' : '#f87171',
+              color: isConnected ? '#34d399' : '#f87171',
             }}
           >
-            <span
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: isConnected ? '#22c55e' : '#ef4444',
-                boxShadow: isConnected ? '0 0 8px #22c55e' : 'none',
-              }}
-            />
-            <span>{isConnected ? 'LIVE' : 'OFFLINE'}</span>
+            <span className="live-dot" style={{ width: '6px', height: '6px' }} />
+            <span>{participants.length} watching</span>
           </div>
         </div>
       </header>
 
       {/* Main Grid: Video Player + Sidebar */}
       <div
+        className="watch-party-grid"
         style={{
           flex: 1,
           maxWidth: isTheaterMode ? '100%' : '1650px',
           margin: '0 auto',
           padding: '12px 16px',
           display: 'grid',
-          gridTemplateColumns: isTheaterMode ? '1fr' : 'minmax(0, 1fr) 420px',
+          gridTemplateColumns: isTheaterMode ? '1fr' : 'minmax(0, 1fr) 400px',
           gap: '16px',
           overflow: 'hidden',
           width: '100%',
@@ -405,177 +402,49 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           transition: 'grid-template-columns 0.3s ease',
         }}
       >
-      {/* Video & Player Column */}
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          position: 'relative',
-          overflowY: 'auto',
-          paddingRight: '6px',
-          gap: '12px',
-        }}
-      >
-        {/* Watch Party Top Quick Actions Toolbar */}
+        {/* Video & Player Column */}
         <div
           style={{
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '8px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '12px',
-            padding: '8px 14px',
+            flexDirection: 'column',
+            position: 'relative',
+            overflowY: 'auto',
+            paddingRight: '4px',
+            gap: '12px',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-            {/* Discover / Quick Pick Button */}
-            <button
-              type="button"
-              onClick={() => setIsDiscoverOpen(true)}
+          {/* Active Poll Live Notification Banner (shown if not currently viewing polls tab) */}
+          {activePoll && activePoll.active && activeTab !== 'polls' && (
+            <div
+              className="glass-card animate-fade-in"
               style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '6px',
-                background: 'linear-gradient(135deg, rgba(255, 75, 43, 0.2), rgba(255, 65, 108, 0.2))',
-                border: '1px solid rgba(255, 75, 43, 0.4)',
-                borderRadius: '8px',
-                padding: '6px 12px',
+                justifyContent: 'space-between',
+                padding: '10px 16px',
+                borderRadius: '10px',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
                 color: '#fff',
                 fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
               }}
             >
-              <span>✨</span>
-              <span>Quick Pick & Discover</span>
-            </button>
-
-            {/* Soundboard Component */}
-            <Soundboard />
-
-            {/* Virtual Snacks & Gifts Component */}
-            <GiftsOverlay gifts={gifts} />
-
-            {/* Live Trivia Quiz Component */}
-            <TriviaModal
-              activeTrivia={activeTrivia}
-              lastTriviaResult={lastTriviaResult}
-              userRole={currentUserRole}
-              userId={currentUserId}
-              onClearResult={onClearTriviaResult}
-            />
-
-            {/* Audio Equalizer & Presets */}
-            <AudioEqualizer />
-
-            {/* A-B Segment Repeat Looper */}
-            <ABLoopControl
-              currentTime={liveCurrentTime}
-              onSeek={onSeek}
-              canControl={currentUserRole === 'HOST' || currentUserRole === 'MODERATOR'}
-            />
-
-            {/* Subtitles & Closed Captions Manager */}
-            <SubtitlesOverlay currentTime={liveCurrentTime} />
-
-            {/* Invite Friends & QR Code Button */}
-            <button
-              type="button"
-              onClick={() => setIsShareModalOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: 'rgba(99, 102, 241, 0.15)',
-                border: '1px solid rgba(99, 102, 241, 0.4)',
-                borderRadius: '8px',
-                padding: '6px 10px',
-                color: '#818cf8',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              title="Share Room & Show QR Code"
-            >
-              <QrCode size={13} />
-              <span>Share & QR</span>
-            </button>
-
-            {/* Analytics & Host Dashboard Button */}
-            <button
-              type="button"
-              onClick={() => setIsAnalyticsOpen(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: 'rgba(56, 189, 248, 0.15)',
-                border: '1px solid rgba(56, 189, 248, 0.35)',
-                borderRadius: '8px',
-                padding: '6px 10px',
-                color: '#38bdf8',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              title="Audience Analytics, Engagement Graph & Host Controls"
-            >
-              <BarChart3 size={13} />
-              <span>Analytics & Host</span>
-            </button>
-
-            {/* Ambient Glow Toggle */}
-            <button
-              type="button"
-              onClick={() => setAmbientGlow(!ambientGlow)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-                background: ambientGlow ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                border: ambientGlow ? '1px solid rgba(99, 102, 241, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
-                borderRadius: '8px',
-                padding: '6px 10px',
-                color: ambientGlow ? '#818cf8' : '#a0aec0',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-              }}
-              title="Toggle Dynamic Ambient Glow around player"
-            >
-              <span>💡</span>
-              <span>Glow {ambientGlow ? 'On' : 'Off'}</span>
-            </button>
-          </div>
-
-          {/* Active Poll Live Notification Pill */}
-          {activePoll && activePoll.active && (
-            <button
-              type="button"
-              onClick={() => setActiveTab('polls')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-                background: 'rgba(255, 75, 43, 0.25)',
-                border: '1px solid #ff4b2b',
-                borderRadius: '20px',
-                padding: '4px 12px',
-                color: '#fff',
-                fontSize: '11px',
-                fontWeight: 700,
-                cursor: 'pointer',
-                animation: 'pulse 1.5s infinite',
-              }}
-            >
-              <span>🔴</span>
-              <span>Poll Live: {activePoll.question.substring(0, 22)}... → Vote</span>
-            </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span className="live-dot" />
+                <span>
+                  <b>Live Poll:</b> {activePoll.question}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setActiveTab('polls')}
+                className="btn-primary"
+                style={{ padding: '3px 10px', fontSize: '11px' }}
+              >
+                Vote Now →
+              </button>
+            </div>
           )}
-        </div>
 
         {/* Host Broadcast Announcement Banner */}
         {activeAnnouncement && (
@@ -583,13 +452,13 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             className="glass-card animate-fade-in"
             style={{
               padding: '12px 18px',
-              background: 'linear-gradient(135deg, rgba(236, 72, 153, 0.25), rgba(99, 102, 241, 0.25))',
-              border: '1px solid #ec4899',
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
               borderRadius: '12px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
-              boxShadow: '0 0 25px rgba(236, 72, 153, 0.35)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
               zIndex: 36,
             }}
           >
@@ -599,17 +468,17 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                   width: '32px',
                   height: '32px',
                   borderRadius: '8px',
-                  background: 'rgba(236, 72, 153, 0.3)',
+                  background: 'rgba(239, 68, 68, 0.2)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#f472b6',
+                  color: '#ef4444',
                 }}
               >
                 <Megaphone size={16} />
               </div>
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 800, color: '#f472b6', letterSpacing: '0.5px' }}>
+                <div style={{ fontSize: '11px', fontWeight: 800, color: '#f87171', letterSpacing: '0.5px' }}>
                   HOST ANNOUNCEMENT
                 </div>
                 <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
@@ -650,8 +519,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 key={req.userId}
                 className="glass-panel"
                 style={{
-                  background: 'rgba(99, 102, 241, 0.25)',
-                  borderColor: '#818cf8',
+                  background: 'rgba(18, 24, 38, 0.95)',
+                  borderColor: 'rgba(255, 255, 255, 0.15)',
                   padding: '10px 16px',
                   display: 'flex',
                   alignItems: 'center',
@@ -804,6 +673,15 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           />
           <SubtitlesOverlay currentTime={liveCurrentTime} />
           <ReactionOverlay reactions={reactions} />
+          <GiftsOverlay gifts={gifts} showControls={false} />
+          <TriviaModal
+            activeTrivia={activeTrivia}
+            lastTriviaResult={lastTriviaResult}
+            userRole={currentUserRole}
+            userId={currentUserId}
+            onClearResult={onClearTriviaResult}
+            showButton={false}
+          />
         </div>
 
         {/* In-Browser WebRTC Voice Chat & Video Grid */}
@@ -1040,6 +918,19 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
         chatMessages={chatMessages}
         gifts={gifts}
         bookmarks={bookmarks}
+      />
+
+      {/* Party Tools & Interactive FX Modal */}
+      <PartyToolsModal
+        isOpen={isPartyToolsOpen}
+        onClose={() => setIsPartyToolsOpen(false)}
+        userRole={currentUserRole}
+        userId={currentUserId}
+        liveCurrentTime={liveCurrentTime}
+        onSeek={onSeek}
+        ambientGlow={ambientGlow}
+        onToggleGlow={() => setAmbientGlow(!ambientGlow)}
+        onOpenAnalytics={() => setIsAnalyticsOpen(true)}
       />
     </div>
   );

@@ -43,7 +43,7 @@ class WebSocketClient {
           cleanup();
           reject(new Error('Connection timed out. Server might be spinning up or unreachable.'));
         }
-      }, 10000);
+      }, 25000);
 
       if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
         const onOpen = () => {

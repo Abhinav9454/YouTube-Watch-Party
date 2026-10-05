@@ -4,6 +4,7 @@ import { wsService } from '../services/websocket';
 
 interface GiftsOverlayProps {
   gifts: GiftItem[];
+  showControls?: boolean;
 }
 
 const SNACK_LIST = [
@@ -15,7 +16,7 @@ const SNACK_LIST = [
   { type: 'confetti', name: 'Party Cannon', icon: '🎉', color: '#8b5cf6' },
 ];
 
-export const GiftsOverlay: React.FC<GiftsOverlayProps> = ({ gifts }) => {
+export const GiftsOverlay: React.FC<GiftsOverlayProps> = ({ gifts, showControls = true }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [sentSnack, setSentSnack] = useState<string | null>(null);
 
@@ -86,8 +87,9 @@ export const GiftsOverlay: React.FC<GiftsOverlayProps> = ({ gifts }) => {
       </div>
 
       {/* Trigger Button & Popup */}
-      <div style={{ position: 'relative' }}>
-        <button
+      {showControls && (
+        <div style={{ position: 'relative' }}>
+          <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
           style={{
@@ -224,6 +226,7 @@ export const GiftsOverlay: React.FC<GiftsOverlayProps> = ({ gifts }) => {
           </div>
         )}
       </div>
-    </>
-  );
+    )}
+  </>
+);
 };
