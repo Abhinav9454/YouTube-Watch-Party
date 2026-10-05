@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Navbar } from './components/Navbar';
 import { Lobby } from './components/Lobby';
 import { WatchParty } from './components/WatchParty';
@@ -8,6 +8,7 @@ import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { wsService } from './services/websocket';
+import { webrtcService } from './services/webrtc';
 import { soundEffects } from './services/soundEffects';
 import { createRoomApi, getChatHistoryApi } from './services/api';
 import type {
@@ -87,6 +88,14 @@ export function App() {
   const [currentUserRole, setCurrentUserRole] = useState<Role>('PARTICIPANT');
 
   const [roomId, setRoomId] = useState<string | null>(null);
+  const [isRoomLoading, setIsRoomLoading] = useState<boolean>(false);
+  const roomIdRef = useRef<string | null>(null);
+  const usernameRef = useRef<string>(username);
+
+  useEffect(() => {
+    roomIdRef.current = roomId;
+    usernameRef.current = username;
+  }, [roomId, username]);
   const [roomName, setRoomName] = useState<string>('');
   const [videoId, setVideoId] = useState<string>('dQw4w9WgXcQ');
   const [playState, setPlayState] = useState<PlayState>('PAUSED');
@@ -124,7 +133,7 @@ export function App() {
     const params = new URLSearchParams(window.location.search);
     const roomParam = params.get('room');
     if (roomParam && !roomId) {
-      handleJoinRoom(roomParam.toUpperCase(), username);
+      handleJoinRoom(roomParam.toUpperCase(), username, undefined, false);
     }
   }, []);
 
@@ -154,6 +163,7 @@ export function App() {
   useEffect(() => {
     const unsubs = [
       wsService.on('sync_state', (payload: SyncStatePayload) => {
+        setIsRoomLoading(false);
         if (payload.videoId) setVideoId(payload.videoId);
         if (payload.playState) setPlayState(payload.playState);
         if (payload.currentTime !== undefined) setCurrentTime(payload.currentTime);
@@ -379,26 +389,27 @@ export function App() {
     };
   }, [userId, currentUserRole, showToast]);
 
-  // Handle browser Back / Forward navigation smoothly
+  // Handle browser Back / Forward navigation cleanly without destroying history
   useEffect(() => {
     const onPopState = () => {
       const params = new URLSearchParams(window.location.search);
       const roomParam = params.get('room');
+      const currentActive = roomIdRef.current;
 
       if (!roomParam) {
-        // User pressed Back to return to Lobby
-        if (roomId) {
-          wsService.leaveRoom(roomId);
+        // User clicked Browser Back button to return to Lobby
+        if (currentActive) {
+          handleLeaveRoom(false);
         }
-        setRoomId(null);
-        setParticipants([]);
-        setPlaylist([]);
-        setControlRequests([]);
-        setChatMessages([]);
-        setCurrentUserRole('PARTICIPANT');
-      } else if (roomParam && roomParam !== roomId) {
-        // User pressed Forward to re-enter a room
-        handleJoinRoom(roomParam.toUpperCase(), username);
+      } else {
+        const targetRoom = roomParam.trim().toUpperCase();
+        // User clicked Browser Forward or Back to a room
+        if (targetRoom !== currentActive) {
+          if (currentActive) {
+            wsService.leaveRoom(currentActive);
+          }
+          handleJoinRoom(targetRoom, usernameRef.current, undefined, false);
+        }
       }
     };
 
@@ -406,7 +417,7 @@ export function App() {
     return () => {
       window.removeEventListener('popstate', onPopState);
     };
-  }, [roomId, username]);
+  }, []);
 
   const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
     setAuthModalMode(mode);
@@ -427,7 +438,12 @@ export function App() {
     showToast('Signed out successfully.', 'info');
   };
 
-  const handleJoinRoom = async (targetRoomId: string, joinUsername: string, passcode?: string) => {
+  const handleJoinRoom = async (
+    targetRoomId: string,
+    joinUsername: string,
+    passcode?: string,
+    pushHistory: boolean = true
+  ) => {
     setUsername(joinUsername);
     localStorage.setItem('watchparty_username', joinUsername);
 
@@ -439,10 +455,16 @@ export function App() {
     } catch {}
 
     try {
+      setIsRoomLoading(true);
       await wsService.connect();
       setRoomId(targetRoomId);
-      const newUrl = `${window.location.pathname}?room=${targetRoomId}`;
-      window.history.pushState({ roomId: targetRoomId }, '', newUrl);
+
+      const targetUrl = `${window.location.pathname}?room=${targetRoomId}`;
+      if (pushHistory) {
+        if (window.location.search !== `?room=${targetRoomId}`) {
+          window.history.pushState({ roomId: targetRoomId }, '', targetUrl);
+        }
+      }
 
       const history = await getChatHistoryApi(targetRoomId);
       if (history.length > 0) {
@@ -451,6 +473,7 @@ export function App() {
 
       wsService.joinRoom(targetRoomId, joinUsername, userId, passcode);
     } catch {
+      setIsRoomLoading(false);
       showToast('Could not connect to WebSocket server. Is backend running?', 'error');
     }
   };
@@ -461,7 +484,7 @@ export function App() {
 
     try {
       const room = await createRoomApi(name, hostUsername, initialVideo, passcode);
-      await handleJoinRoom(room.roomId, hostUsername, passcode);
+      await handleJoinRoom(room.roomId, hostUsername, passcode, true);
       setRoomName(room.name);
       setVideoId(room.videoId);
       if (room.playlist) setPlaylist(room.playlist);
@@ -470,18 +493,26 @@ export function App() {
     }
   };
 
-  const handleLeaveRoom = () => {
-    if (roomId) {
-      wsService.leaveRoom(roomId);
+  const handleLeaveRoom = (pushHistory: boolean = true) => {
+    const currentActive = roomIdRef.current;
+    if (currentActive) {
+      wsService.leaveRoom(currentActive);
     }
+    webrtcService.stopMedia();
     setRoomId(null);
+    setIsRoomLoading(false);
     setParticipants([]);
     setPlaylist([]);
     setControlRequests([]);
     setChatMessages([]);
     setCurrentUserRole('PARTICIPANT');
-    const cleanUrl = window.location.pathname;
-    window.history.pushState({ roomId: null }, '', cleanUrl);
+
+    if (pushHistory) {
+      const cleanUrl = window.location.pathname;
+      if (window.location.search) {
+        window.history.pushState({ roomId: null }, '', cleanUrl);
+      }
+    }
   };
 
   const handlePlay = (time: number) => {
@@ -592,6 +623,32 @@ export function App() {
             onJoinRoom={handleJoinRoom}
             onCreateRoom={handleCreateRoom}
           />
+        ) : isRoomLoading ? (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '65vh',
+              gap: '16px',
+            }}
+          >
+            <div
+              className="animate-spin"
+              style={{
+                width: '46px',
+                height: '46px',
+                borderRadius: '50%',
+                border: '3px solid rgba(99, 102, 241, 0.2)',
+                borderTopColor: '#6366f1',
+              }}
+            />
+            <div style={{ fontSize: '1.15rem', fontWeight: 600, color: '#fff' }}>Connecting to Watch Party...</div>
+            <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+              Synchronizing timeline & room participants
+            </div>
+          </div>
         ) : (
           <WatchParty
             roomId={roomId}

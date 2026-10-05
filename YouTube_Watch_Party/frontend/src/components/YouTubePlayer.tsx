@@ -588,6 +588,11 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         return;
       }
 
+      // If modifier keys are pressed (e.g. Alt + ArrowLeft / Alt + ArrowRight for Browser Back/Forward), allow browser navigation
+      if (e.altKey || e.ctrlKey || e.metaKey) {
+        return;
+      }
+
       if (e.key === ' ' || e.key === 'k' || e.key === 'K') {
         e.preventDefault();
         handleTogglePlay();
