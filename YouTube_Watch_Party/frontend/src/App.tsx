@@ -478,23 +478,17 @@ export function App() {
 
       wsService.joinRoom(cleanId, joinUsername, userId, passcode);
 
-      // Auto-request sync after 2.5s if still loading
+      // Rapid sync request if initial response is delayed
       setTimeout(() => {
         if (roomIdRef.current === cleanId) {
           wsService.requestSync();
         }
-      }, 2500);
+      }, 300);
 
-      // Safety timeout: unblock loading state if server delayed
+      // Safety timeout: unblock loading state rapidly
       setTimeout(() => {
-        setIsRoomLoading((prev) => {
-          if (prev) {
-            console.warn('Sync state timeout reached, revealing party room');
-            return false;
-          }
-          return false;
-        });
-      }, 5000);
+        setIsRoomLoading(false);
+      }, 1500);
     } catch {
       setIsRoomLoading(false);
       showToast('Could not connect to WebSocket server. Is backend running?', 'error');

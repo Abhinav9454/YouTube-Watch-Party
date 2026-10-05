@@ -143,7 +143,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     };
   }, [needsUserUnmute, handleUserUnmute]);
 
-  // Robust Server Synchronization function with smart drift tolerance & rate throttling
+  // Real-Time Server Synchronization with instant action execution and tight drift bounds
   const syncWithServer = useCallback(
     (
       targetPlayState: PlayState,
@@ -157,31 +157,30 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         isServerSyncingRef.current = true;
         lastActionTimestampRef.current = Date.now();
 
-        // Calculate expected video position accounting for elapsed playback time
+        // Calculate expected video position with tightly bounded transit latency compensation
         let expectedTime = targetTime;
         if (targetPlayState === 'PLAYING' && targetTimestamp) {
           const speed = serverPlaybackSpeedRef.current || 1.0;
-          const elapsedSec = ((Date.now() - targetTimestamp) / 1000) * speed;
-          if (elapsedSec > 0 && elapsedSec < 86400) {
-            expectedTime += elapsedSec;
-          }
+          // Clamp transit latency to 0-500ms to eliminate artificial clock-skew drift
+          const transitLatencyMs = Math.max(0, Math.min(500, Date.now() - targetTimestamp));
+          const elapsedSec = (transitLatencyMs / 1000) * speed;
+          expectedTime += elapsedSec;
         }
 
         const localTime = playerRef.current.getCurrentTime ? playerRef.current.getCurrentTime() || 0 : 0;
         const drift = Math.abs(localTime - expectedTime);
         const timeSinceLastSeek = Date.now() - lastSeekTimestampRef.current;
 
-        // SMART DRIFT RULES:
-        // 1. If forceSeek is true: seek immediately.
-        // 2. Huge drift (> 4.0s): seek immediately (host made a large chapter/timeline jump).
-        // 3. While PAUSED: tight tolerance (0.5s) to guarantee frame-perfect lock.
-        // 4. While PLAYING: 2.2s tolerance AND at least 3.0s between seeks!
-        //    Crucial: this prevents rebuffering ping-pong loops and audio stuttering.
-        const isHugeDrift = drift > 4.0;
-        const isModerateDrift = drift > 2.2 && timeSinceLastSeek > 3000;
-        const isPausedDrift = targetPlayState === 'PAUSED' && drift > 0.5;
+        // INSTANTANEOUS SYNCHRONIZATION RULES:
+        // 1. Explicit action (forceSeek = true): snap immediately to the exact frame.
+        // 2. While PAUSED: any drift > 0.15s snaps immediately.
+        // 3. While PLAYING: drift > 0.4s seeks immediately (rate-limited to 800ms to avoid audio stutter).
+        // 4. Large drift (> 1.5s): emergency snap immediately.
+        const isPausedDrift = targetPlayState === 'PAUSED' && drift > 0.15;
+        const isSignificantDrift = targetPlayState === 'PLAYING' && drift > 0.4 && timeSinceLastSeek > 800;
+        const isEmergencyDrift = drift > 1.5;
 
-        const shouldSeek = forceSeek || isHugeDrift || isModerateDrift || isPausedDrift;
+        const shouldSeek = forceSeek || isPausedDrift || isSignificantDrift || isEmergencyDrift;
 
         if (shouldSeek) {
           lastSeekTimestampRef.current = Date.now();
@@ -202,8 +201,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
             } catch {}
           }
 
-          // Only issue playVideo() if not already playing or buffering!
-          if (playerState !== 1 && playerState !== 3) {
+          // Trigger instant playback
+          if (playerState !== 1) {
             playerRef.current.playVideo();
           }
 
@@ -220,9 +219,9 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                 }
               } catch {}
             }
-          }, 350);
+          }, 200);
         } else if (targetPlayState === 'PAUSED') {
-          // Only pause if not already paused!
+          // Trigger instant pause
           if (playerState !== 2) {
             playerRef.current.pauseVideo();
           }
@@ -236,7 +235,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
       } finally {
         setTimeout(() => {
           isServerSyncingRef.current = false;
-        }, 1200);
+        }, 250);
       }
     },
     [isPlayerReady]
@@ -404,10 +403,21 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   }, [isPlayerReady, syncWithServer]);
 
   // React to server state updates (play, pause, seek, speed change)
+  const prevServerPlayStateRef = useRef<PlayState>(serverPlayState);
+  const prevServerTimeRef = useRef<number>(serverCurrentTime);
+
   useEffect(() => {
-    if (isPlayerReady) {
-      syncWithServer(serverPlayState, serverCurrentTime, serverTimestamp, false);
-    }
+    if (!isPlayerReady) return;
+
+    // Detect if this update represents an explicit action (play/pause toggle or seek)
+    const stateChanged = serverPlayState !== prevServerPlayStateRef.current;
+    const seekChanged = Math.abs(serverCurrentTime - prevServerTimeRef.current) > 0.35;
+    const isExplicitAction = stateChanged || seekChanged;
+
+    prevServerPlayStateRef.current = serverPlayState;
+    prevServerTimeRef.current = serverCurrentTime;
+
+    syncWithServer(serverPlayState, serverCurrentTime, serverTimestamp, isExplicitAction);
   }, [serverPlayState, serverCurrentTime, serverTimestamp, serverPlaybackSpeed, isPlayerReady, syncWithServer]);
 
   // Periodic Scrubber & Subtitle Ticker (every 400ms)
@@ -456,7 +466,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
 
     setTimeout(() => {
       isServerSyncingRef.current = false;
-    }, 1200);
+    }, 250);
   };
 
   // Replay from 00:00
@@ -472,7 +482,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     onSeek(0);
     setTimeout(() => {
       isServerSyncingRef.current = false;
-    }, 1200);
+    }, 250);
   };
 
   // Scrubber drag handling (single seek on release, zero intermediate flooding)
@@ -502,7 +512,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     onSeek(target);
     setTimeout(() => {
       isServerSyncingRef.current = false;
-    }, 1200);
+    }, 250);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {

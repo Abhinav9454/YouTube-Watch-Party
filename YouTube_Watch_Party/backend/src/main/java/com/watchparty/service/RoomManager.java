@@ -181,7 +181,7 @@ public class RoomManager {
                 room.setCurrentTime(time);
             }
             room.setPlayState(PlayState.PLAYING);
-            syncRoomToDb(room);
+            syncRoomToDbAsync(room);
             return true;
         }
         return false;
@@ -200,7 +200,7 @@ public class RoomManager {
                 room.setCurrentTime(time);
             }
             room.setPlayState(PlayState.PAUSED);
-            syncRoomToDb(room);
+            syncRoomToDbAsync(room);
             return true;
         }
         return false;
@@ -216,7 +216,7 @@ public class RoomManager {
         Room room = activeRooms.get(roomId);
         if (room != null) {
             room.setCurrentTime(time);
-            syncRoomToDb(room);
+            syncRoomToDbAsync(room);
             return true;
         }
         return false;
@@ -234,7 +234,7 @@ public class RoomManager {
             String videoId = extractVideoId(rawVideoInput);
             room.setVideoId(videoId);
             room.setPlayState(PlayState.PAUSED);
-            syncRoomToDb(room);
+            syncRoomToDbAsync(room);
             return true;
         }
         return false;
@@ -410,6 +410,17 @@ public class RoomManager {
     public List<ChatMessageEntity> getChatHistory(String roomId) {
         String cleanId = (roomId != null) ? roomId.trim().toUpperCase() : "";
         return chatMessageRepository.findTop50ByRoomIdOrderByTimestampAsc(cleanId);
+    }
+
+    public void syncRoomToDbAsync(Room room) {
+        if (room == null) return;
+        java.util.concurrent.CompletableFuture.runAsync(() -> {
+            try {
+                syncRoomToDb(room);
+            } catch (Exception e) {
+                log.error("Async DB sync error for room [{}]: {}", room.getRoomId(), e.getMessage());
+            }
+        });
     }
 
     @Transactional
