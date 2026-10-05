@@ -1,0 +1,26 @@
+# Secrets and Environment Variables (NEVER COMMIT)
+.env
+.env.*
+!.env.example
+*.secret.properties
+application-secret.properties
+application-local.properties
+secret.properties
+
+# Build & Data
+target/
+*.class
+*.jar
+*.war
+data/
+*.db
+*.mv.db
+*.trace.db
+
+# IDE & OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+*.log

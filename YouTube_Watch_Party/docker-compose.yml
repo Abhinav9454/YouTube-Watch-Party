@@ -1,0 +1,45 @@
+services:
+  # Spring Boot 3 + Java 21 Backend Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: watchparty-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      - watchparty-db-data:/app/data
+    env_file:
+      - .env
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_PROFILES_ACTIVE=default
+      - MONGODB_USERNAME=${MONGODB_USERNAME:-}
+      - MONGODB_PASSWORD=${MONGODB_PASSWORD:-}
+      - MONGODB_CLUSTER=${MONGODB_CLUSTER:-}
+      - MONGODB_DATABASE=${MONGODB_DATABASE:-watchparty}
+    restart: unless-stopped
+    networks:
+      - watchparty-network
+
+  # React 19 + TypeScript + Nginx Frontend Service
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: watchparty-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    networks:
+      - watchparty-network
+
+volumes:
+  watchparty-db-data:
+    driver: local
+
+networks:
+  watchparty-network:
+    driver: bridge

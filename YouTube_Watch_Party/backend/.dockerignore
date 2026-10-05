@@ -1,0 +1,7 @@
+data/
+.git/
+.mvn/
+*.log
+*.mv.db
+.idea/
+*.iml
