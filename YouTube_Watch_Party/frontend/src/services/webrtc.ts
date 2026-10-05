@@ -109,6 +109,7 @@ class WebRtcService {
     this.peers.forEach((pc) => pc.close());
     this.peers.clear();
     this.remoteStreams.clear();
+    this.pendingCandidates.clear();
   }
 
   public toggleMute(): boolean {
@@ -196,6 +197,8 @@ class WebRtcService {
     });
   }
 
+  private pendingCandidates: Map<string, RTCIceCandidateInit[]> = new Map();
+
   private async handleOffer(senderId: string, sdp: RTCSessionDescriptionInit) {
     let pc = this.peers.get(senderId);
     if (!pc) {
@@ -210,6 +213,18 @@ class WebRtcService {
     }
 
     await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+
+    // Drain queued candidates for this peer
+    const queuedOffer = this.pendingCandidates.get(senderId) || [];
+    for (const c of queuedOffer) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(c));
+      } catch (e) {
+        console.warn('Error applying queued ICE candidate:', e);
+      }
+    }
+    this.pendingCandidates.delete(senderId);
+
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
 
@@ -223,17 +238,34 @@ class WebRtcService {
     const pc = this.peers.get(senderId);
     if (pc) {
       await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+
+      // Drain queued candidates for this peer
+      const queuedAnswer = this.pendingCandidates.get(senderId) || [];
+      for (const c of queuedAnswer) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(c));
+        } catch (e) {
+          console.warn('Error applying queued ICE candidate:', e);
+        }
+      }
+      this.pendingCandidates.delete(senderId);
     }
   }
 
   private async handleCandidate(senderId: string, candidate: RTCIceCandidateInit) {
     const pc = this.peers.get(senderId);
-    if (pc && candidate) {
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      } catch (e) {
-        console.warn('Error adding ICE candidate:', e);
-      }
+    if (!pc || !pc.remoteDescription) {
+      // Buffer early candidate until setRemoteDescription completes
+      const queue = this.pendingCandidates.get(senderId) || [];
+      queue.push(candidate);
+      this.pendingCandidates.set(senderId, queue);
+      return;
+    }
+
+    try {
+      await pc.addIceCandidate(new RTCIceCandidate(candidate));
+    } catch (e) {
+      console.warn('Error adding ICE candidate:', e);
     }
   }
 
@@ -273,6 +305,7 @@ class WebRtcService {
     }
     this.remoteStreams.delete(peerId);
     this.analysers.delete(peerId);
+    this.pendingCandidates.delete(peerId);
     this.peerLeftListeners.forEach((cb) => cb(peerId));
   }
 

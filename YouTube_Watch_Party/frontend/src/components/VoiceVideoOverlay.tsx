@@ -330,6 +330,30 @@ export const VoiceVideoOverlay: React.FC<VoiceVideoOverlayProps> = ({
         )}
       </div>
 
+      {/* Persistent Always-on Audio Elements for all remote peers */}
+      {inCall && (
+        <div style={{ display: 'none' }}>
+          {Array.from(remotePeers.entries()).map(([peerId, peerState]) => {
+            if (!peerState.stream) return null;
+            return (
+              <audio
+                key={`audio-${peerId}`}
+                autoPlay
+                playsInline
+                ref={(el) => {
+                  if (el && peerState.stream) {
+                    if (el.srcObject !== peerState.stream) {
+                      el.srcObject = peerState.stream;
+                    }
+                    el.muted = isDeafened;
+                  }
+                }}
+              />
+            );
+          })}
+        </div>
+      )}
+
       {/* Floating Video Cams Grid (When in Call and Not Minimized) */}
       {inCall && !isMinimized && (
         <div
@@ -427,6 +451,7 @@ export const VoiceVideoOverlay: React.FC<VoiceVideoOverlayProps> = ({
                 {peerState.stream && peerState.isVideoEnabled ? (
                   <video
                     autoPlay
+                    muted
                     playsInline
                     ref={(el) => {
                       if (el && peerState.stream) {

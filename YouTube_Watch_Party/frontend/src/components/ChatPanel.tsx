@@ -46,6 +46,10 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (inputText.trim()) {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+      }
+      wsService.sendTyping(false);
       onSendMessage(inputText.trim());
       setInputText('');
     }

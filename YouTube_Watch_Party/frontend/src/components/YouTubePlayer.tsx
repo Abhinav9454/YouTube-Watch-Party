@@ -372,9 +372,9 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     lastActionTimestampRef.current = Date.now();
 
     try {
-      const startTime = serverCurrentTime || 0;
+      const startTime = serverCurrentTimeRef.current || 0;
       if (typeof playerRef.current.loadVideoById === 'function') {
-        if (serverPlayState === 'PLAYING') {
+        if (serverPlayStateRef.current === 'PLAYING') {
           playerRef.current.loadVideoById(videoId, startTime);
         } else {
           playerRef.current.cueVideoById(videoId, startTime);
@@ -387,7 +387,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         isServerSyncingRef.current = false;
       }, 1500);
     }
-  }, [videoId, isPlayerReady, serverPlayState, serverCurrentTime]);
+  }, [videoId, isPlayerReady]);
 
   // Tab Visibility Catch-up: when user returns to this tab, smoothly re-align
   useEffect(() => {
