@@ -21,7 +21,7 @@ export function cleanRoomCode(input: string): string {
   if (hashMatch) return hashMatch[1].toUpperCase();
 
   // 3. Search in path: /room/XYZ, /party/XYZ, /watch/XYZ
-  const pathMatch = trimmed.match(/(?:\/room\/|\/party\/|\/watch\/|\/)([a-zA-Z0-9_-]{4,12})(?:[?#&]|$)/i);
+  const pathMatch = trimmed.match(/(?:\/room\/|\/party\/|\/watch\/|\/)([a-zA-Z0-9_-]{4,24})(?:[?#&]|$)/i);
   if (pathMatch && !trimmed.toLowerCase().endsWith('.com') && !trimmed.toLowerCase().endsWith('.com/')) {
     const candidate = pathMatch[1].toUpperCase();
     if (!['HTTP', 'HTTPS', 'WWW', 'COM', 'PARTY', 'ROOM', 'WATCH', 'API'].includes(candidate)) {
@@ -56,13 +56,13 @@ export function getRoomFromUrl(): string {
     if (match) return cleanRoomCode(match[1]);
 
     const rawHash = hash.replace(/^#\/?/, '');
-    if (rawHash && /^[a-zA-Z0-9_-]{4,12}$/.test(rawHash)) {
+    if (rawHash && /^[a-zA-Z0-9_-]{4,24}$/.test(rawHash)) {
       return cleanRoomCode(rawHash);
     }
   }
 
   // 3. Pathname: /room/XYZ
-  const pathMatch = window.location.pathname.match(/\/(?:room|party|watch)\/([a-zA-Z0-9_-]{4,12})/i);
+  const pathMatch = window.location.pathname.match(/\/(?:room|party|watch)\/([a-zA-Z0-9_-]{4,24})/i);
   if (pathMatch) {
     return cleanRoomCode(pathMatch[1]);
   }

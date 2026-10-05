@@ -476,7 +476,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                     const cleaned = cleanRoomCode(val);
                     setJoinCode(cleaned || val.toUpperCase());
                   }}
-                  placeholder="e.g. 7X9K2P or paste invite link"
+                  placeholder="e.g. 7X9K2PM4WQ or paste invite link"
                   style={{
                     width: '100%',
                     padding: '12px 14px',

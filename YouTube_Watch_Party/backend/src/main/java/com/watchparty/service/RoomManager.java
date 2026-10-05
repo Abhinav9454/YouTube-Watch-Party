@@ -428,13 +428,14 @@ public class RoomManager {
     }
 
     /**
-     * Generates a 6-character room code (e.g. PARTY-492 or alphanumeric).
+     * Generates a 10-character cryptographically secure room code (e.g. 4KX9M2P7WQ).
+     * Provides over 1.1 quadrillion combinations to prevent unauthorized access or guessing.
      */
     private String generateRoomCode() {
         String chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
         StringBuilder sb = new StringBuilder();
-        Random rnd = new Random();
-        for (int i = 0; i < 6; i++) {
+        java.security.SecureRandom rnd = new java.security.SecureRandom();
+        for (int i = 0; i < 10; i++) {
             sb.append(chars.charAt(rnd.nextInt(chars.length())));
         }
         return sb.toString();
