@@ -1,5 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, Users, ListPlus, ShieldCheck, X, QrCode, BarChart3, Megaphone } from 'lucide-react';
+import {
+  MessageSquare,
+  Users,
+  ListPlus,
+  ShieldCheck,
+  X,
+  QrCode,
+  BarChart3,
+  Megaphone,
+  ArrowLeft,
+  Copy,
+  Check,
+  Crown,
+  Shield,
+  HelpCircle,
+  Volume2,
+  VolumeX,
+} from 'lucide-react';
 import { YouTubePlayer } from './YouTubePlayer';
 import { ParticipantList } from './ParticipantList';
 import { ChatPanel } from './ChatPanel';
@@ -18,6 +35,7 @@ import { SubtitlesOverlay } from './SubtitlesOverlay';
 import { ShareModal } from './ShareModal';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { wsService } from '../services/websocket';
+import { soundEffects } from '../services/soundEffects';
 import type { Bookmark, ChatMessage, ControlRequestedPayload, GiftItem, Participant, PlayState, Poll, QueueItem, ReactionItem, Role, TriviaEndedPayload, TriviaQuestion } from '../types/party';
 
 interface WatchPartyProps {
@@ -42,6 +60,10 @@ interface WatchPartyProps {
   chatMessages: ChatMessage[];
   reactions: ReactionItem[];
   controlRequests: ControlRequestedPayload[];
+  isConnected?: boolean;
+  username?: string;
+  onLeaveRoom?: () => void;
+  onOpenShortcuts?: () => void;
   onPlay: (time: number) => void;
   onPause: (time: number) => void;
   onSeek: (time: number) => void;
@@ -62,8 +84,8 @@ interface WatchPartyProps {
 }
 
 export const WatchParty: React.FC<WatchPartyProps> = ({
-  roomId: _roomId,
-  roomName: _roomName,
+  roomId,
+  roomName,
   videoId,
   playState,
   currentTime,
@@ -83,6 +105,10 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   chatMessages,
   reactions,
   controlRequests,
+  isConnected = true,
+  username: _username = 'Guest',
+  onLeaveRoom,
+  onOpenShortcuts,
   onPlay,
   onPause,
   onSeek,
@@ -110,6 +136,22 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [isSfxMuted, setIsSfxMuted] = useState(() => soundEffects.isMuted());
+
+  const handleCopyRoomCode = () => {
+    const url = `${window.location.origin}?room=${roomId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    });
+  };
+
+  const toggleSoundEffects = () => {
+    const nextState = !isSfxMuted;
+    soundEffects.setMuted(nextState);
+    setIsSfxMuted(nextState);
+  };
 
   useEffect(() => {
     const unsub = wsService.on('host_announcement', (payload: { announcement: string }) => {
@@ -132,16 +174,237 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   return (
     <div
       style={{
-        maxWidth: isTheaterMode ? '100%' : '1550px',
-        margin: '0 auto',
-        padding: '16px 20px',
-        display: 'grid',
-        gridTemplateColumns: isTheaterMode ? '1fr' : 'minmax(0, 1fr) 420px',
-        gap: '20px',
-        height: 'calc(100vh - 75px)',
-        transition: 'grid-template-columns 0.3s ease',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        width: '100%',
+        overflow: 'hidden',
+        background: '#090c16',
       }}
     >
+      {/* Sleek Cinema Room Top Bar */}
+      <header
+        style={{
+          height: '52px',
+          minHeight: '52px',
+          padding: '0 16px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: 'rgba(12, 16, 28, 0.95)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+          zIndex: 40,
+        }}
+      >
+        {/* Left: Exit/Leave + Room Title + Room Code + Role */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {onLeaveRoom && (
+            <button
+              type="button"
+              onClick={onLeaveRoom}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#f87171',
+                padding: '6px 12px',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.22)';
+                e.currentTarget.style.color = '#ff6b6b';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.12)';
+                e.currentTarget.style.color = '#f87171';
+              }}
+              title="Leave Room & Return to Lobby"
+            >
+              <ArrowLeft size={14} />
+              <span>Leave Room</span>
+            </button>
+          )}
+
+          {/* Room Name & Role */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span
+              style={{
+                fontSize: '14px',
+                fontWeight: 700,
+                color: '#fff',
+                letterSpacing: '-0.2px',
+                maxWidth: '220px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+              title={roomName || 'Watch Party Room'}
+            >
+              {roomName || 'Watch Party'}
+            </span>
+
+            {/* Role Badge */}
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                padding: '2px 8px',
+                borderRadius: '12px',
+                fontSize: '11px',
+                fontWeight: 600,
+                background:
+                  currentUserRole === 'HOST'
+                    ? 'rgba(251, 191, 36, 0.15)'
+                    : currentUserRole === 'MODERATOR'
+                    ? 'rgba(56, 189, 248, 0.15)'
+                    : 'rgba(255, 255, 255, 0.08)',
+                color:
+                  currentUserRole === 'HOST'
+                    ? '#fbbf24'
+                    : currentUserRole === 'MODERATOR'
+                    ? '#38bdf8'
+                    : '#94a3b8',
+                border: `1px solid ${
+                  currentUserRole === 'HOST'
+                    ? 'rgba(251, 191, 36, 0.3)'
+                    : currentUserRole === 'MODERATOR'
+                    ? 'rgba(56, 189, 248, 0.3)'
+                    : 'rgba(255, 255, 255, 0.1)'
+                }`,
+              }}
+            >
+              {currentUserRole === 'HOST' && <Crown size={11} />}
+              {currentUserRole === 'MODERATOR' && <Shield size={11} />}
+              <span>{currentUserRole}</span>
+            </span>
+          </div>
+
+          {/* Room Code with Copy Link Pill */}
+          <button
+            type="button"
+            onClick={handleCopyRoomCode}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              background: copiedCode ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+              border: copiedCode ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+              color: copiedCode ? '#4ade80' : '#cbd5e1',
+              padding: '4px 10px',
+              borderRadius: '6px',
+              fontSize: '12px',
+              fontFamily: 'monospace',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            title="Click to copy invite link"
+          >
+            {copiedCode ? <Check size={12} /> : <Copy size={12} />}
+            <span>{roomId}</span>
+          </button>
+        </div>
+
+        {/* Right: Sound FX, Shortcuts, Live Indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* SFX Mute Toggle */}
+          <button
+            type="button"
+            onClick={toggleSoundEffects}
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+              padding: '6px 10px',
+              color: isSfxMuted ? '#f87171' : '#cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              fontSize: '12px',
+              cursor: 'pointer',
+            }}
+            title={isSfxMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+          >
+            {isSfxMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+          </button>
+
+          {/* Keyboard Shortcuts Button */}
+          {onOpenShortcuts && (
+            <button
+              type="button"
+              onClick={onOpenShortcuts}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '8px',
+                padding: '6px 10px',
+                color: '#cbd5e1',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '12px',
+                cursor: 'pointer',
+              }}
+              title="Keyboard Shortcuts (?)"
+            >
+              <HelpCircle size={14} />
+            </button>
+          )}
+
+          {/* Connection Status Pill */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '4px 10px',
+              borderRadius: '12px',
+              background: isConnected ? 'rgba(34, 197, 94, 0.12)' : 'rgba(239, 68, 68, 0.12)',
+              border: `1px solid ${isConnected ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+              fontSize: '11px',
+              fontWeight: 700,
+              color: isConnected ? '#4ade80' : '#f87171',
+            }}
+          >
+            <span
+              style={{
+                width: '6px',
+                height: '6px',
+                borderRadius: '50%',
+                background: isConnected ? '#22c55e' : '#ef4444',
+                boxShadow: isConnected ? '0 0 8px #22c55e' : 'none',
+              }}
+            />
+            <span>{isConnected ? 'LIVE' : 'OFFLINE'}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Grid: Video Player + Sidebar */}
+      <div
+        style={{
+          flex: 1,
+          maxWidth: isTheaterMode ? '100%' : '1650px',
+          margin: '0 auto',
+          padding: '12px 16px',
+          display: 'grid',
+          gridTemplateColumns: isTheaterMode ? '1fr' : 'minmax(0, 1fr) 420px',
+          gap: '16px',
+          overflow: 'hidden',
+          width: '100%',
+          minHeight: 0,
+          transition: 'grid-template-columns 0.3s ease',
+        }}
+      >
       {/* Video & Player Column */}
       <div
         style={{
@@ -749,6 +1012,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           </div>
         </div>
       )}
+      </div>
 
       {/* Quick Pick & Discover Modal */}
       <DiscoverModal
@@ -761,16 +1025,16 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        roomId={_roomId}
-        roomName={_roomName}
+        roomId={roomId}
+        roomName={roomName}
       />
 
       {/* Audience Analytics & Host Command Center */}
       <AnalyticsDashboard
         isOpen={isAnalyticsOpen}
         onClose={() => setIsAnalyticsOpen(false)}
-        roomName={_roomName}
-        roomId={_roomId}
+        roomName={roomName}
+        roomId={roomId}
         userRole={currentUserRole}
         participants={participants}
         chatMessages={chatMessages}

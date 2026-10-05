@@ -598,25 +598,21 @@ export function App() {
         onSuccess={handleAuthSuccess}
       />
 
-      <Navbar
-        roomId={roomId || undefined}
-        roomName={roomName}
-        username={username}
-        userRole={roomId ? currentUserRole : undefined}
-        isConnected={isConnected}
-        onLeaveRoom={roomId ? handleLeaveRoom : undefined}
-        authUser={authUser}
-        onOpenAuth={handleOpenAuth}
-        onLogout={handleLogout}
-        onBackToLobby={handleLeaveRoom}
-      />
+      {!roomId && (
+        <Navbar
+          isConnected={isConnected}
+          authUser={authUser}
+          onOpenAuth={handleOpenAuth}
+          onLogout={handleLogout}
+        />
+      )}
 
       <KeyboardShortcutsModal
         isOpen={isShortcutsOpen}
         onClose={() => setIsShortcutsOpen(false)}
       />
 
-      <main style={{ flex: 1 }}>
+      <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {!roomId ? (
           <Lobby
             initialRoomCode={new URLSearchParams(window.location.search).get('room') || ''}
@@ -630,7 +626,7 @@ export function App() {
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center',
-              minHeight: '65vh',
+              minHeight: '75vh',
               gap: '16px',
             }}
           >
@@ -648,6 +644,24 @@ export function App() {
             <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
               Synchronizing timeline & room participants
             </div>
+            <button
+              type="button"
+              onClick={() => handleLeaveRoom(true)}
+              style={{
+                marginTop: '10px',
+                padding: '6px 16px',
+                background: 'rgba(255, 255, 255, 0.08)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                color: '#cbd5e1',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+              }}
+            >
+              Cancel & Return to Lobby
+            </button>
           </div>
         ) : (
           <WatchParty
@@ -672,6 +686,10 @@ export function App() {
             chatMessages={chatMessages}
             reactions={reactions}
             controlRequests={controlRequests}
+            isConnected={isConnected}
+            username={username}
+            onLeaveRoom={() => handleLeaveRoom(true)}
+            onOpenShortcuts={() => setIsShortcutsOpen(true)}
             onPlay={handlePlay}
             onPause={handlePause}
             onSeek={handleSeek}
