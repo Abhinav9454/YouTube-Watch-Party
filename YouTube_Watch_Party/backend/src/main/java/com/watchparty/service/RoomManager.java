@@ -40,7 +40,7 @@ public class RoomManager {
     @Transactional
     public Room createRoom(String requestedRoomId, String name, String creatorUsername, String initialVideoId, String passcode) {
         String roomId = (requestedRoomId != null && !requestedRoomId.trim().isEmpty())
-                ? requestedRoomId.trim()
+                ? requestedRoomId.trim().toUpperCase()
                 : generateRoomCode();
 
         String videoId = (initialVideoId != null && !initialVideoId.trim().isEmpty())
@@ -72,7 +72,7 @@ public class RoomManager {
         if (roomId == null || roomId.trim().isEmpty()) {
             return null;
         }
-        roomId = roomId.trim();
+        roomId = roomId.trim().toUpperCase();
 
         // 1. Check in-memory active rooms
         Room room = activeRooms.get(roomId);
@@ -103,9 +103,10 @@ public class RoomManager {
 
     public Room getRoom(String roomId) {
         if (roomId == null) return null;
-        Room room = activeRooms.get(roomId.trim());
+        String cleanId = roomId.trim().toUpperCase();
+        Room room = activeRooms.get(cleanId);
         if (room == null) {
-            return getOrCreateRoom(roomId, "Host");
+            return getOrCreateRoom(cleanId, "Host");
         }
         return room;
     }
@@ -118,7 +119,7 @@ public class RoomManager {
      * Adds a participant to a room.
      */
     public Participant joinRoom(String roomId, String participantId, String username) {
-        Room room = getOrCreateRoom(roomId, username);
+        Room room = getOrCreateRoom(roomId != null ? roomId.trim().toUpperCase() : null, username);
         if (room == null) {
             return null;
         }
@@ -407,7 +408,8 @@ public class RoomManager {
     }
 
     public List<ChatMessageEntity> getChatHistory(String roomId) {
-        return chatMessageRepository.findTop50ByRoomIdOrderByTimestampAsc(roomId);
+        String cleanId = (roomId != null) ? roomId.trim().toUpperCase() : "";
+        return chatMessageRepository.findTop50ByRoomIdOrderByTimestampAsc(cleanId);
     }
 
     @Transactional

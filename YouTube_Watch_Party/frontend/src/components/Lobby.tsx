@@ -41,6 +41,7 @@ const FEATURED_VIDEOS = [
 ];
 
 import { extractYouTubeVideoId } from '../utils/youtube';
+import { cleanRoomCode } from '../utils/room';
 
 function extractYouTubeId(urlOrId: string): string {
   return extractYouTubeVideoId(urlOrId);
@@ -77,7 +78,7 @@ export const Lobby: React.FC<LobbyProps> = ({
 
   useEffect(() => {
     if (initialRoomCode) {
-      setJoinCode(initialRoomCode);
+      setJoinCode(cleanRoomCode(initialRoomCode));
       setTab('join');
     }
   }, [initialRoomCode]);
@@ -108,10 +109,11 @@ export const Lobby: React.FC<LobbyProps> = ({
 
   const handleJoinSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!joinCode.trim()) return;
+    const finalCode = cleanRoomCode(joinCode);
+    if (!finalCode) return;
     soundEffects.play('join');
     const finalPasscode = joinPasscode.trim() ? joinPasscode.trim() : undefined;
-    onJoinRoom(joinCode.trim().toUpperCase(), username.trim() || 'Viewer', finalPasscode);
+    onJoinRoom(finalCode, username.trim() || 'Viewer', finalPasscode);
   };
 
   const handleQuickJoinRoom = (roomId: string, isPasscodeProtected?: boolean) => {
@@ -842,22 +844,25 @@ export const Lobby: React.FC<LobbyProps> = ({
             <form onSubmit={handleJoinSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.85rem', color: '#cbd5e0', marginBottom: '6px', fontWeight: 600 }}>
-                  Enter 6-Character Room Code
+                  Enter Room Code or Paste Invite Link
                 </label>
                 <div style={{ position: 'relative' }}>
                   <input
                     type="text"
                     className="input-field"
                     value={joinCode}
-                    onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                    placeholder="e.g. 7X9K2P"
-                    maxLength={10}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const cleaned = cleanRoomCode(val);
+                      setJoinCode(cleaned || val.toUpperCase());
+                    }}
+                    placeholder="e.g. 7X9K2P or paste invite link"
                     style={{
                       width: '100%',
                       padding: '12px 14px',
                       borderRadius: '10px',
-                      fontSize: '1.2rem',
-                      letterSpacing: '3px',
+                      fontSize: '1.15rem',
+                      letterSpacing: '2px',
                       fontWeight: 700,
                       textTransform: 'uppercase',
                       textAlign: 'center',

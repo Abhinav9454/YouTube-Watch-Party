@@ -28,8 +28,38 @@ class WebSocketClient {
   public connect(): Promise<void> {
     this.isExplicitlyClosed = false;
     return new Promise((resolve, reject) => {
-      if (this.socket && (this.socket.readyState === WebSocket.OPEN || this.socket.readyState === WebSocket.CONNECTING)) {
-        if (this.socket.readyState === WebSocket.OPEN) resolve();
+      if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+        resolve();
+        return;
+      }
+
+      let timeoutTimer: ReturnType<typeof setTimeout> | null = null;
+      const cleanup = () => {
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+      };
+
+      timeoutTimer = setTimeout(() => {
+        if (!this.isConnected && (!this.socket || this.socket.readyState !== WebSocket.OPEN)) {
+          cleanup();
+          reject(new Error('Connection timed out. Server might be spinning up or unreachable.'));
+        }
+      }, 10000);
+
+      if (this.socket && this.socket.readyState === WebSocket.CONNECTING) {
+        const onOpen = () => {
+          cleanup();
+          this.socket?.removeEventListener('open', onOpen);
+          this.socket?.removeEventListener('error', onError);
+          resolve();
+        };
+        const onError = () => {
+          cleanup();
+          this.socket?.removeEventListener('open', onOpen);
+          this.socket?.removeEventListener('error', onError);
+          reject(new Error('WebSocket connection failed'));
+        };
+        this.socket.addEventListener('open', onOpen);
+        this.socket.addEventListener('error', onError);
         return;
       }
 
@@ -37,6 +67,7 @@ class WebSocketClient {
         this.socket = new WebSocket(this.url);
 
         this.socket.onopen = () => {
+          cleanup();
           this.isConnected = true;
           this.reconnectAttempts = 0;
           this.notifyStatus(true);
@@ -58,7 +89,8 @@ class WebSocketClient {
         this.socket.onerror = (err) => {
           console.warn('WebSocket connection error:', err);
           if (!this.isConnected) {
-            setTimeout(() => reject(new Error('WebSocket connection failed')), 1000);
+            cleanup();
+            setTimeout(() => reject(new Error('WebSocket connection failed')), 800);
           }
         };
 

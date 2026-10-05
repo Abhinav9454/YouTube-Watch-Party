@@ -1,6 +1,6 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Share2, Copy, Check, QrCode, Lock, Globe, MessageCircle, Send } from 'lucide-react';
-import { generateQrMatrix } from '../services/qrGenerator';
+import QRCode from 'qrcode';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -20,18 +20,33 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [copiedLink, setCopiedLink] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedDiscord, setCopiedDiscord] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState<string>('');
+  const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const [useLiveUrl, setUseLiveUrl] = useState<boolean>(false);
 
   const inviteUrl = useMemo(() => {
-    return `${window.location.origin}?room=${roomId}`;
-  }, [roomId]);
-
-  const qrMatrix = useMemo(() => {
-    try {
-      return generateQrMatrix(inviteUrl);
-    } catch {
-      return [];
+    const cleanId = (roomId || '').trim().toUpperCase();
+    if (useLiveUrl) {
+      return `https://youtube-watch-party-r2gl.onrender.com/?room=${encodeURIComponent(cleanId)}`;
     }
-  }, [inviteUrl]);
+    const base = window.location.origin.replace(/\/+$/, '');
+    return `${base}/?room=${encodeURIComponent(cleanId)}`;
+  }, [roomId, useLiveUrl]);
+
+  useEffect(() => {
+    if (!roomId) return;
+    QRCode.toDataURL(inviteUrl, {
+      width: 280,
+      margin: 2,
+      errorCorrectionLevel: 'M',
+      color: {
+        dark: '#0f172a',
+        light: '#ffffff',
+      },
+    })
+      .then((url) => setQrDataUrl(url))
+      .catch((err) => console.error('Failed to generate standard QR code:', err));
+  }, [inviteUrl, roomId]);
 
   if (!isOpen) return null;
 
@@ -236,25 +251,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               justifyContent: 'center',
             }}
           >
-            {qrMatrix.length > 0 ? (
-              <svg width="140" height="140" viewBox={`0 0 ${qrMatrix.length} ${qrMatrix.length}`}>
-                {qrMatrix.map((row, y) =>
-                  row.map((cell, x) =>
-                    cell ? (
-                      <rect
-                        key={`${x}-${y}`}
-                        x={x}
-                        y={y}
-                        width="1"
-                        height="1"
-                        fill="#090d16"
-                      />
-                    ) : null
-                  )
-                )}
-              </svg>
+            {qrDataUrl ? (
+              <img
+                src={qrDataUrl}
+                alt={`Scan QR Code to join room ${roomId}`}
+                style={{ width: '160px', height: '160px', display: 'block', borderRadius: '8px' }}
+              />
             ) : (
-              <div style={{ width: '140px', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+              <div style={{ width: '160px', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
                 <QrCode size={48} />
               </div>
             )}
@@ -262,6 +266,24 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           <span style={{ fontSize: '11px', color: '#94a3b8' }}>
             📱 Scan with camera on phone or tablet to join instantly
           </span>
+          {isLocalhost && (
+            <button
+              type="button"
+              onClick={() => setUseLiveUrl(!useLiveUrl)}
+              style={{
+                background: useLiveUrl ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255, 255, 255, 0.06)',
+                border: useLiveUrl ? '1px solid #6366f1' : '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '6px',
+                padding: '4px 10px',
+                color: useLiveUrl ? '#a5b4fc' : '#94a3b8',
+                fontSize: '11px',
+                cursor: 'pointer',
+                marginTop: '2px',
+              }}
+            >
+              {useLiveUrl ? '🌐 QR: Using Live Server URL' : '📱 Testing on phone? Switch QR to Live Server'}
+            </button>
+          )}
         </div>
 
         {/* Copy Invite Link */}

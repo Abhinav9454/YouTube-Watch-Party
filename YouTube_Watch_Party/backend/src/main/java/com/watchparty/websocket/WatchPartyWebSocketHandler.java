@@ -187,7 +187,7 @@ public class WatchPartyWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
-        roomId = roomId.trim();
+        roomId = roomId.trim().toUpperCase();
         if (username == null || username.trim().isEmpty()) {
             username = "Guest-" + session.getId().substring(0, 4);
         } else {
@@ -217,13 +217,13 @@ public class WatchPartyWebSocketHandler extends TextWebSocketHandler {
         Room room = roomManager.getRoom(roomId);
 
         // 1. Notify room that user joined
-        broadcastToRoom(roomId, "user_joined", Map.of(
-                "userId", userId,
-                "username", username,
-                "role", participant.getRole().name(),
-                "participants", room.getParticipants(),
-                "roomName", room.getName()
-        ));
+        Map<String, Object> joinedPayload = new HashMap<>();
+        joinedPayload.put("userId", userId);
+        joinedPayload.put("username", username);
+        joinedPayload.put("role", participant.getRole().name());
+        joinedPayload.put("participants", room.getParticipants());
+        joinedPayload.put("roomName", room.getName() != null ? room.getName() : "Watch Party");
+        broadcastToRoom(roomId, "user_joined", joinedPayload);
 
         // 2. Send immediate initial synchronization state to the joining user
         Map<String, Object> syncPayload = new HashMap<>();

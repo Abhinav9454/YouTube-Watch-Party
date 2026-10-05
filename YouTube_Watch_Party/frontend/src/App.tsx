@@ -11,6 +11,7 @@ import { wsService } from './services/websocket';
 import { webrtcService } from './services/webrtc';
 import { soundEffects } from './services/soundEffects';
 import { createRoomApi, getChatHistoryApi } from './services/api';
+import { cleanRoomCode, getRoomFromUrl } from './utils/room';
 import type {
   Bookmark,
   BookmarksUpdatedPayload,
@@ -130,10 +131,9 @@ export function App() {
   };
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const roomParam = params.get('room');
-    if (roomParam && !roomId) {
-      handleJoinRoom(roomParam.toUpperCase(), username, undefined, false);
+    const urlRoomCode = getRoomFromUrl();
+    if (urlRoomCode && !roomId) {
+      handleJoinRoom(urlRoomCode, username, undefined, false);
     }
   }, []);
 
@@ -175,6 +175,15 @@ export function App() {
         if (payload.assignedRole) setCurrentUserRole(payload.assignedRole);
       }),
 
+      wsService.on('error_message', (payload: { message?: string; code?: string }) => {
+        setIsRoomLoading(false);
+        const msg = payload?.message || 'Server error';
+        showToast(msg, 'error');
+        if (payload?.code === 'AUTH_FAILED') {
+          handleLeaveRoom(false);
+        }
+      }),
+
       wsService.on('user_joined', (payload: UserJoinedPayload) => {
         if (payload.participants) {
           setParticipants(payload.participants);
@@ -183,6 +192,7 @@ export function App() {
           setRoomName(payload.roomName);
         }
         if (payload.userId === userId) {
+          setIsRoomLoading(false);
           setCurrentUserRole(payload.role);
           showToast(`Joined watch party room as ${payload.role}!`, 'success');
         } else {
@@ -366,9 +376,6 @@ export function App() {
         showToast(`Trivia ended! Correct answer: ${payload.correctOption}`, 'info');
       }),
 
-      wsService.on('error_message', (payload: { message: string }) => {
-        showToast(payload.message, 'error');
-      }),
 
       wsService.on('chat_cleared', () => {
         setChatMessages([]);
@@ -392,23 +399,21 @@ export function App() {
   // Handle browser Back / Forward navigation cleanly without destroying history
   useEffect(() => {
     const onPopState = () => {
-      const params = new URLSearchParams(window.location.search);
-      const roomParam = params.get('room');
+      const urlRoomCode = getRoomFromUrl();
       const currentActive = roomIdRef.current;
 
-      if (!roomParam) {
+      if (!urlRoomCode) {
         // User clicked Browser Back button to return to Lobby
         if (currentActive) {
           handleLeaveRoom(false);
         }
       } else {
-        const targetRoom = roomParam.trim().toUpperCase();
         // User clicked Browser Forward or Back to a room
-        if (targetRoom !== currentActive) {
+        if (urlRoomCode !== currentActive) {
           if (currentActive) {
             wsService.leaveRoom(currentActive);
           }
-          handleJoinRoom(targetRoom, usernameRef.current, undefined, false);
+          handleJoinRoom(urlRoomCode, usernameRef.current, undefined, false);
         }
       }
     };
@@ -444,34 +449,60 @@ export function App() {
     passcode?: string,
     pushHistory: boolean = true
   ) => {
+    const cleanId = cleanRoomCode(targetRoomId);
+    if (!cleanId) {
+      showToast('Please enter a valid room code or link', 'error');
+      return;
+    }
+
     setUsername(joinUsername);
     localStorage.setItem('watchparty_username', joinUsername);
 
     // Track recently visited room
     try {
       const saved: string[] = JSON.parse(localStorage.getItem('watchparty_recent_rooms') || '[]');
-      const updated = [targetRoomId, ...saved.filter((id) => id !== targetRoomId)].slice(0, 10);
+      const updated = [cleanId, ...saved.filter((id) => id !== cleanId)].slice(0, 10);
       localStorage.setItem('watchparty_recent_rooms', JSON.stringify(updated));
     } catch {}
 
     try {
       setIsRoomLoading(true);
       await wsService.connect();
-      setRoomId(targetRoomId);
+      setRoomId(cleanId);
 
-      const targetUrl = `${window.location.pathname}?room=${targetRoomId}`;
+      const targetUrl = `${window.location.pathname}?room=${cleanId}`;
       if (pushHistory) {
-        if (window.location.search !== `?room=${targetRoomId}`) {
-          window.history.pushState({ roomId: targetRoomId }, '', targetUrl);
+        if (window.location.search !== `?room=${cleanId}`) {
+          window.history.pushState({ roomId: cleanId }, '', targetUrl);
         }
       }
 
-      const history = await getChatHistoryApi(targetRoomId);
-      if (history.length > 0) {
-        setChatMessages(history);
-      }
+      // Fetch chat history asynchronously without blocking join
+      getChatHistoryApi(cleanId).then((history) => {
+        if (history && history.length > 0) {
+          setChatMessages(history);
+        }
+      }).catch(() => {});
 
-      wsService.joinRoom(targetRoomId, joinUsername, userId, passcode);
+      wsService.joinRoom(cleanId, joinUsername, userId, passcode);
+
+      // Auto-request sync after 2.5s if still loading
+      setTimeout(() => {
+        if (roomIdRef.current === cleanId) {
+          wsService.requestSync();
+        }
+      }, 2500);
+
+      // Safety timeout: unblock loading state if server delayed
+      setTimeout(() => {
+        setIsRoomLoading((prev) => {
+          if (prev) {
+            console.warn('Sync state timeout reached, revealing party room');
+            return false;
+          }
+          return false;
+        });
+      }, 5000);
     } catch {
       setIsRoomLoading(false);
       showToast('Could not connect to WebSocket server. Is backend running?', 'error');
@@ -615,7 +646,7 @@ export function App() {
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
         {!roomId ? (
           <Lobby
-            initialRoomCode={new URLSearchParams(window.location.search).get('room') || ''}
+            initialRoomCode={getRoomFromUrl()}
             onJoinRoom={handleJoinRoom}
             onCreateRoom={handleCreateRoom}
           />
