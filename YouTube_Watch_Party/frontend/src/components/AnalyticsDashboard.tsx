@@ -317,7 +317,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                   gap: '4px',
                 }}
               >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#818cf8', fontSize: '11px', fontWeight: 600 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#f87171', fontSize: '11px', fontWeight: 600 }}>
                   <MessageSquare size={14} />
                   <span>MESSAGES</span>
                 </div>
@@ -409,8 +409,8 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                       height: `${val}%`,
                       background:
                         val > 65
-                          ? 'linear-gradient(to top, #38bdf8, #818cf8)'
-                          : 'linear-gradient(to top, rgba(56, 189, 248, 0.3), rgba(56, 189, 248, 0.7))',
+                          ? 'linear-gradient(to top, #ff2a2a, #f97316)'
+                          : 'linear-gradient(to top, rgba(239, 68, 68, 0.3), rgba(239, 68, 68, 0.7))',
                       borderRadius: '4px 4px 0 0',
                       transition: 'height 0.3s ease',
                       position: 'relative',
@@ -465,12 +465,12 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({
                             {chatter.username}
                           </span>
                         </div>
-                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#38bdf8' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#f87171' }}>
                           {chatter.count} messages
                         </span>
                       </div>
                       <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden' }}>
-                        <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, #38bdf8, #818cf8)' }} />
+                        <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, #ff2a2a, #f97316)' }} />
                       </div>
                     </div>
                   );

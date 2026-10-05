@@ -112,10 +112,10 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
             maxWidth: '560px',
             background: 'rgba(17, 24, 39, 0.95)',
             backdropFilter: 'blur(16px)',
-            border: '2px solid #8b5cf6',
+            border: '2px solid #ef4444',
             borderRadius: '16px',
             padding: '16px 20px',
-            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(139, 92, 246, 0.3)',
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(239, 68, 68, 0.3)',
             zIndex: 60,
           }}
         >
@@ -123,7 +123,7 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
             <span
               style={{
-                background: 'linear-gradient(135deg, #8b5cf6, #ec4899)',
+                background: 'linear-gradient(135deg, #ff2a2a, #dc2626)',
                 color: '#fff',
                 fontSize: '11px',
                 fontWeight: 800,
@@ -161,7 +161,7 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
               style={{
                 width: `${(timeLeft / (activeTrivia.durationSeconds || 15)) * 100}%`,
                 height: '100%',
-                background: timeLeft <= 5 ? '#ef4444' : 'linear-gradient(90deg, #8b5cf6, #ec4899)',
+                background: timeLeft <= 5 ? '#ef4444' : 'linear-gradient(90deg, #ff2a2a, #f97316)',
                 transition: 'width 0.5s linear',
               }}
             />
@@ -186,8 +186,8 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
                     alignItems: 'center',
                     gap: '8px',
                     padding: '10px 12px',
-                    background: isSelected ? 'rgba(139, 92, 246, 0.35)' : 'rgba(255, 255, 255, 0.05)',
-                    border: isSelected ? '2px solid #8b5cf6' : '1px solid rgba(255, 255, 255, 0.12)',
+                    background: isSelected ? 'rgba(239, 68, 68, 0.35)' : 'rgba(255, 255, 255, 0.05)',
+                    border: isSelected ? '2px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.12)',
                     borderRadius: '10px',
                     color: '#fff',
                     fontSize: '12px',
@@ -202,7 +202,7 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
                       width: '20px',
                       height: '20px',
                       borderRadius: '50%',
-                      background: isSelected ? '#8b5cf6' : 'rgba(255, 255, 255, 0.1)',
+                      background: isSelected ? '#ef4444' : 'rgba(255, 255, 255, 0.1)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -342,8 +342,8 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: isCreating ? 'rgba(139, 92, 246, 0.3)' : 'rgba(255, 255, 255, 0.08)',
-              border: isCreating ? '1px solid #8b5cf6' : '1px solid rgba(255, 255, 255, 0.15)',
+              background: isCreating ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+              border: isCreating ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.15)',
               borderRadius: '8px',
               padding: '6px 12px',
               color: '#fff',
@@ -368,10 +368,10 @@ export const TriviaModal: React.FC<TriviaModalProps> = ({
                 width: '320px',
                 background: 'rgba(22, 25, 40, 0.98)',
                 backdropFilter: 'blur(16px)',
-                border: '1px solid rgba(139, 92, 246, 0.4)',
+                border: '1px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '14px',
                 padding: '14px',
-                boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(139, 92, 246, 0.25)',
+                boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(239, 68, 68, 0.18)',
                 zIndex: 100,
               }}
             >

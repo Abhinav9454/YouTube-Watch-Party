@@ -52,9 +52,9 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
           width: '100%',
           padding: '24px',
           borderRadius: 'var(--radius-md)',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 30px rgba(99, 102, 241, 0.25)',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 68, 68, 0.15)',
           background: 'rgba(15, 20, 32, 0.96)',
-          border: '1px solid rgba(99, 102, 241, 0.3)',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -65,12 +65,12 @@ export const KeyboardShortcutsModal: React.FC<KeyboardShortcutsModalProps> = ({ 
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                background: 'rgba(99, 102, 241, 0.2)',
-                border: '1px solid rgba(99, 102, 241, 0.4)',
+                background: 'rgba(239, 68, 68, 0.15)',
+                border: '1px solid rgba(239, 68, 68, 0.35)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: '#818cf8',
+                color: '#ef4444',
               }}
             >
               <Keyboard size={20} />

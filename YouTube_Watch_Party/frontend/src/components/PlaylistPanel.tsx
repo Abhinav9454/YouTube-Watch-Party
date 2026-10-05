@@ -47,7 +47,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
       {/* Header and Add button */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '8px', borderBottom: '1px solid var(--border-subtle)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>
-          <ListPlus size={16} color="#818cf8" />
+          <ListPlus size={16} color="#ef4444" />
           <span>Up Next ({playlist.length})</span>
         </div>
 
@@ -114,7 +114,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
           <div style={{ textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.85rem', margin: 'auto', padding: '20px 0' }}>
             <p style={{ marginBottom: '12px' }}>Queue is empty. Videos in queue will auto-play next!</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <span style={{ fontSize: '0.78rem', color: '#a5b4fc', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+              <span style={{ fontSize: '0.78rem', color: '#fca5a5', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
                 <Sparkles size={13} /> Quick Suggestions:
               </span>
               {POPULAR_SUGGESTIONS.map((s) => (
@@ -136,7 +136,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
                   }}
                 >
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.title}</span>
-                  <Plus size={13} color="#818cf8" />
+                  <Plus size={13} color="#ef4444" />
                 </button>
               ))}
             </div>
@@ -157,7 +157,7 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
-                <span style={{ fontSize: '0.75rem', color: '#818cf8', fontWeight: 700, minWidth: '18px' }}>
+                <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 700, minWidth: '18px' }}>
                   #{index + 1}
                 </span>
                 <div style={{ overflow: 'hidden' }}>

@@ -87,9 +87,9 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                 flexDirection: 'column',
                 gap: '8px',
                 padding: '10px 12px',
-                background: isSelf ? 'rgba(99, 102, 241, 0.08)' : 'rgba(255, 255, 255, 0.03)',
+                background: isSelf ? 'rgba(239, 68, 68, 0.08)' : 'rgba(255, 255, 255, 0.03)',
                 borderRadius: 'var(--radius-sm)',
-                border: `1px solid ${isSelf ? 'rgba(99, 102, 241, 0.3)' : 'var(--border-subtle)'}`,
+                border: `1px solid ${isSelf ? 'rgba(239, 68, 68, 0.3)' : 'var(--border-subtle)'}`,
                 transition: 'background 0.2s',
               }}
             >
@@ -100,7 +100,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                       width: '30px',
                       height: '30px',
                       borderRadius: '50%',
-                      background: p.role === 'HOST' ? '#f59e0b' : p.role === 'MODERATOR' ? '#06b6d4' : '#6366f1',
+                      background: p.role === 'HOST' ? '#f59e0b' : p.role === 'MODERATOR' ? '#38bdf8' : '#ef4444',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -115,7 +115,7 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{p.username}</span>
                       {isSelf && (
-                        <span style={{ fontSize: '0.7rem', color: '#818cf8', fontWeight: 600 }}>(You)</span>
+                        <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 700 }}>(You)</span>
                       )}
                       {p.handRaised && (
                         <span

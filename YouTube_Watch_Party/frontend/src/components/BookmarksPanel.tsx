@@ -334,10 +334,10 @@ export const BookmarksPanel: React.FC<BookmarksPanelProps> = ({
                 onClick={handlePostToChat}
                 style={{
                   padding: '6px 4px',
-                  background: 'rgba(168, 85, 247, 0.15)',
-                  border: '1px solid rgba(168, 85, 247, 0.3)',
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
                   borderRadius: '6px',
-                  color: '#c084fc',
+                  color: '#f87171',
                   fontSize: '11px',
                   fontWeight: 600,
                   cursor: 'pointer',

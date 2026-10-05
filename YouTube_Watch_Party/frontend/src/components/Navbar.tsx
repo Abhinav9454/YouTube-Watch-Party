@@ -58,32 +58,45 @@ export const Navbar: React.FC<NavbarProps> = ({
           gap: '10px',
           userSelect: 'none',
         }}
-        title="SyncWave - YouTube Watch Party"
+        title="YouTube Watch Party - Synchronized Streaming"
       >
         <div
           style={{
             width: '34px',
             height: '34px',
             borderRadius: '10px',
-            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+            background: 'linear-gradient(135deg, #ff2a2a 0%, #e50914 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 0 15px rgba(99, 102, 241, 0.45)',
+            boxShadow: '0 2px 14px rgba(239, 68, 68, 0.45)',
           }}
         >
           <Tv size={18} color="#fff" />
         </div>
-        <span
-          style={{
-            fontWeight: 800,
-            fontSize: '1.2rem',
-            letterSpacing: '-0.3px',
-            color: '#fff',
-          }}
-        >
-          SyncWave
-        </span>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+          <span
+            style={{
+              fontWeight: 800,
+              fontSize: '1.2rem',
+              letterSpacing: '-0.3px',
+              color: '#fff',
+            }}
+          >
+            WatchParty
+          </span>
+          <span
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 700,
+              color: '#ef4444',
+              letterSpacing: '0.5px',
+              textTransform: 'uppercase',
+            }}
+          >
+            LIVE
+          </span>
+        </div>
       </div>
 
       {/* Right Controls */}
@@ -198,22 +211,22 @@ export const Navbar: React.FC<NavbarProps> = ({
                 fontWeight: 700,
                 borderRadius: '20px',
                 border: 'none',
-                background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                background: 'linear-gradient(135deg, #ff2a2a, #e50914)',
                 color: '#fff',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '6px',
-                boxShadow: '0 2px 14px rgba(99, 102, 241, 0.35)',
+                boxShadow: '0 2px 14px rgba(239, 68, 68, 0.35)',
                 transition: 'all 0.2s',
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-1px)';
-                e.currentTarget.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.5)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(239, 68, 68, 0.5)';
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 2px 14px rgba(99, 102, 241, 0.35)';
+                e.currentTarget.style.boxShadow = '0 2px 14px rgba(239, 68, 68, 0.35)';
               }}
             >
               <Sparkles size={14} />

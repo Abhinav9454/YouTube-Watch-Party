@@ -10,7 +10,7 @@ import type { ToastMessage } from './components/Toast';
 import { wsService } from './services/websocket';
 import { webrtcService } from './services/webrtc';
 import { createRoomApi, getChatHistoryApi } from './services/api';
-import { cleanRoomCode, getRoomFromUrl } from './utils/room';
+import { cleanRoomCode, getRoomFromUrl, getPasscodeFromUrl } from './utils/room';
 import type {
   Bookmark,
   BookmarksUpdatedPayload,
@@ -130,8 +130,9 @@ export function App() {
 
   useEffect(() => {
     const urlRoomCode = getRoomFromUrl();
+    const urlPasscode = getPasscodeFromUrl();
     if (urlRoomCode && !roomId) {
-      handleJoinRoom(urlRoomCode, username, undefined, false);
+      handleJoinRoom(urlRoomCode, username, urlPasscode, false);
     }
   }, []);
 
@@ -404,7 +405,7 @@ export function App() {
           if (currentActive) {
             wsService.leaveRoom(currentActive);
           }
-          handleJoinRoom(urlRoomCode, usernameRef.current, undefined, false);
+          handleJoinRoom(urlRoomCode, usernameRef.current, getPasscodeFromUrl(), false);
         }
       }
     };
@@ -658,8 +659,8 @@ export function App() {
                 width: '46px',
                 height: '46px',
                 borderRadius: '50%',
-                border: '3px solid rgba(99, 102, 241, 0.2)',
-                borderTopColor: '#6366f1',
+                border: '3px solid rgba(239, 68, 68, 0.2)',
+                borderTopColor: '#ef4444',
               }}
             />
             <div style={{ fontSize: '1.15rem', fontWeight: 600, color: '#fff' }}>Connecting to Watch Party...</div>

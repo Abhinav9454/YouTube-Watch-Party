@@ -20,8 +20,7 @@ class WebSocketClient {
     } else {
       const loc = window.location;
       const protocol = loc.protocol === 'https:' ? 'wss:' : 'ws:';
-      const host = loc.hostname === 'localhost' || loc.hostname === '127.0.0.1' ? 'localhost:8080' : loc.host;
-      this.url = `${protocol}//${host}/ws/party`;
+      this.url = `${protocol}//${loc.host}/ws/party`;
     }
   }
 

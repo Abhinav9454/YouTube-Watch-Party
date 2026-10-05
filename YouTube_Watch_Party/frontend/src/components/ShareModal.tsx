@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Share2, Copy, Check, QrCode, Lock, Globe, MessageCircle, Send } from 'lucide-react';
+import { Share2, Copy, Check, QrCode, Lock, Globe, MessageCircle, Wifi, ExternalLink } from 'lucide-react';
 import QRCode from 'qrcode';
 
 interface ShareModalProps {
@@ -21,18 +21,30 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedDiscord, setCopiedDiscord] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string>('');
-  const isLocalhost = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-  // Default to live hosted URL on localhost so scanning QR code from ANY phone camera connects immediately!
-  const [useLiveUrl, setUseLiveUrl] = useState<boolean>(true);
+
+  const isLocalHostOrLan = typeof window !== 'undefined' && (
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1' ||
+    /^10\.|^192\.168\.|^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(window.location.hostname)
+  );
+
+  // 'wifi' for same-router mobile/tablet scanning, 'cloud' for global Render link
+  const [networkMode, setNetworkMode] = useState<'wifi' | 'cloud'>(() => {
+    return isLocalHostOrLan ? 'wifi' : 'cloud';
+  });
 
   const inviteUrl = useMemo(() => {
     const cleanId = (roomId || '').trim().toUpperCase();
-    if (useLiveUrl || isLocalhost) {
+    if (networkMode === 'cloud') {
       return `https://youtube-watch-party-r2gl.onrender.com/?room=${encodeURIComponent(cleanId)}`;
     }
-    const base = window.location.origin.replace(/\/+$/, '');
-    return `${base}/?room=${encodeURIComponent(cleanId)}`;
-  }, [roomId, useLiveUrl, isLocalhost]);
+    // Local Wi-Fi network mode
+    const port = window.location.port ? `:${window.location.port}` : ':5173';
+    const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? '10.106.39.147'
+      : window.location.hostname;
+    return `http://${host}${port}/?room=${encodeURIComponent(cleanId)}`;
+  }, [roomId, networkMode]);
 
   useEffect(() => {
     if (!roomId) return;
@@ -41,7 +53,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       margin: 2,
       errorCorrectionLevel: 'M',
       color: {
-        dark: '#0f172a',
+        dark: '#0a0d14',
         light: '#ffffff',
       },
     })
@@ -65,7 +77,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     });
   };
 
-  const shareText = `🍿 Join my YouTube Watch Party "${roomName}"! Watch videos in exact millisecond sync with live voice, chat & trivia:`;
+  const shareText = `🍿 Join my YouTube Watch Party "${roomName}"! Real-time synchronized playback, live chat & video:`;
 
   const handleShareWhatsApp = () => {
     const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${shareText} ${inviteUrl}`)}`;
@@ -83,7 +95,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   };
 
   const handleCopyDiscordCard = () => {
-    const discordCard = `>>> **🎬 YOU'RE INVITED TO A YOUTUBE WATCH PARTY!**\n**Room:** ${roomName}\n**Room Code:** \`${roomId}\`\n**Join Link:** ${inviteUrl}\n*Synchronized video, WebRTC voice/video, live trivia & snacks!*`;
+    const discordCard = `>>> **🎬 YOU'RE INVITED TO A YOUTUBE WATCH PARTY!**\n**Room:** ${roomName}\n**Room Code:** \`${roomId}\`\n**Join Link:** ${inviteUrl}\n*Real-time video sync, live chat, snacks & trivia!*`;
     navigator.clipboard.writeText(discordCard).then(() => {
       setCopiedDiscord(true);
       setTimeout(() => setCopiedDiscord(false), 2500);
@@ -95,13 +107,14 @@ export const ShareModal: React.FC<ShareModalProps> = ({
       style={{
         position: 'fixed',
         inset: 0,
-        background: 'rgba(0, 0, 0, 0.78)',
-        backdropFilter: 'blur(8px)',
+        background: 'rgba(0, 0, 0, 0.82)',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 1000,
-        padding: '20px',
+        padding: '16px',
       }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
@@ -115,11 +128,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           background: 'rgba(14, 18, 28, 0.98)',
           border: '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '16px',
-          padding: '24px',
+          padding: '22px',
           boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 25px rgba(239, 68, 68, 0.15)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '18px',
+          gap: '16px',
         }}
       >
         {/* Header */}
@@ -130,7 +143,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 width: '36px',
                 height: '36px',
                 borderRadius: '10px',
-                background: 'linear-gradient(135deg, #ff2a2a, #e50914)',
+                background: 'linear-gradient(135deg, #ff2a2a, #dc2626)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -141,11 +154,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <Share2 size={18} />
             </div>
             <div>
-              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 700, color: '#fff' }}>
+              <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 800, color: '#fff' }}>
                 Invite to Watch Party
               </h3>
               <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
-                Share with friends to watch in real-time sync
+                Scan QR or share link for instant synchronized entry
               </p>
             </div>
           </div>
@@ -153,11 +166,17 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             type="button"
             onClick={onClose}
             style={{
-              background: 'none',
+              background: 'rgba(255, 255, 255, 0.06)',
               border: 'none',
               color: '#94a3b8',
               cursor: 'pointer',
-              fontSize: '18px',
+              fontSize: '16px',
+              width: '30px',
+              height: '30px',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
             ✕
@@ -177,7 +196,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           }}
         >
           <div>
-            <div style={{ fontSize: '11px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '10px', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 700 }}>
               ROOM CODE
             </div>
             <div style={{ fontSize: '20px', fontWeight: 800, color: '#fff', letterSpacing: '2px', fontFamily: 'monospace' }}>
@@ -201,7 +220,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               }}
             >
               {isLocked ? <Lock size={11} /> : <Globe size={11} />}
-              {isLocked ? 'Passcode Locked' : 'Public Room'}
+              {isLocked ? 'Passcode' : 'Public'}
             </span>
 
             <button
@@ -212,10 +231,10 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 alignItems: 'center',
                 gap: '4px',
                 padding: '6px 12px',
-                background: copiedCode ? 'rgba(34, 197, 94, 0.25)' : 'rgba(99, 102, 241, 0.2)',
-                border: copiedCode ? '1px solid #22c55e' : '1px solid rgba(99, 102, 241, 0.4)',
+                background: copiedCode ? 'rgba(34, 197, 94, 0.25)' : 'rgba(239, 68, 68, 0.15)',
+                border: copiedCode ? '1px solid #22c55e' : '1px solid rgba(239, 68, 68, 0.35)',
                 borderRadius: '8px',
-                color: copiedCode ? '#4ade80' : '#818cf8',
+                color: copiedCode ? '#4ade80' : '#fca5a5',
                 fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
@@ -227,26 +246,85 @@ export const ShareModal: React.FC<ShareModalProps> = ({
           </div>
         </div>
 
-        {/* QR Code Section */}
+        {/* Network Target Selector Tabs */}
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            background: 'rgba(0, 0, 0, 0.4)',
+            padding: '4px',
+            borderRadius: '10px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            gap: '4px',
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setNetworkMode('wifi')}
+            style={{
+              padding: '8px 10px',
+              border: 'none',
+              borderRadius: '7px',
+              background: networkMode === 'wifi' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
+              color: networkMode === 'wifi' ? '#fff' : '#94a3b8',
+              fontWeight: 700,
+              fontSize: '12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <Wifi size={13} />
+            <span>Wi-Fi / LAN Phone</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setNetworkMode('cloud')}
+            style={{
+              padding: '8px 10px',
+              border: 'none',
+              borderRadius: '7px',
+              background: networkMode === 'cloud' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
+              color: networkMode === 'cloud' ? '#fff' : '#94a3b8',
+              fontWeight: 700,
+              fontSize: '12px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <Globe size={13} />
+            <span>Public Cloud Link</span>
+          </button>
+        </div>
+
+        {/* QR Code Card */}
         <div
           style={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'center',
-            padding: '16px',
+            padding: '14px',
             background: 'rgba(255, 255, 255, 0.02)',
             border: '1px solid rgba(255, 255, 255, 0.06)',
             borderRadius: '12px',
-            gap: '10px',
+            gap: '8px',
           }}
         >
           <div
             style={{
-              padding: '10px',
+              padding: '8px',
               background: '#ffffff',
-              borderRadius: '12px',
-              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.5)',
+              borderRadius: '10px',
+              boxShadow: '0 8px 25px rgba(0, 0, 0, 0.6)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -256,35 +334,19 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <img
                 src={qrDataUrl}
                 alt={`Scan QR Code to join room ${roomId}`}
-                style={{ width: '160px', height: '160px', display: 'block', borderRadius: '8px' }}
+                style={{ width: '150px', height: '150px', display: 'block', borderRadius: '6px' }}
               />
             ) : (
-              <div style={{ width: '160px', height: '160px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
-                <QrCode size={48} />
+              <div style={{ width: '150px', height: '150px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#64748b' }}>
+                <QrCode size={44} />
               </div>
             )}
           </div>
-          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
-            📱 Scan with camera on phone or tablet to join instantly
+          <span style={{ fontSize: '11px', color: '#94a3b8', textAlign: 'center' }}>
+            {networkMode === 'wifi'
+              ? '📱 Scan with phone camera on same Wi-Fi / hotspot'
+              : '🌐 Scan or share for global internet access'}
           </span>
-          {isLocalhost && (
-            <button
-              type="button"
-              onClick={() => setUseLiveUrl(!useLiveUrl)}
-              style={{
-                background: useLiveUrl ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255, 255, 255, 0.06)',
-                border: useLiveUrl ? '1px solid #6366f1' : '1px solid rgba(255, 255, 255, 0.15)',
-                borderRadius: '6px',
-                padding: '4px 10px',
-                color: useLiveUrl ? '#a5b4fc' : '#94a3b8',
-                fontSize: '11px',
-                cursor: 'pointer',
-                marginTop: '2px',
-              }}
-            >
-              {useLiveUrl ? '🌐 QR: Using Live Server URL' : '📱 Testing on phone? Switch QR to Live Server'}
-            </button>
-          )}
         </div>
 
         {/* Copy Invite Link */}
@@ -295,7 +357,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             value={inviteUrl}
             style={{
               flex: 1,
-              background: 'rgba(0, 0, 0, 0.4)',
+              background: 'rgba(0, 0, 0, 0.45)',
               border: '1px solid rgba(255, 255, 255, 0.1)',
               borderRadius: '8px',
               padding: '8px 12px',
@@ -303,6 +365,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               fontSize: '12px',
               outline: 'none',
               textOverflow: 'ellipsis',
+              fontFamily: 'monospace',
             }}
           />
           <button
@@ -312,13 +375,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
             style={{ padding: '8px 14px', fontSize: '12px', gap: '6px', whiteSpace: 'nowrap' }}
           >
             {copiedLink ? <Check size={14} /> : <Copy size={14} />}
-            <span>{copiedLink ? 'Link Copied!' : 'Copy Link'}</span>
+            <span>{copiedLink ? 'Copied!' : 'Copy Link'}</span>
           </button>
         </div>
 
         {/* Social Share Buttons */}
         <div>
-          <span style={{ fontSize: '11px', color: '#94a3b8', display: 'block', marginBottom: '8px' }}>
+          <span style={{ fontSize: '10px', color: '#94a3b8', display: 'block', marginBottom: '6px', fontWeight: 700, letterSpacing: '0.5px' }}>
             SHARE TO SOCIAL APPS:
           </span>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
@@ -340,7 +403,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 cursor: 'pointer',
               }}
             >
-              <MessageCircle size={16} />
+              <MessageCircle size={15} />
               <span>WhatsApp</span>
             </button>
 
@@ -362,7 +425,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 cursor: 'pointer',
               }}
             >
-              <Send size={16} />
+              <ExternalLink size={15} />
               <span>Telegram</span>
             </button>
 
@@ -384,8 +447,8 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 cursor: 'pointer',
               }}
             >
-              <span style={{ fontSize: '15px', fontWeight: 800 }}>𝕏</span>
-              <span>X / Twitter</span>
+              <span style={{ fontSize: '14px', fontWeight: 800 }}>𝕏</span>
+              <span>Twitter</span>
             </button>
 
             <button
@@ -397,16 +460,16 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 alignItems: 'center',
                 gap: '4px',
                 padding: '8px 4px',
-                background: copiedDiscord ? 'rgba(34, 197, 94, 0.2)' : 'rgba(99, 102, 241, 0.12)',
-                border: copiedDiscord ? '1px solid #22c55e' : '1px solid rgba(99, 102, 241, 0.25)',
+                background: copiedDiscord ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.12)',
+                border: copiedDiscord ? '1px solid #22c55e' : '1px solid rgba(239, 68, 68, 0.28)',
                 borderRadius: '8px',
-                color: copiedDiscord ? '#4ade80' : '#818cf8',
+                color: copiedDiscord ? '#4ade80' : '#fca5a5',
                 fontSize: '11px',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
             >
-              {copiedDiscord ? <Check size={16} /> : <Share2 size={16} />}
+              {copiedDiscord ? <Check size={15} /> : <Share2 size={15} />}
               <span>{copiedDiscord ? 'Copied!' : 'Discord'}</span>
             </button>
           </div>

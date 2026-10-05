@@ -62,7 +62,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       case 'MODERATOR':
         return '#38bdf8';
       case 'SYSTEM':
-        return '#a855f7';
+        return '#f87171';
       default:
         return '#94a3b8';
     }
@@ -165,8 +165,8 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               </div>
               <div
                 style={{
-                  background: isSelf ? 'rgba(99, 102, 241, 0.22)' : 'rgba(255, 255, 255, 0.06)',
-                  border: `1px solid ${isSelf ? 'rgba(99, 102, 241, 0.4)' : 'var(--border-subtle)'}`,
+                  background: isSelf ? 'rgba(239, 68, 68, 0.16)' : 'rgba(255, 255, 255, 0.06)',
+                  border: `1px solid ${isSelf ? 'rgba(239, 68, 68, 0.35)' : 'var(--border-subtle)'}`,
                   color: 'var(--text-main)',
                   padding: '8px 12px',
                   borderRadius: isSelf ? '12px 12px 2px 12px' : '12px 12px 12px 2px',

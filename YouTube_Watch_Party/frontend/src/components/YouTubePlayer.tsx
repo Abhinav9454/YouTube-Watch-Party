@@ -706,11 +706,11 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               top: '50%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(168, 85, 247, 0.95))',
+              background: 'linear-gradient(135deg, #ff2a2a, #dc2626)',
               color: '#fff',
               padding: '12px 24px',
               borderRadius: '30px',
-              boxShadow: '0 10px 35px rgba(99, 102, 241, 0.7), 0 0 20px rgba(168, 85, 247, 0.5)',
+              boxShadow: '0 10px 35px rgba(239, 68, 68, 0.6), 0 0 20px rgba(0, 0, 0, 0.8)',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -763,13 +763,13 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                 width: '68px',
                 height: '68px',
                 borderRadius: '50%',
-                background: 'rgba(99, 102, 241, 0.85)',
+                background: 'rgba(239, 68, 68, 0.9)',
                 backdropFilter: 'blur(8px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
-                boxShadow: '0 0 25px rgba(99, 102, 241, 0.6)',
+                boxShadow: '0 0 30px rgba(239, 68, 68, 0.65)',
                 transition: 'transform 0.2s',
                 transform: isHoveringControls ? 'scale(1.08)' : 'scale(1)',
               }}
@@ -915,9 +915,9 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                 width: '100%',
                 height: '6px',
                 borderRadius: '3px',
-                accentColor: canControl ? '#6366f1' : '#64748b',
+                accentColor: canControl ? '#ef4444' : '#64748b',
                 cursor: canControl ? 'pointer' : 'not-allowed',
-                background: `linear-gradient(to right, #6366f1 ${progressPercent}%, rgba(255, 255, 255, 0.2) ${progressPercent}%)`,
+                background: `linear-gradient(to right, #ef4444 ${progressPercent}%, rgba(255, 255, 255, 0.2) ${progressPercent}%)`,
               }}
             />
           </div>
@@ -1032,8 +1032,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                           key={speed}
                           onClick={() => handleSpeedSelect(speed)}
                           style={{
-                            background: serverPlaybackSpeed === speed ? 'rgba(99, 102, 241, 0.3)' : 'none',
-                            color: serverPlaybackSpeed === speed ? '#818cf8' : '#fff',
+                            background: serverPlaybackSpeed === speed ? 'rgba(239, 68, 68, 0.25)' : 'none',
+                            color: serverPlaybackSpeed === speed ? '#ef4444' : '#fff',
                             border: 'none',
                             padding: '4px 12px',
                             borderRadius: '4px',
@@ -1070,7 +1070,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: isTheaterMode ? '#818cf8' : '#fff',
+                    color: isTheaterMode ? '#ef4444' : '#fff',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -1087,7 +1087,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: isMiniPlayer ? '#818cf8' : '#fff',
+                    color: isMiniPlayer ? '#ef4444' : '#fff',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
@@ -1152,9 +1152,9 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               key={preset.id}
               onClick={() => onChangeVideo(preset.id)}
               style={{
-                background: videoId === preset.id ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                border: `1px solid ${videoId === preset.id ? 'rgba(99, 102, 241, 0.5)' : 'var(--border-subtle)'}`,
-                color: videoId === preset.id ? '#a5b4fc' : 'var(--text-muted)',
+                background: videoId === preset.id ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                border: `1px solid ${videoId === preset.id ? 'rgba(239, 68, 68, 0.5)' : 'var(--border-subtle)'}`,
+                color: videoId === preset.id ? '#fca5a5' : 'var(--text-muted)',
                 borderRadius: 'var(--radius-full)',
                 padding: '4px 12px',
                 fontSize: '0.76rem',

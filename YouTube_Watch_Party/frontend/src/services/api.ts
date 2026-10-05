@@ -1,6 +1,6 @@
 import type { RoomEntityDto, RoomState, ChatMessage } from '../types/party';
 
-const API_BASE = import.meta.env.VITE_API_URL || (typeof window !== 'undefined' && (window.location.port === '3000' || window.location.port === '5173') ? 'http://localhost:8080/api' : '/api');
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 export async function createRoomApi(
   name?: string,

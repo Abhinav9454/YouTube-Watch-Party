@@ -79,18 +79,18 @@ export const ABLoopControl: React.FC<ABLoopControlProps> = ({
           alignItems: 'center',
           gap: '5px',
           background: isLooping
-            ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3))'
+            ? 'linear-gradient(135deg, #ff2a2a, #dc2626)'
             : pointA !== null
-            ? 'rgba(168, 85, 247, 0.2)'
+            ? 'rgba(239, 68, 68, 0.2)'
             : 'rgba(255, 255, 255, 0.05)',
           border: isLooping
-            ? '1px solid #c084fc'
+            ? '1px solid #ef4444'
             : pointA !== null
-            ? '1px solid rgba(168, 85, 247, 0.5)'
+            ? '1px solid rgba(239, 68, 68, 0.5)'
             : '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '8px',
           padding: '6px 10px',
-          color: isLooping ? '#e9d5ff' : '#a0aec0',
+          color: isLooping ? '#fff' : '#a0aec0',
           fontSize: '12px',
           fontWeight: 600,
           cursor: 'pointer',
@@ -117,12 +117,12 @@ export const ABLoopControl: React.FC<ABLoopControlProps> = ({
             bottom: '44px',
             right: 0,
             width: '290px',
-            background: 'rgba(18, 20, 36, 0.98)',
+            background: 'rgba(15, 20, 32, 0.98)',
             backdropFilter: 'blur(16px)',
-            border: '1px solid rgba(168, 85, 247, 0.35)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
             borderRadius: '14px',
             padding: '14px',
-            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(168, 85, 247, 0.18)',
+            boxShadow: '0 16px 40px rgba(0, 0, 0, 0.8), 0 0 25px rgba(239, 68, 68, 0.18)',
             zIndex: 100,
           }}
         >
@@ -187,11 +187,11 @@ export const ABLoopControl: React.FC<ABLoopControlProps> = ({
                 style={{
                   fontSize: '10px',
                   fontWeight: 700,
-                  background: 'rgba(168, 85, 247, 0.3)',
-                  color: '#c084fc',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  color: '#f87171',
                   padding: '2px 6px',
                   borderRadius: '10px',
-                  border: '1px solid #c084fc',
+                  border: '1px solid rgba(239, 68, 68, 0.5)',
                 }}
               >
                 ACTIVE
@@ -260,7 +260,7 @@ export const ABLoopControl: React.FC<ABLoopControlProps> = ({
                 gap: '6px',
                 padding: '8px 12px',
                 background: isLooping
-                  ? 'linear-gradient(135deg, #a855f7, #ec4899)'
+                  ? 'linear-gradient(135deg, #ff2a2a, #dc2626)'
                   : 'rgba(255, 255, 255, 0.1)',
                 border: 'none',
                 borderRadius: '8px',

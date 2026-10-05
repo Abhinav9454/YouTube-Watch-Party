@@ -82,7 +82,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
         style={{
           height: '1px',
           width: '100%',
-          background: 'linear-gradient(90deg, transparent 0%, rgba(99, 102, 241, 0.5) 50%, transparent 100%)',
+          background: 'linear-gradient(90deg, transparent 0%, rgba(239, 68, 68, 0.4) 50%, transparent 100%)',
         }}
       />
 
@@ -104,32 +104,32 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                   width: '38px',
                   height: '38px',
                   borderRadius: '10px',
-                  background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                  background: 'linear-gradient(135deg, #ff2a2a, #e50914)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
+                  boxShadow: '0 2px 14px rgba(239, 68, 68, 0.4)',
                 }}
               >
                 <Tv size={20} color="#fff" />
               </div>
-              <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span style={{ fontSize: '1.25rem', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
-                  SyncWave
+                  WatchParty
                 </span>
                 <span
                   style={{
-                    marginLeft: '6px',
-                    fontSize: '0.75rem',
+                    fontSize: '0.72rem',
                     fontWeight: 700,
-                    background: 'rgba(99, 102, 241, 0.2)',
-                    color: '#818cf8',
+                    background: 'rgba(239, 68, 68, 0.15)',
+                    color: '#f87171',
                     padding: '2px 7px',
                     borderRadius: '4px',
-                    border: '1px solid rgba(99, 102, 241, 0.3)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    letterSpacing: '0.5px',
                   }}
                 >
-                  PRO
+                  LIVE
                 </span>
               </div>
             </div>
@@ -182,7 +182,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                   onClick={() => handleNav('features')}
                   style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13px', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <Zap size={13} color="#818cf8" /> Sub-Second Timeline Sync
+                  <Zap size={13} color="#ef4444" /> Sub-Second Timeline Sync
                 </button>
               </li>
               <li>
@@ -240,7 +240,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <li style={{ fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#6366f1' }} />
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
                 Java 21 LTS + Spring Boot 3.3
               </li>
               <li style={{ fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -252,7 +252,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                 React 19 + TypeScript + Vite
               </li>
               <li style={{ fontSize: '13px', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#a855f7' }} />
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#f59e0b' }} />
                 STOMP over WebSocket Protocol
               </li>
               <li>
@@ -280,7 +280,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                   rel="noopener noreferrer"
                   style={{ color: '#94a3b8', fontSize: '13px', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <Code2 size={14} color="#818cf8" /> GitHub Repository
+                  <Code2 size={14} color="#ef4444" /> GitHub Repository
                   <ExternalLink size={11} color="#64748b" />
                 </a>
               </li>
@@ -309,7 +309,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                     onClick={onOpenShortcuts}
                     style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13px', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
                   >
-                    <Cpu size={13} color="#818cf8" /> Shortcuts Cheat Sheet (?)
+                    <Cpu size={13} color="#ef4444" /> Shortcuts Cheat Sheet (?)
                   </button>
                 </li>
               )}
@@ -328,7 +328,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                   onClick={() => setActiveModal('terms')}
                   style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13px', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  <FileText size={13} color="#818cf8" /> Terms of Service
+                  <FileText size={13} color="#ef4444" /> Terms of Service
                 </button>
               </li>
               <li>
@@ -387,7 +387,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                 }}
                 title="Keyboard Shortcuts Cheat Sheet (?)"
               >
-                <HelpCircle size={14} color="#818cf8" />
+                <HelpCircle size={14} color="#ef4444" />
                 <span>Shortcuts (?)</span>
               </button>
             )}
@@ -439,10 +439,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
               maxHeight: '85vh',
               overflowY: 'auto',
               background: 'rgba(15, 20, 32, 0.98)',
-              border: '1px solid rgba(99, 102, 241, 0.35)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
               borderRadius: '20px',
               padding: '28px',
-              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(99, 102, 241, 0.2)',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.9), 0 0 35px rgba(239, 68, 68, 0.18)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -450,7 +450,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 {activeModal === 'privacy' && <Lock size={22} color="#34d399" />}
-                {activeModal === 'terms' && <FileText size={22} color="#818cf8" />}
+                {activeModal === 'terms' && <FileText size={22} color="#ef4444" />}
                 {activeModal === 'fairuse' && <Shield size={22} color="#f43f5e" />}
                 {activeModal === 'docs' && <BookOpen size={22} color="#38bdf8" />}
                 {activeModal === 'hostguide' && <Users size={22} color="#f59e0b" />}
@@ -478,7 +478,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
             {activeModal === 'docs' && (
               <div style={{ fontSize: '13.5px', color: '#cbd5e1', lineHeight: 1.65, display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <p>
-                  SyncWave Party utilizes a hybrid real-time architecture: <strong>STOMP over WebSockets</strong> for state authority and low-latency timeline broadcasts, coupled with <strong>WebRTC Mesh</strong> for peer-to-peer audio/video calling.
+                  WatchParty utilizes a hybrid real-time architecture: <strong>STOMP over WebSockets</strong> for state authority and low-latency timeline broadcasts, coupled with <strong>WebRTC Mesh</strong> for peer-to-peer audio/video calling.
                 </p>
 
                 <div style={{ background: 'rgba(0, 0, 0, 0.4)', padding: '14px', borderRadius: '10px', border: '1px solid rgba(255, 255, 255, 0.08)' }}>
@@ -486,10 +486,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                     WEBSOCKET STOMP DESTINATIONS
                   </div>
                   <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '6px', fontFamily: 'monospace', fontSize: '12px' }}>
-                    <li><span style={{ color: '#818cf8' }}>/topic/room/&#123;roomId&#125;</span> — Broadcasts play, pause, seek, playlist, reactions</li>
-                    <li><span style={{ color: '#818cf8' }}>/topic/room/&#123;roomId&#125;/chat</span> — Instant chat broadcasts</li>
-                    <li><span style={{ color: '#818cf8' }}>/app/room/&#123;roomId&#125;/sync</span> — Inbound playback synchronization commands</li>
-                    <li><span style={{ color: '#818cf8' }}>/app/room/&#123;roomId&#125;/trivia</span> — Synchronized quiz state broadcasts</li>
+                    <li><span style={{ color: '#ef4444' }}>/topic/room/&#123;roomId&#125;</span> — Broadcasts play, pause, seek, playlist, reactions</li>
+                    <li><span style={{ color: '#ef4444' }}>/topic/room/&#123;roomId&#125;/chat</span> — Instant chat broadcasts</li>
+                    <li><span style={{ color: '#ef4444' }}>/app/room/&#123;roomId&#125;/sync</span> — Inbound playback synchronization commands</li>
+                    <li><span style={{ color: '#ef4444' }}>/app/room/&#123;roomId&#125;/trivia</span> — Synchronized quiz state broadcasts</li>
                   </ul>
                 </div>
 
@@ -562,8 +562,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                             style={{
                               padding: '8px 10px',
                               borderRadius: '8px',
-                              border: feedbackCategory === cat.id ? '1px solid #6366f1' : '1px solid rgba(255, 255, 255, 0.08)',
-                              background: feedbackCategory === cat.id ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                              border: feedbackCategory === cat.id ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.08)',
+                              background: feedbackCategory === cat.id ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.04)',
                               color: feedbackCategory === cat.id ? '#fff' : '#94a3b8',
                               fontWeight: 600,
                               fontSize: '12px',

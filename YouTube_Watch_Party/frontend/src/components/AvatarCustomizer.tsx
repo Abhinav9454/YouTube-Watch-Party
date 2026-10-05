@@ -18,7 +18,7 @@ export const AVATAR_OPTIONS = [
 
 export const BADGE_OPTIONS = [
   { id: 'vip', label: 'VIP Guest', icon: '🌟', color: '#fbbf24' },
-  { id: 'dj', label: 'Party DJ', icon: '🎧', color: '#a855f7' },
+  { id: 'dj', label: 'Party DJ', icon: '🎧', color: '#f43f5e' },
   { id: 'trivia', label: 'Trivia Whiz', icon: '🧠', color: '#38bdf8' },
   { id: 'snack', label: 'Snack Master', icon: '🍿', color: '#f97316' },
   { id: 'hype', label: 'Hype Captain', icon: '🔥', color: '#ef4444' },
@@ -104,10 +104,10 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
               width: '100%',
               maxWidth: '440px',
               background: 'rgba(18, 22, 38, 0.98)',
-              border: '1px solid rgba(168, 85, 247, 0.35)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
               borderRadius: '16px',
               padding: '22px',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(168, 85, 247, 0.15)',
+              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.9), 0 0 30px rgba(239, 68, 68, 0.15)',
               display: 'flex',
               flexDirection: 'column',
               gap: '16px',
@@ -121,11 +121,11 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                     width: '34px',
                     height: '34px',
                     borderRadius: '8px',
-                    background: 'rgba(168, 85, 247, 0.2)',
+                    background: 'rgba(239, 68, 68, 0.15)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    color: '#c084fc',
+                    color: '#ef4444',
                   }}
                 >
                   <Smile size={18} />
@@ -171,12 +171,12 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                   width: '48px',
                   height: '48px',
                   borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                  background: 'linear-gradient(135deg, #ff2a2a, #dc2626)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '24px',
-                  boxShadow: '0 0 20px rgba(99, 102, 241, 0.4)',
+                  boxShadow: '0 2px 14px rgba(239, 68, 68, 0.4)',
                 }}
               >
                 {selectedAvatar}
@@ -211,8 +211,8 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                         alignItems: 'center',
                         gap: '2px',
                         padding: '8px 4px',
-                        background: isSelected ? 'rgba(168, 85, 247, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                        border: isSelected ? '1px solid #c084fc' : '1px solid rgba(255, 255, 255, 0.08)',
+                        background: isSelected ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                        border: isSelected ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.08)',
                         borderRadius: '10px',
                         cursor: 'pointer',
                         transition: 'transform 0.15s ease',
@@ -220,7 +220,7 @@ export const AvatarCustomizer: React.FC<AvatarCustomizerProps> = ({
                       }}
                     >
                       <span style={{ fontSize: '22px' }}>{av.emoji}</span>
-                      <span style={{ fontSize: '10px', color: isSelected ? '#c084fc' : '#94a3b8' }}>
+                      <span style={{ fontSize: '10px', color: isSelected ? '#f87171' : '#94a3b8' }}>
                         {av.name}
                       </span>
                     </button>

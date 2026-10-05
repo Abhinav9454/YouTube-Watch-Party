@@ -135,7 +135,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
 
   const handleCopyRoomCode = () => {
-    const url = `${window.location.origin}?room=${roomId}`;
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const origin = isLocalhost ? 'http://10.106.39.147:5173' : window.location.origin;
+    const url = `${origin}/?room=${roomId}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedCode(true);
       setTimeout(() => setCopiedCode(false), 2000);
@@ -566,8 +568,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
               alignItems: 'center',
               gap: '10px',
               borderRadius: '12px',
-              border: '1px dashed rgba(99, 102, 241, 0.4)',
-              background: 'rgba(99, 102, 241, 0.04)',
+              border: '1px dashed rgba(239, 68, 68, 0.4)',
+              background: 'rgba(239, 68, 68, 0.04)',
             }}
           >
             <div style={{ fontSize: '32px' }}>📺</div>
@@ -600,8 +602,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                   zIndex: 9999,
                   borderRadius: '14px',
                   overflow: 'hidden',
-                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(99, 102, 241, 0.5)',
-                  border: '2px solid #6366f1',
+                  boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(239, 68, 68, 0.45)',
+                  border: '2px solid #ef4444',
                   background: '#090d16',
                 }
               : {
@@ -609,7 +611,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                   width: '100%',
                   borderRadius: '12px',
                   boxShadow: ambientGlow
-                    ? '0 0 60px rgba(99, 102, 241, 0.25), 0 0 120px rgba(255, 75, 43, 0.15)'
+                    ? '0 0 60px rgba(239, 68, 68, 0.22), 0 0 100px rgba(0, 0, 0, 0.85)'
                     : 'none',
                   transition: 'box-shadow 0.4s ease',
                 }
@@ -723,9 +725,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 padding: '6px 4px',
                 border: 'none',
                 borderRadius: '6px',
-                background: activeTab === 'chat' ? 'rgba(99, 102, 241, 0.85)' : 'transparent',
+                background: activeTab === 'chat' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: activeTab === 'chat' ? '#fff' : 'var(--text-muted)',
-                fontWeight: 600,
+                fontWeight: 700,
                 fontSize: '0.75rem',
                 cursor: 'pointer',
                 display: 'flex',
@@ -733,6 +735,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '2px',
+                boxShadow: activeTab === 'chat' ? '0 2px 8px rgba(239, 68, 68, 0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
             >
@@ -746,9 +749,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 padding: '6px 4px',
                 border: 'none',
                 borderRadius: '6px',
-                background: activeTab === 'playlist' ? 'rgba(99, 102, 241, 0.85)' : 'transparent',
+                background: activeTab === 'playlist' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: activeTab === 'playlist' ? '#fff' : 'var(--text-muted)',
-                fontWeight: 600,
+                fontWeight: 700,
                 fontSize: '0.75rem',
                 cursor: 'pointer',
                 display: 'flex',
@@ -756,6 +759,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '2px',
+                boxShadow: activeTab === 'playlist' ? '0 2px 8px rgba(239, 68, 68, 0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
             >
@@ -769,9 +773,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 padding: '6px 4px',
                 border: 'none',
                 borderRadius: '6px',
-                background: activeTab === 'participants' ? 'rgba(99, 102, 241, 0.85)' : 'transparent',
+                background: activeTab === 'participants' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: activeTab === 'participants' ? '#fff' : 'var(--text-muted)',
-                fontWeight: 600,
+                fontWeight: 700,
                 fontSize: '0.75rem',
                 cursor: 'pointer',
                 display: 'flex',
@@ -779,6 +783,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '2px',
+                boxShadow: activeTab === 'participants' ? '0 2px 8px rgba(239, 68, 68, 0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
             >
@@ -792,9 +797,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 padding: '6px 4px',
                 border: 'none',
                 borderRadius: '6px',
-                background: activeTab === 'polls' ? 'rgba(255, 75, 43, 0.85)' : 'transparent',
+                background: activeTab === 'polls' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: activeTab === 'polls' ? '#fff' : 'var(--text-muted)',
-                fontWeight: 600,
+                fontWeight: 700,
                 fontSize: '0.75rem',
                 cursor: 'pointer',
                 display: 'flex',
@@ -803,6 +808,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 justifyContent: 'center',
                 gap: '2px',
                 position: 'relative',
+                boxShadow: activeTab === 'polls' ? '0 2px 8px rgba(239, 68, 68, 0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
             >
@@ -818,9 +824,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 padding: '6px 4px',
                 border: 'none',
                 borderRadius: '6px',
-                background: activeTab === 'moments' ? 'rgba(99, 102, 241, 0.85)' : 'transparent',
+                background: activeTab === 'moments' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: activeTab === 'moments' ? '#fff' : 'var(--text-muted)',
-                fontWeight: 600,
+                fontWeight: 700,
                 fontSize: '0.75rem',
                 cursor: 'pointer',
                 display: 'flex',
@@ -828,6 +834,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '2px',
+                boxShadow: activeTab === 'moments' ? '0 2px 8px rgba(239, 68, 68, 0.35)' : 'none',
                 transition: 'all 0.2s',
               }}
             >

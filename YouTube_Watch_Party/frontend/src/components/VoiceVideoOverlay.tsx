@@ -293,9 +293,9 @@ export const VoiceVideoOverlay: React.FC<VoiceVideoOverlayProps> = ({
               type="button"
               onClick={handleToggleDucking}
               style={{
-                background: isDucking ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                border: isDucking ? '1px solid #818cf8' : '1px solid rgba(255, 255, 255, 0.1)',
-                color: isDucking ? '#818cf8' : '#718096',
+                background: isDucking ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                border: isDucking ? '1px solid rgba(239, 68, 68, 0.4)' : '1px solid rgba(255, 255, 255, 0.1)',
+                color: isDucking ? '#fca5a5' : '#718096',
                 borderRadius: '20px',
                 padding: '4px 10px',
                 fontSize: '11px',
@@ -399,7 +399,7 @@ export const VoiceVideoOverlay: React.FC<VoiceVideoOverlayProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '24px',
-                  background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(255, 75, 43, 0.2))',
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.08))',
                 }}
               >
                 <span>👤</span>

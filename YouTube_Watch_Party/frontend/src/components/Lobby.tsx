@@ -153,7 +153,7 @@ export const Lobby: React.FC<LobbyProps> = ({
             transform: 'translateX(-50%)',
             width: '650px',
             height: '350px',
-            background: 'radial-gradient(ellipse at center, rgba(99, 102, 241, 0.22) 0%, rgba(168, 85, 247, 0.12) 40%, transparent 70%)',
+            background: 'radial-gradient(ellipse at center, rgba(239, 68, 68, 0.14) 0%, rgba(220, 38, 38, 0.04) 50%, transparent 75%)',
             filter: 'blur(60px)',
             pointerEvents: 'none',
             zIndex: -1,
@@ -168,13 +168,13 @@ export const Lobby: React.FC<LobbyProps> = ({
             gap: '8px',
             padding: '5px 14px',
             borderRadius: '9999px',
-            background: 'rgba(99, 102, 241, 0.12)',
-            border: '1px solid rgba(99, 102, 241, 0.3)',
+            background: 'rgba(239, 68, 68, 0.10)',
+            border: '1px solid rgba(239, 68, 68, 0.28)',
             marginBottom: '20px',
           }}
         >
-          <Sparkles size={14} color="#818cf8" />
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#c7d2fe' }}>
+          <Sparkles size={14} color="#f87171" />
+          <span style={{ fontSize: '13px', fontWeight: 600, color: '#fecaca' }}>
             Next-Gen YouTube Watch Party • Zero Install • 100% Free
           </span>
         </div>
@@ -194,7 +194,7 @@ export const Lobby: React.FC<LobbyProps> = ({
           Watch YouTube Together.{' '}
           <span
             style={{
-              background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #38bdf8 100%)',
+              background: 'linear-gradient(135deg, #ff2a2a 0%, #f97316 60%, #e11d48 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -225,8 +225,8 @@ export const Lobby: React.FC<LobbyProps> = ({
             width: '100%',
             padding: '28px',
             borderRadius: '20px',
-            border: '1px solid rgba(99, 102, 241, 0.32)',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.6), 0 0 40px rgba(99, 102, 241, 0.15)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
+            boxShadow: '0 24px 60px rgba(0, 0, 0, 0.75), 0 0 30px rgba(239, 68, 68, 0.12)',
             background: 'rgba(15, 20, 32, 0.94)',
             textAlign: 'left',
           }}
@@ -243,7 +243,7 @@ export const Lobby: React.FC<LobbyProps> = ({
             }}
           >
             <div>
-              <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#818cf8', fontWeight: 700, letterSpacing: '0.5px' }}>
+              <span style={{ fontSize: '11px', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 700, letterSpacing: '0.5px' }}>
                 Your Screen Name
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
@@ -271,14 +271,14 @@ export const Lobby: React.FC<LobbyProps> = ({
                 width: '38px',
                 height: '38px',
                 borderRadius: '50%',
-                background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                background: 'linear-gradient(135deg, #ff2a2a, #dc2626)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
                 fontWeight: 800,
                 fontSize: '15px',
-                boxShadow: '0 0 15px rgba(99, 102, 241, 0.4)',
+                boxShadow: '0 0 15px rgba(239, 68, 68, 0.35)',
               }}
             >
               {username ? username[0].toUpperCase() : 'U'}
@@ -304,7 +304,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                 padding: '9px',
                 border: 'none',
                 borderRadius: '8px',
-                background: tab === 'create' ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'transparent',
+                background: tab === 'create' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: tab === 'create' ? '#fff' : '#94a3b8',
                 fontWeight: 700,
                 fontSize: '0.9rem',
@@ -326,7 +326,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                 padding: '9px',
                 border: 'none',
                 borderRadius: '8px',
-                background: tab === 'join' ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'transparent',
+                background: tab === 'join' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: tab === 'join' ? '#fff' : '#94a3b8',
                 fontWeight: 700,
                 fontSize: '0.9rem',
@@ -374,8 +374,8 @@ export const Lobby: React.FC<LobbyProps> = ({
                         }}
                         style={{
                           padding: '8px 10px',
-                          background: isSelected ? 'rgba(99, 102, 241, 0.25)' : 'rgba(255, 255, 255, 0.04)',
-                          border: isSelected ? '1px solid #6366f1' : '1px solid rgba(255, 255, 255, 0.08)',
+                          background: isSelected ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                          border: isSelected ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.08)',
                           borderRadius: '8px',
                           cursor: 'pointer',
                           transition: 'all 0.2s',
@@ -387,7 +387,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                         <span style={{ fontSize: '12px', fontWeight: 600, color: isSelected ? '#fff' : '#cbd5e1' }}>
                           {vid.tag} {vid.title}
                         </span>
-                        {isSelected && <CheckCircle2 size={13} color="#818cf8" />}
+                        {isSelected && <CheckCircle2 size={13} color="#f87171" />}
                       </div>
                     );
                   })}
@@ -413,14 +413,14 @@ export const Lobby: React.FC<LobbyProps> = ({
               >
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Lock size={14} color={requirePasscode ? '#38bdf8' : '#94a3b8'} />
+                    <Lock size={14} color={requirePasscode ? '#ef4444' : '#94a3b8'} />
                     <span style={{ fontSize: '12px', fontWeight: 600, color: '#e2e8f0' }}>Passcode Protect Room</span>
                   </div>
                   <input
                     type="checkbox"
                     checked={requirePasscode}
                     onChange={(e) => setRequirePasscode(e.target.checked)}
-                    style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#6366f1' }}
+                    style={{ cursor: 'pointer', width: '15px', height: '15px', accentColor: '#ef4444' }}
                   />
                 </div>
 
@@ -450,7 +450,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                   justifyContent: 'center',
                   gap: '8px',
                   marginTop: '4px',
-                  boxShadow: '0 0 25px rgba(99, 102, 241, 0.4)',
+                  boxShadow: '0 4px 20px rgba(239, 68, 68, 0.4)',
                 }}
               >
                 <Sparkles size={17} />
@@ -467,12 +467,14 @@ export const Lobby: React.FC<LobbyProps> = ({
                   type="text"
                   className="input-field"
                   value={joinCode}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    const cleaned = cleanRoomCode(val);
-                    setJoinCode(cleaned || val.toUpperCase());
+                  onChange={(e) => setJoinCode(e.target.value)}
+                  onBlur={() => {
+                    const cleaned = cleanRoomCode(joinCode);
+                    if (cleaned && cleaned.length >= 4) {
+                      setJoinCode(cleaned);
+                    }
                   }}
-                  placeholder="e.g. 7X9K2PM4WQ or paste invite link"
+                  placeholder="e.g. QHSDHXSBRN or paste party link..."
                   style={{
                     width: '100%',
                     padding: '12px 14px',
@@ -560,7 +562,7 @@ export const Lobby: React.FC<LobbyProps> = ({
             <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Zero Downloads or Extensions</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#a855f7' }}>WebRTC Mesh</span>
+            <span style={{ fontSize: '1.3rem', fontWeight: 800, color: '#f87171' }}>WebRTC Mesh</span>
             <span style={{ fontSize: '12px', color: '#94a3b8', fontWeight: 500 }}>Live Voice & Video Calls</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
@@ -641,12 +643,12 @@ export const Lobby: React.FC<LobbyProps> = ({
                       {room.name}
                     </h3>
                     <div style={{ fontSize: '11px', color: '#94a3b8' }}>
-                      Host: <strong style={{ color: '#c7d2fe' }}>{room.creatorUsername}</strong>
+                      Host: <strong style={{ color: '#fff' }}>{room.creatorUsername}</strong>
                     </div>
                   </div>
 
                   <div style={{ marginTop: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                    <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#818cf8', fontWeight: 700 }}>
+                    <span style={{ fontSize: '12px', fontFamily: 'monospace', color: '#fca5a5', fontWeight: 700 }}>
                       #{room.roomId}
                     </span>
                     <button
@@ -657,9 +659,9 @@ export const Lobby: React.FC<LobbyProps> = ({
                         fontSize: '11px',
                         fontWeight: 600,
                         borderRadius: '6px',
-                        border: '1px solid #6366f1',
-                        background: 'rgba(99, 102, 241, 0.15)',
-                        color: '#c7d2fe',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        color: '#fecaca',
                         cursor: 'pointer',
                       }}
                     >
@@ -706,14 +708,14 @@ export const Lobby: React.FC<LobbyProps> = ({
               desc: 'Authoritative timestamp consensus maintains <15ms drift so everyone laughs at the exact same joke.',
             },
             {
-              icon: <Mic size={22} color="#a855f7" />,
+              icon: <Mic size={22} color="#ef4444" />,
               title: 'WebRTC Voice & Cam',
               desc: 'Talk and see your friends with built-in auto-ducking that lowers YouTube audio when someone speaks.',
             },
             {
               icon: <Gift size={22} color="#f43f5e" />,
-              title: '3D Flying Snacks',
-              desc: 'Toss popcorn, pizza, soda, and party confetti across everyone’s screens with spatial sound effects.',
+              title: 'Interactive Virtual Snacks',
+              desc: 'Toss popcorn, pizza, soda, and party confetti across everyone’s screens with smooth visual animations.',
             },
             {
               icon: <Sparkles size={22} color="#f59e0b" />,
@@ -808,7 +810,7 @@ export const Lobby: React.FC<LobbyProps> = ({
                   }}
                 >
                   <span>{faq.q}</span>
-                  {isOpen ? <ChevronUp size={16} color="#818cf8" /> : <ChevronDown size={16} color="#94a3b8" />}
+                  {isOpen ? <ChevronUp size={16} color="#ef4444" /> : <ChevronDown size={16} color="#94a3b8" />}
                 </button>
                 {isOpen && (
                   <div

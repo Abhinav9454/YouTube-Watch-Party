@@ -48,7 +48,7 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
                 ? 'rgba(12, 38, 28, 0.95)'
                 : 'rgba(20, 26, 44, 0.95)',
               border: `1px solid ${
-                isError ? '#f43f5e' : isSuccess ? '#10b981' : '#6366f1'
+                isError ? '#f43f5e' : isSuccess ? '#10b981' : '#ef4444'
               }`,
               boxShadow: '0 10px 25px rgba(0,0,0,0.5)',
               backdropFilter: 'blur(8px)',
@@ -60,7 +60,7 @@ export const ToastContainer: React.FC<ToastProps> = ({ toasts, onDismiss }) => {
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               {isError && <AlertCircle size={18} color="#f43f5e" />}
               {isSuccess && <CheckCircle size={18} color="#10b981" />}
-              {!isError && !isSuccess && <Info size={18} color="#6366f1" />}
+              {!isError && !isSuccess && <Info size={18} color="#ef4444" />}
               <span>{toast.message}</span>
             </div>
             <button

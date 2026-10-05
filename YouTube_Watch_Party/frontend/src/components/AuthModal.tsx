@@ -90,7 +90,7 @@ export function AuthModal({ isOpen, initialMode = 'signin', onClose, onSuccess }
           background: 'linear-gradient(135deg, rgba(24, 24, 37, 0.95), rgba(15, 15, 26, 0.98))',
           border: '1px solid rgba(255, 255, 255, 0.12)',
           borderRadius: '1.25rem',
-          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 35px rgba(124, 58, 237, 0.15)',
+          boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.7), 0 0 35px rgba(239, 68, 68, 0.15)',
           overflow: 'hidden',
           position: 'relative',
         }}
@@ -104,7 +104,7 @@ export function AuthModal({ isOpen, initialMode = 'signin', onClose, onSuccess }
             left: 0,
             right: 0,
             height: '4px',
-            background: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6)',
+            background: 'linear-gradient(90deg, #ff2a2a, #dc2626)',
           }}
         />
 
@@ -144,16 +144,16 @@ export function AuthModal({ isOpen, initialMode = 'signin', onClose, onSuccess }
                 gap: '0.5rem',
                 padding: '0.35rem 0.85rem',
                 borderRadius: '9999px',
-                background: 'rgba(139, 92, 246, 0.15)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-                color: '#c4b5fd',
+                background: 'rgba(239, 68, 68, 0.12)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                color: '#fca5a5',
                 fontSize: '0.8rem',
                 fontWeight: 600,
                 marginBottom: '0.75rem',
               }}
             >
               <Sparkles size={14} />
-              <span>Official SyncWave Account</span>
+              <span>Official WatchParty Account</span>
             </div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f8fafc', margin: 0 }}>
               {mode === 'signup' ? 'Create Your Account' : 'Welcome Back'}
@@ -187,7 +187,7 @@ export function AuthModal({ isOpen, initialMode = 'signin', onClose, onSuccess }
                 padding: '0.6rem',
                 borderRadius: '0.5rem',
                 border: 'none',
-                background: mode === 'signin' ? 'linear-gradient(135deg, #7c3aed, #6366f1)' : 'transparent',
+                background: mode === 'signin' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: mode === 'signin' ? '#fff' : '#94a3b8',
                 fontWeight: 600,
                 fontSize: '0.875rem',
@@ -213,7 +213,7 @@ export function AuthModal({ isOpen, initialMode = 'signin', onClose, onSuccess }
                 padding: '0.6rem',
                 borderRadius: '0.5rem',
                 border: 'none',
-                background: mode === 'signup' ? 'linear-gradient(135deg, #ec4899, #8b5cf6)' : 'transparent',
+                background: mode === 'signup' ? 'linear-gradient(135deg, #ff2a2a, #dc2626)' : 'transparent',
                 color: mode === 'signup' ? '#fff' : '#94a3b8',
                 fontWeight: 600,
                 fontSize: '0.875rem',
@@ -275,9 +275,9 @@ export function AuthModal({ isOpen, initialMode = 'signin', onClose, onSuccess }
                       style={{
                         padding: '0.4rem',
                         fontSize: '1.4rem',
-                        border: avatar === emoji ? '2px solid #a855f7' : '1px solid transparent',
+                        border: avatar === emoji ? '2px solid #ef4444' : '1px solid transparent',
                         borderRadius: '0.5rem',
-                        background: avatar === emoji ? 'rgba(168, 85, 247, 0.25)' : 'transparent',
+                        background: avatar === emoji ? 'rgba(239, 68, 68, 0.25)' : 'transparent',
                         cursor: 'pointer',
                         transition: 'transform 0.15s',
                         transform: avatar === emoji ? 'scale(1.15)' : 'scale(1)',
@@ -441,15 +441,12 @@ export function AuthModal({ isOpen, initialMode = 'signin', onClose, onSuccess }
                 padding: '0.85rem',
                 borderRadius: '0.75rem',
                 border: 'none',
-                background:
-                  mode === 'signup'
-                    ? 'linear-gradient(135deg, #ec4899, #8b5cf6)'
-                    : 'linear-gradient(135deg, #7c3aed, #6366f1)',
+                background: 'linear-gradient(135deg, #ff2a2a, #dc2626)',
                 color: '#fff',
                 fontSize: '0.95rem',
                 fontWeight: 700,
                 cursor: loading ? 'not-allowed' : 'pointer',
-                boxShadow: '0 4px 15px rgba(124, 58, 237, 0.4)',
+                boxShadow: '0 4px 15px rgba(239, 68, 68, 0.4)',
                 transition: 'all 0.2s',
                 opacity: loading ? 0.7 : 1,
               }}
@@ -458,7 +455,7 @@ export function AuthModal({ isOpen, initialMode = 'signin', onClose, onSuccess }
                 ? 'Processing...'
                 : mode === 'signup'
                 ? 'Create Free Account'
-                : 'Sign In to SyncWave'}
+                : 'Sign In to WatchParty'}
             </button>
           </form>
 

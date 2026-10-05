@@ -13,7 +13,7 @@ const SNACK_LIST = [
   { type: 'soda', name: 'Cold Soda', icon: '🥤', color: '#06b6d4' },
   { type: 'icecream', name: 'Ice Cream', icon: '🍦', color: '#ec4899' },
   { type: 'donut', name: 'Glazed Donut', icon: '🍩', color: '#d946ef' },
-  { type: 'confetti', name: 'Party Cannon', icon: '🎉', color: '#8b5cf6' },
+  { type: 'confetti', name: 'Party Cannon', icon: '🎉', color: '#f59e0b' },
 ];
 
 export const GiftsOverlay: React.FC<GiftsOverlayProps> = ({ gifts, showControls = true }) => {
