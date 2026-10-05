@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Navbar } from './components/Navbar';
 import { Lobby } from './components/Lobby';
 import { WatchParty } from './components/WatchParty';
+import { AuthModal } from './components/AuthModal';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { wsService } from './services/websocket';
@@ -38,6 +39,13 @@ import type {
   TriviaEndedPayload,
 } from './types/party';
 
+interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
+  avatar: string;
+}
+
 export function App() {
   const [userId] = useState<string>(() => {
     const saved = localStorage.getItem('watchparty_userid');
@@ -47,7 +55,29 @@ export function App() {
     return generated;
   });
 
+  const [authUser, setAuthUser] = useState<AuthUser | null>(() => {
+    const saved = localStorage.getItem('watchparty_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+
   const [username, setUsername] = useState<string>(() => {
+    const savedUser = localStorage.getItem('watchparty_user');
+    if (savedUser) {
+      try {
+        const parsed = JSON.parse(savedUser);
+        if (parsed.username) return parsed.username;
+      } catch {}
+    }
     return localStorage.getItem('watchparty_username') || `User_${Math.floor(1000 + Math.random() * 9000)}`;
   });
 
@@ -332,15 +362,70 @@ export function App() {
     };
   }, [userId, currentUserRole, showToast]);
 
+  // Handle browser Back / Forward navigation smoothly
+  useEffect(() => {
+    const onPopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get('room');
+
+      if (!roomParam) {
+        // User pressed Back to return to Lobby
+        if (roomId) {
+          wsService.leaveRoom(roomId);
+        }
+        setRoomId(null);
+        setParticipants([]);
+        setPlaylist([]);
+        setControlRequests([]);
+        setChatMessages([]);
+        setCurrentUserRole('PARTICIPANT');
+      } else if (roomParam && roomParam !== roomId) {
+        // User pressed Forward to re-enter a room
+        handleJoinRoom(roomParam.toUpperCase(), username);
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+    };
+  }, [roomId, username]);
+
+  const handleOpenAuth = (mode: 'signin' | 'signup' = 'signin') => {
+    setAuthModalMode(mode);
+    setIsAuthModalOpen(true);
+  };
+
+  const handleAuthSuccess = (user: AuthUser) => {
+    setAuthUser(user);
+    setUsername(user.username);
+    localStorage.setItem('watchparty_username', user.username);
+    showToast(`Welcome, ${user.username}! Signed in successfully.`, 'success');
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('watchparty_token');
+    localStorage.removeItem('watchparty_user');
+    setAuthUser(null);
+    showToast('Signed out successfully.', 'info');
+  };
+
   const handleJoinRoom = async (targetRoomId: string, joinUsername: string, passcode?: string) => {
     setUsername(joinUsername);
     localStorage.setItem('watchparty_username', joinUsername);
+
+    // Track recently visited room
+    try {
+      const saved: string[] = JSON.parse(localStorage.getItem('watchparty_recent_rooms') || '[]');
+      const updated = [targetRoomId, ...saved.filter((id) => id !== targetRoomId)].slice(0, 10);
+      localStorage.setItem('watchparty_recent_rooms', JSON.stringify(updated));
+    } catch {}
 
     try {
       await wsService.connect();
       setRoomId(targetRoomId);
       const newUrl = `${window.location.pathname}?room=${targetRoomId}`;
-      window.history.pushState({ path: newUrl }, '', newUrl);
+      window.history.pushState({ roomId: targetRoomId }, '', newUrl);
 
       const history = await getChatHistoryApi(targetRoomId);
       if (history.length > 0) {
@@ -379,7 +464,7 @@ export function App() {
     setChatMessages([]);
     setCurrentUserRole('PARTICIPANT');
     const cleanUrl = window.location.pathname;
-    window.history.pushState({ path: cleanUrl }, '', cleanUrl);
+    window.history.pushState({ roomId: null }, '', cleanUrl);
   };
 
   const handlePlay = (time: number) => {
@@ -458,6 +543,13 @@ export function App() {
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
 
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        initialMode={authModalMode}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={handleAuthSuccess}
+      />
+
       <Navbar
         roomId={roomId || undefined}
         roomName={roomName}
@@ -465,6 +557,10 @@ export function App() {
         userRole={roomId ? currentUserRole : undefined}
         isConnected={isConnected}
         onLeaveRoom={roomId ? handleLeaveRoom : undefined}
+        authUser={authUser}
+        onOpenAuth={handleOpenAuth}
+        onLogout={handleLogout}
+        onBackToLobby={handleLeaveRoom}
       />
 
       <main style={{ flex: 1 }}>
