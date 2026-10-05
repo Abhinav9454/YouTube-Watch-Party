@@ -3,6 +3,8 @@ import { Navbar } from './components/Navbar';
 import { Lobby } from './components/Lobby';
 import { WatchParty } from './components/WatchParty';
 import { AuthModal } from './components/AuthModal';
+import { Footer } from './components/Footer';
+import { KeyboardShortcutsModal } from './components/KeyboardShortcutsModal';
 import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { wsService } from './services/websocket';
@@ -69,6 +71,7 @@ export function App() {
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signin');
+  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
 
   const [username, setUsername] = useState<string>(() => {
     const savedUser = localStorage.getItem('watchparty_user');
@@ -123,6 +126,20 @@ export function App() {
     if (roomParam && !roomId) {
       handleJoinRoom(roomParam.toUpperCase(), username);
     }
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return;
+      }
+      if (e.key === '?') {
+        setIsShortcutsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   useEffect(() => {
@@ -563,6 +580,11 @@ export function App() {
         onBackToLobby={handleLeaveRoom}
       />
 
+      <KeyboardShortcutsModal
+        isOpen={isShortcutsOpen}
+        onClose={() => setIsShortcutsOpen(false)}
+      />
+
       <main style={{ flex: 1 }}>
         {!roomId ? (
           <Lobby
@@ -613,6 +635,8 @@ export function App() {
           />
         )}
       </main>
+
+      {!roomId && <Footer onOpenShortcuts={() => setIsShortcutsOpen(true)} />}
     </div>
   );
 }

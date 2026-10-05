@@ -164,8 +164,66 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Center Room Code & Share Controls (when in room) */}
-      {roomId && (
+      {/* Center Navigation Links (when on Landing Page / Lobby) */}
+      {!roomId ? (
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }} className="desktop-only">
+          <button
+            type="button"
+            onClick={() => document.getElementById('launcher-card')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+          >
+            Create Party
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById('public-parties')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+          >
+            Live Parties
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+          >
+            How It Works
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+          >
+            Features
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById('comparison')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+          >
+            Why Us
+          </button>
+          <button
+            type="button"
+            onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+          >
+            FAQ
+          </button>
+        </nav>
+      ) : (
+        /* Center Room Code & Share Controls (when in room) */
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <div
             onClick={handleCopyLink}
