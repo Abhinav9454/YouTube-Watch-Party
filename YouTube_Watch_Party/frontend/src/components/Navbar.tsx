@@ -1,27 +1,14 @@
 import React, { useState } from 'react';
 import {
   Tv,
-  Copy,
-  Check,
   LogOut,
-  Crown,
-  Shield,
-  User,
-  QrCode,
-  HelpCircle,
-  Volume2,
-  VolumeX,
-  ArrowLeft,
   LogIn,
   UserPlus,
   Menu,
   X,
+  Sparkles,
 } from 'lucide-react';
 import type { Role } from '../types/party';
-import { ShareModal } from './ShareModal';
-import { AvatarCustomizer } from './AvatarCustomizer';
-import { KeyboardShortcutsModal } from './KeyboardShortcutsModal';
-import { soundEffects } from '../services/soundEffects';
 
 interface AuthUser {
   id: string;
@@ -35,7 +22,7 @@ interface NavbarProps {
   roomName?: string;
   username?: string;
   userRole?: Role;
-  isConnected: boolean;
+  isConnected?: boolean;
   onLeaveRoom?: () => void;
   authUser?: AuthUser | null;
   onOpenAuth?: (mode: 'signin' | 'signup') => void;
@@ -44,349 +31,188 @@ interface NavbarProps {
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
-  roomId,
-  roomName,
-  username,
-  userRole,
-  isConnected,
-  onLeaveRoom,
   authUser,
   onOpenAuth,
   onLogout,
-  onBackToLobby,
 }) => {
-  const [copied, setCopied] = useState(false);
-  const [isShareOpen, setIsShareOpen] = useState(false);
-  const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
-  const [isSfxMuted, setIsSfxMuted] = useState(() => soundEffects.isMuted());
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleCopyLink = () => {
-    if (!roomId) return;
-    const url = `${window.location.origin}?room=${roomId}`;
-    navigator.clipboard.writeText(url).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  };
-
-  const toggleSoundEffects = () => {
-    const nextState = !isSfxMuted;
-    soundEffects.setMuted(nextState);
-    setIsSfxMuted(nextState);
-  };
-
-  const getRoleIcon = () => {
-    switch (userRole) {
-      case 'HOST':
-        return <Crown size={12} color="#fbbf24" />;
-      case 'MODERATOR':
-        return <Shield size={12} color="#38bdf8" />;
-      default:
-        return <User size={12} color="#94a3b8" />;
+  const scrollToSection = (sectionId: string) => {
+    setIsMobileMenuOpen(false);
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  const scrollToTop = () => {
+    setIsMobileMenuOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   return (
     <header
       style={{
-        height: '62px',
-        padding: '0 24px',
+        height: '64px',
+        padding: '0 28px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        background: 'rgba(9, 12, 22, 0.82)',
+        background: 'rgba(9, 12, 22, 0.85)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
         boxShadow: '0 4px 30px rgba(0, 0, 0, 0.35)',
       }}
     >
-      {/* 1. BRAND & ROOM CONTEXT (LEFT) */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-        {/* Back to Lobby Pill (When in room) */}
-        {roomId && (
-          <button
-            onClick={onBackToLobby || onLeaveRoom}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1px solid rgba(255, 255, 255, 0.12)',
-              color: '#cbd5e1',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              fontSize: '0.8rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
-              e.currentTarget.style.color = '#fff';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-              e.currentTarget.style.color = '#cbd5e1';
-            }}
-            title="Leave room & return to Lobby"
-          >
-            <ArrowLeft size={14} />
-            <span>Lobby</span>
-          </button>
-        )}
-
-        {/* Brand Logo & Title */}
+      {/* 1. BRAND LOGO & TITLE (LEFT) */}
+      <div
+        onClick={scrollToTop}
+        style={{
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          userSelect: 'none',
+        }}
+        title="SyncWave Home"
+      >
         <div
-          onClick={roomId ? onBackToLobby : undefined}
           style={{
-            cursor: roomId ? 'pointer' : 'default',
+            width: '36px',
+            height: '36px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
             display: 'flex',
             alignItems: 'center',
-            gap: '10px',
+            justifyContent: 'center',
+            boxShadow: '0 0 18px rgba(99, 102, 241, 0.5)',
+            flexShrink: 0,
+            transition: 'transform 0.2s ease',
           }}
-          title={roomId ? 'Return to Lobby' : undefined}
+          onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.05)')}
+          onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
         >
-          <div
+          <Tv size={20} color="#fff" />
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <span
             style={{
-              width: '34px',
-              height: '34px',
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 0 16px rgba(99, 102, 241, 0.5)',
-              flexShrink: 0,
+              fontWeight: 800,
+              fontSize: '1.2rem',
+              letterSpacing: '-0.3px',
+              color: '#fff',
             }}
           >
-            <Tv size={18} color="#fff" />
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: '6px', color: '#fff' }}>
-              <span>SyncWave</span>
-              <span
-                style={{
-                  color: '#818cf8',
-                  fontWeight: 700,
-                  fontSize: '0.68rem',
-                  background: 'rgba(99, 102, 241, 0.15)',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                  padding: '1px 6px',
-                  borderRadius: '10px',
-                  letterSpacing: '0.5px',
-                }}
-              >
-                PARTY
-              </span>
-            </div>
-            {roomName && (
-              <div
-                style={{
-                  fontSize: '0.72rem',
-                  color: '#94a3b8',
-                  fontWeight: 500,
-                  maxWidth: '180px',
-                  overflow: 'hidden',
-                  textOverflow: 'ellipsis',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                {roomName}
-              </div>
-            )}
-          </div>
+            SyncWave
+          </span>
+          <span
+            style={{
+              color: '#818cf8',
+              fontWeight: 700,
+              fontSize: '0.68rem',
+              background: 'rgba(99, 102, 241, 0.15)',
+              border: '1px solid rgba(99, 102, 241, 0.3)',
+              padding: '2px 7px',
+              borderRadius: '10px',
+              letterSpacing: '0.6px',
+            }}
+          >
+            PARTY
+          </span>
         </div>
       </div>
 
-      {/* 2. CENTER SECTION: ELEGANT NAV (LOBBY) OR SHARE CAPSULE (ROOM) */}
-      {!roomId ? (
-        /* Minimalist Navigation Links on Lobby */
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '28px' }} className="desktop-only">
-          <button
-            type="button"
-            onClick={() => document.getElementById('public-parties')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-          >
-            Live Parties
-          </button>
-          <button
-            type="button"
-            onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-          >
-            How It Works
-          </button>
-          <button
-            type="button"
-            onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-          >
-            Features
-          </button>
-          <button
-            type="button"
-            onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
-          >
-            FAQ
-          </button>
-        </nav>
-      ) : (
-        /* Unified Room Share Capsule when inside room */
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            background: 'rgba(255, 255, 255, 0.04)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '30px',
-            padding: '3px 4px 3px 12px',
-            gap: '8px',
-          }}
-        >
-          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, letterSpacing: '0.5px' }}>
-            ROOM
-          </span>
-          <span style={{ fontSize: '0.82rem', fontFamily: 'monospace', fontWeight: 700, color: '#a5b4fc', letterSpacing: '0.5px' }}>
-            {roomId}
-          </span>
-
-          <button
-            onClick={handleCopyLink}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: copied ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-              border: `1px solid ${copied ? '#10b981' : 'rgba(255, 255, 255, 0.1)'}`,
-              color: copied ? '#10b981' : '#cbd5e1',
-              padding: '4px 10px',
-              borderRadius: '20px',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            title="Copy party invite link"
-          >
-            {copied ? <Check size={12} /> : <Copy size={12} />}
-            <span>{copied ? 'Copied!' : 'Copy'}</span>
-          </button>
-
-          <button
-            onClick={() => setIsShareOpen(true)}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(168, 85, 247, 0.35))',
-              border: '1px solid rgba(168, 85, 247, 0.4)',
-              color: '#d8b4fe',
-              padding: '4px 12px',
-              borderRadius: '20px',
-              fontSize: '0.75rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            title="Invite friends via QR code & social cards"
-          >
-            <QrCode size={12} />
-            <span>Invite</span>
-          </button>
-        </div>
-      )}
-
-      {/* 3. RIGHT SECTION: UTILITIES & USER PROFILE */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {/* Compact Sound Effects Toggle */}
+      {/* 2. CENTER SECTION: MINIMALIST NAVIGATION LINKS */}
+      <nav style={{ display: 'flex', alignItems: 'center', gap: '32px' }} className="desktop-only">
         <button
-          onClick={toggleSoundEffects}
+          type="button"
+          onClick={() => scrollToSection('public-parties')}
           style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '8px',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
-            color: isSfxMuted ? '#f43f5e' : '#10b981',
-            transition: 'all 0.2s',
-          }}
-          title={isSfxMuted ? 'Sound Effects: Muted' : 'Sound Effects: Active'}
-        >
-          {isSfxMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
-        </button>
-
-        {/* Compact Keyboard Shortcuts Help */}
-        <button
-          onClick={() => setIsShortcutsOpen(true)}
-          style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '8px',
-            width: '32px',
-            height: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            cursor: 'pointer',
+            background: 'none',
+            border: 'none',
             color: '#94a3b8',
-            transition: 'all 0.2s',
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+            padding: '6px 0',
           }}
-          title="Keyboard Shortcuts Guide (?)"
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
         >
-          <HelpCircle size={15} />
+          Live Parties
         </button>
 
-        {/* Minimalist Live Connection Dot */}
-        <div
+        <button
+          type="button"
+          onClick={() => scrollToSection('features')}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            padding: '4px 8px',
-            background: 'rgba(255, 255, 255, 0.03)',
-            borderRadius: '12px',
-            fontSize: '0.72rem',
-            color: '#64748b',
+            background: 'none',
+            border: 'none',
+            color: '#94a3b8',
+            fontSize: '14px',
             fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+            padding: '6px 0',
           }}
-          title={isConnected ? 'Connected to WebSocket Server' : 'Disconnected, reconnecting...'}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
         >
-          <span
-            style={{
-              width: '6px',
-              height: '6px',
-              borderRadius: '50%',
-              backgroundColor: isConnected ? '#10b981' : '#f43f5e',
-              boxShadow: isConnected ? '0 0 8px #10b981' : '0 0 8px #f43f5e',
-            }}
-          />
-          <span className="desktop-only">{isConnected ? 'Live' : 'Offline'}</span>
-        </div>
+          Features
+        </button>
 
-        {/* User Profile / Auth Area */}
+        <button
+          type="button"
+          onClick={() => scrollToSection('how-it-works')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#94a3b8',
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+            padding: '6px 0',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+        >
+          How It Works
+        </button>
+
+        <button
+          type="button"
+          onClick={() => scrollToSection('faq')}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: '#94a3b8',
+            fontSize: '14px',
+            fontWeight: 600,
+            cursor: 'pointer',
+            transition: 'color 0.2s',
+            padding: '6px 0',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+          onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
+        >
+          FAQ
+        </button>
+      </nav>
+
+      {/* 3. RIGHT SECTION: AUTHENTICATION CTAS */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {authUser ? (
-          /* Logged In User */
+          /* Logged In User Profile */
           <div style={{ position: 'relative' }}>
             <button
+              type="button"
               onClick={() => setShowProfileMenu(!showProfileMenu)}
               style={{
                 display: 'flex',
@@ -395,14 +221,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
                 borderRadius: '30px',
-                padding: '4px 10px 4px 6px',
+                padding: '4px 12px 4px 6px',
                 color: '#fff',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)')}
+              onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)')}
             >
-              <span style={{ fontSize: '1.1rem' }}>{authUser.avatar || '🍿'}</span>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{authUser.username}</span>
+              <span style={{ fontSize: '1.15rem' }}>{authUser.avatar || '🍿'}</span>
+              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{authUser.username}</span>
             </button>
 
             {showProfileMenu && (
@@ -417,24 +245,25 @@ export const Navbar: React.FC<NavbarProps> = ({
                   border: '1px solid rgba(255, 255, 255, 0.12)',
                   borderRadius: '12px',
                   boxShadow: '0 15px 35px rgba(0, 0, 0, 0.7)',
-                  padding: '10px',
+                  padding: '12px',
                   zIndex: 100,
                 }}
               >
-                <div style={{ paddingBottom: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '8px' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{authUser.username}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis' }}>{authUser.email}</div>
+                <div style={{ paddingBottom: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '10px' }}>
+                  <div style={{ fontSize: '0.88rem', fontWeight: 700, color: '#fff' }}>{authUser.username}</div>
+                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis' }}>{authUser.email}</div>
                 </div>
 
                 {onLogout && (
                   <button
+                    type="button"
                     onClick={() => {
                       setShowProfileMenu(false);
                       onLogout();
                     }}
                     style={{
                       width: '100%',
-                      padding: '6px 10px',
+                      padding: '8px 10px',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '8px',
@@ -442,13 +271,16 @@ export const Navbar: React.FC<NavbarProps> = ({
                       border: '1px solid rgba(239, 68, 68, 0.25)',
                       borderRadius: '8px',
                       color: '#f87171',
-                      fontSize: '0.78rem',
+                      fontSize: '0.82rem',
                       fontWeight: 600,
                       cursor: 'pointer',
+                      transition: 'all 0.2s',
                     }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)')}
                   >
-                    <LogOut size={13} />
-                    Sign Out
+                    <LogOut size={14} />
+                    <span>Sign Out</span>
                   </button>
                 )}
               </div>
@@ -456,59 +288,39 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         ) : (
           /* Guest / Not Logged In */
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {username && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <AvatarCustomizer currentUsername={username} />
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    background: 'rgba(255, 255, 255, 0.04)',
-                    padding: '3px 8px',
-                    borderRadius: '16px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    fontSize: '0.76rem',
-                    color: '#cbd5e1',
-                  }}
-                >
-                  {getRoleIcon()}
-                  <span style={{ fontWeight: 600 }}>{username}</span>
-                </div>
-              </div>
-            )}
-
-            {!roomId && onOpenAuth && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            {onOpenAuth && (
               <button
+                type="button"
                 onClick={() => onOpenAuth('signin')}
                 style={{
                   background: 'none',
                   border: 'none',
                   color: '#cbd5e1',
-                  fontSize: '0.8rem',
+                  fontSize: '0.85rem',
                   fontWeight: 600,
                   cursor: 'pointer',
-                  padding: '6px 10px',
+                  padding: '7px 12px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
+                  gap: '5px',
                   transition: 'color 0.2s',
                 }}
                 onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
                 onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
               >
-                <LogIn size={13} />
+                <LogIn size={14} />
                 <span>Sign In</span>
               </button>
             )}
 
-            {!roomId && onOpenAuth && (
+            {onOpenAuth ? (
               <button
+                type="button"
                 onClick={() => onOpenAuth('signup')}
                 style={{
-                  padding: '5px 12px',
-                  fontSize: '0.78rem',
+                  padding: '7px 16px',
+                  fontSize: '0.84rem',
                   fontWeight: 700,
                   borderRadius: '20px',
                   border: 'none',
@@ -517,68 +329,70 @@ export const Navbar: React.FC<NavbarProps> = ({
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  boxShadow: '0 2px 10px rgba(99, 102, 241, 0.35)',
+                  gap: '6px',
+                  boxShadow: '0 2px 14px rgba(99, 102, 241, 0.35)',
                   transition: 'all 0.2s',
                 }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(99, 102, 241, 0.5)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 2px 14px rgba(99, 102, 241, 0.35)';
+                }}
               >
-                <UserPlus size={13} />
+                <UserPlus size={14} />
                 <span>Get Started</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => scrollToSection('launcher-card')}
+                style={{
+                  padding: '7px 16px',
+                  fontSize: '0.84rem',
+                  fontWeight: 700,
+                  borderRadius: '20px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Sparkles size={14} />
+                <span>Start Party</span>
               </button>
             )}
           </div>
         )}
 
-        {/* Distinct Leave Button (inside room) */}
-        {roomId && onLeaveRoom && (
-          <button
-            onClick={onLeaveRoom}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-              background: 'rgba(239, 68, 68, 0.15)',
-              border: '1px solid rgba(239, 68, 68, 0.35)',
-              color: '#f87171',
-              padding: '5px 10px',
-              borderRadius: '16px',
-              fontSize: '0.76rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-            }}
-            title="Leave party session"
-          >
-            <LogOut size={13} />
-            <span>Leave</span>
-          </button>
-        )}
-
-        {/* Mobile Hamburger Menu (Lobby only) */}
-        {!roomId && (
-          <button
-            type="button"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="mobile-only"
-            style={{
-              background: 'rgba(255, 255, 255, 0.05)',
-              border: '1px solid rgba(255, 255, 255, 0.1)',
-              borderRadius: '8px',
-              padding: '6px',
-              display: 'flex',
-              alignItems: 'center',
-              color: '#fff',
-              cursor: 'pointer',
-            }}
-            title="Toggle Menu"
-          >
-            {isMobileMenuOpen ? <X size={17} color="#f43f5e" /> : <Menu size={17} color="#818cf8" />}
-          </button>
-        )}
+        {/* Mobile Hamburger Menu Toggle */}
+        <button
+          type="button"
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="mobile-only"
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            padding: '6px',
+            display: 'flex',
+            alignItems: 'center',
+            color: '#fff',
+            cursor: 'pointer',
+          }}
+          title="Toggle Menu"
+        >
+          {isMobileMenuOpen ? <X size={18} color="#f43f5e" /> : <Menu size={18} color="#818cf8" />}
+        </button>
       </div>
 
-      {/* Mobile Drawer (Lobby mode) */}
-      {!roomId && isMobileMenuOpen && (
+      {/* Mobile Navigation Drawer */}
+      {isMobileMenuOpen && (
         <div
           style={{
             position: 'absolute',
@@ -599,70 +413,55 @@ export const Navbar: React.FC<NavbarProps> = ({
         >
           <button
             type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              document.getElementById('launcher-card')?.scrollIntoView({ behavior: 'smooth' });
+            onClick={() => scrollToSection('launcher-card')}
+            style={{
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2))',
+              border: '1px solid rgba(99, 102, 241, 0.4)',
+              borderRadius: '8px',
+              padding: '10px 14px',
+              color: '#fff',
+              fontSize: '14px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textAlign: 'left',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
             }}
-            style={{ background: 'none', border: 'none', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
           >
-            🚀 Create Watch Party
+            <span>🚀</span>
+            <span>Create / Join Party</span>
           </button>
           <button
             type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              document.getElementById('public-parties')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+            onClick={() => scrollToSection('public-parties')}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
           >
             🔥 Live Public Parties
           </button>
           <button
             type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
-          >
-            ⚡ How It Works
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+            onClick={() => scrollToSection('features')}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
           >
             💎 Platform Features
           </button>
           <button
             type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
+            onClick={() => scrollToSection('how-it-works')}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+          >
+            ⚡ How It Works
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToSection('faq')}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
           >
             ❓ Frequently Asked Questions
           </button>
         </div>
       )}
-
-      {roomId && (
-        <ShareModal
-          isOpen={isShareOpen}
-          onClose={() => setIsShareOpen(false)}
-          roomId={roomId}
-          roomName={roomName || 'Watch Party'}
-        />
-      )}
-
-      <KeyboardShortcutsModal
-        isOpen={isShortcutsOpen}
-        onClose={() => setIsShortcutsOpen(false)}
-      />
     </header>
   );
 };

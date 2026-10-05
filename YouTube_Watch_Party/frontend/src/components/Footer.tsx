@@ -20,18 +20,29 @@ import {
   Star,
   Check,
   Users,
+  Volume2,
+  VolumeX,
+  HelpCircle,
 } from 'lucide-react';
 import { soundEffects } from '../services/soundEffects';
 
 interface FooterProps {
   onOpenShortcuts?: () => void;
   onNavigateSection?: (sectionId: string) => void;
+  isConnected?: boolean;
 }
 
 type ModalType = 'privacy' | 'terms' | 'fairuse' | 'docs' | 'hostguide' | 'feedback' | null;
 
-export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSection }) => {
+export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSection, isConnected = true }) => {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [isSfxMuted, setIsSfxMuted] = useState(() => soundEffects.isMuted());
+
+  const toggleSoundEffects = () => {
+    const nextState = !isSfxMuted;
+    soundEffects.setMuted(nextState);
+    setIsSfxMuted(nextState);
+  };
 
   // Feedback form state
   const [feedbackCategory, setFeedbackCategory] = useState<'feature' | 'bug' | 'question' | 'praise'>('feature');
@@ -145,8 +156,8 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                 alignItems: 'center',
                 gap: '8px',
                 padding: '6px 12px',
-                background: 'rgba(16, 185, 129, 0.1)',
-                border: '1px solid rgba(16, 185, 129, 0.25)',
+                background: isConnected ? 'rgba(16, 185, 129, 0.1)' : 'rgba(244, 63, 94, 0.1)',
+                border: `1px solid ${isConnected ? 'rgba(16, 185, 129, 0.25)' : 'rgba(244, 63, 94, 0.25)'}`,
                 borderRadius: '9999px',
                 width: 'fit-content',
               }}
@@ -156,15 +167,17 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
                   width: '8px',
                   height: '8px',
                   borderRadius: '50%',
-                  background: '#10b981',
-                  boxShadow: '0 0 10px #10b981',
+                  background: isConnected ? '#10b981' : '#f43f5e',
+                  boxShadow: isConnected ? '0 0 10px #10b981' : '0 0 10px #f43f5e',
                   display: 'inline-block',
                 }}
               />
-              <span style={{ fontSize: '12px', fontWeight: 600, color: '#34d399' }}>
-                All Systems Operational
+              <span style={{ fontSize: '12px', fontWeight: 600, color: isConnected ? '#34d399' : '#fb7185' }}>
+                {isConnected ? 'All Systems Operational' : 'Connecting to Server...'}
               </span>
-              <span style={{ fontSize: '11px', color: '#6ee7b7', opacity: 0.8 }}>• &lt;15ms</span>
+              <span style={{ fontSize: '11px', color: isConnected ? '#6ee7b7' : '#fda4af', opacity: 0.8 }}>
+                {isConnected ? '• <15ms' : '• Offline'}
+              </span>
             </div>
           </div>
 
@@ -362,11 +375,57 @@ export const Footer: React.FC<FooterProps> = ({ onOpenShortcuts, onNavigateSecti
             <span>for seamless group streaming worldwide.</span>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
-            <span>v2.5.0 Production</span>
-            <span>•</span>
-            <span>MongoDB Atlas Secured</span>
-            <span>•</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            {/* Audio Effects Toggle (Moved from Header) */}
+            <button
+              type="button"
+              onClick={toggleSoundEffects}
+              style={{
+                background: 'rgba(255, 255, 255, 0.05)',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                color: isSfxMuted ? '#f87171' : '#34d399',
+                padding: '5px 10px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                fontSize: '12px',
+                fontWeight: 500,
+                transition: 'all 0.2s',
+              }}
+              title={isSfxMuted ? 'Sound Effects Muted (Click to enable)' : 'Sound Effects Active (Click to mute)'}
+            >
+              {isSfxMuted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+              <span>SFX: {isSfxMuted ? 'Muted' : 'On'}</span>
+            </button>
+
+            {/* Keyboard Shortcuts Button (Moved from Header) */}
+            {onOpenShortcuts && (
+              <button
+                type="button"
+                onClick={onOpenShortcuts}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  color: '#cbd5e1',
+                  padding: '5px 10px',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  transition: 'all 0.2s',
+                }}
+                title="Keyboard Shortcuts Cheat Sheet (?)"
+              >
+                <HelpCircle size={14} color="#818cf8" />
+                <span>Shortcuts (?)</span>
+              </button>
+            )}
+
             <button
               type="button"
               onClick={scrollToTop}

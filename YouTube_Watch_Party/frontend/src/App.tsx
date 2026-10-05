@@ -711,7 +711,12 @@ export function App() {
         )}
       </main>
 
-      {!roomId && <Footer onOpenShortcuts={() => setIsShortcutsOpen(true)} />}
+      {!roomId && (
+        <Footer
+          isConnected={isConnected}
+          onOpenShortcuts={() => setIsShortcutsOpen(true)}
+        />
+      )}
     </div>
   );
 }
