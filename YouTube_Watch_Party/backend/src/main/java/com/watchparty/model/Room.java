@@ -90,7 +90,7 @@ public class Room {
     public double getCalculatedCurrentTime() {
         if (playState == PlayState.PLAYING) {
             long elapsedMillis = System.currentTimeMillis() - lastUpdatedTimestamp;
-            return currentTime + (elapsedMillis / 1000.0);
+            return currentTime + ((elapsedMillis / 1000.0) * playbackSpeed);
         }
         return currentTime;
     }

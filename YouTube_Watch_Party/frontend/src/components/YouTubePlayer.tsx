@@ -67,10 +67,13 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   const [hasRequestedControl, setHasRequestedControl] = useState(false);
   const [scrubberHoverTime, setScrubberHoverTime] = useState<number | null>(null);
   const [scrubberHoverX, setScrubberHoverX] = useState<number>(0);
+  const [needsUserUnmute, setNeedsUserUnmute] = useState(false);
 
   const isServerSyncingRef = useRef(false);
+  const hasUserInteractedRef = useRef(false);
 
   const canControl = userRole === 'HOST' || userRole === 'MODERATOR';
+
 
   useEffect(() => {
     let checkInterval: any;
@@ -150,6 +153,40 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     };
   }, [videoId]);
 
+  const handleUserUnmute = useCallback(() => {
+    hasUserInteractedRef.current = true;
+    if (playerRef.current) {
+      try {
+        playerRef.current.unMute();
+        playerRef.current.setVolume(volume > 0 ? volume : 80);
+      } catch (e) {
+        console.warn('Failed to unmute:', e);
+      }
+    }
+    setIsMuted(false);
+    setNeedsUserUnmute(false);
+  }, [volume]);
+
+  // Global user activation listener: first click or keypress anywhere on the page un-mutes
+  useEffect(() => {
+    const handleGlobalInteraction = () => {
+      hasUserInteractedRef.current = true;
+      if (needsUserUnmute && playerRef.current) {
+        handleUserUnmute();
+      }
+    };
+
+    window.addEventListener('click', handleGlobalInteraction, { capture: true });
+    window.addEventListener('keydown', handleGlobalInteraction, { capture: true });
+    window.addEventListener('touchstart', handleGlobalInteraction, { capture: true });
+
+    return () => {
+      window.removeEventListener('click', handleGlobalInteraction, { capture: true });
+      window.removeEventListener('keydown', handleGlobalInteraction, { capture: true });
+      window.removeEventListener('touchstart', handleGlobalInteraction, { capture: true });
+    };
+  }, [needsUserUnmute, handleUserUnmute]);
+
   const syncWithServer = useCallback(
     (
       targetPlayState: PlayState,
@@ -162,10 +199,12 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
       try {
         isServerSyncingRef.current = true;
 
+        // Calculate exact expected video position accounting for elapsed time while playing
         let expectedTime = targetTime;
         if (targetPlayState === 'PLAYING' && targetTimestamp) {
-          const elapsedSec = ((Date.now() - targetTimestamp) / 1000) * serverPlaybackSpeed;
-          if (elapsedSec > 0 && elapsedSec < 3600) {
+          const speed = serverPlaybackSpeed || 1.0;
+          const elapsedSec = ((Date.now() - targetTimestamp) / 1000) * speed;
+          if (elapsedSec > 0 && elapsedSec < 86400) {
             expectedTime += elapsedSec;
           }
         }
@@ -173,13 +212,40 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         const localTime = playerRef.current.getCurrentTime() || 0;
         const drift = Math.abs(localTime - expectedTime);
 
-        if (forceSeek || drift > 1.5) {
+        // 1.2s Broadcast Drift Tolerance: avoids micro-stuttering and continuous rebuffering
+        if (forceSeek || drift > 1.2) {
           playerRef.current.seekTo(expectedTime, true);
           setCurrentTime(expectedTime);
         }
 
         if (targetPlayState === 'PLAYING') {
+          // If user has not yet interacted with this tab, modern browsers block unmuted autoplay.
+          // Start muted so playback stays in 100% millisecond sync across all tabs.
+          if (!hasUserInteractedRef.current) {
+            try {
+              playerRef.current.mute();
+              setIsMuted(true);
+              setNeedsUserUnmute(true);
+            } catch {}
+          }
+
           playerRef.current.playVideo();
+
+          // Autoplay fallback check: if browser paused/blocked it anyway, force mute & play
+          setTimeout(() => {
+            if (playerRef.current) {
+              try {
+                const state = playerRef.current.getPlayerState();
+                // 1 = PLAYING, 3 = BUFFERING. If neither, unmuted autoplay was blocked by browser
+                if (state !== 1 && state !== 3) {
+                  playerRef.current.mute();
+                  playerRef.current.playVideo();
+                  setIsMuted(true);
+                  setNeedsUserUnmute(true);
+                }
+              } catch {}
+            }
+          }, 350);
         } else if (targetPlayState === 'PAUSED') {
           playerRef.current.pauseVideo();
         }
@@ -197,6 +263,21 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     },
     [isPlayerReady, serverPlaybackSpeed]
   );
+
+  // Tab Visibility Catch-up: when user returns from another tab, immediately resync position
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && isPlayerReady) {
+        syncWithServer(serverPlayState, serverCurrentTime, serverTimestamp, false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [isPlayerReady, serverPlayState, serverCurrentTime, serverTimestamp, syncWithServer]);
+
 
   useEffect(() => {
     if (isPlayerReady) {
@@ -379,6 +460,65 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           }}
         />
 
+        {/* Full-player click target to unmute for non-host participants */}
+        {!canControl && needsUserUnmute && (
+          <div
+            onClick={handleUserUnmute}
+            title="Click anywhere to unmute"
+            style={{
+              position: 'absolute',
+              inset: 0,
+              cursor: 'pointer',
+              zIndex: 22,
+            }}
+          />
+        )}
+
+        {/* Floating Banner when Autoplay was muted by browser policy */}
+        {needsUserUnmute && (
+          <div
+            onClick={handleUserUnmute}
+            className="animate-pulse"
+            style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.95), rgba(168, 85, 247, 0.95))',
+              color: '#fff',
+              padding: '12px 24px',
+              borderRadius: '30px',
+              boxShadow: '0 10px 35px rgba(99, 102, 241, 0.7), 0 0 20px rgba(168, 85, 247, 0.5)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              zIndex: 35,
+              border: '1.5px solid rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(10px)',
+              userSelect: 'none',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                background: 'rgba(255, 255, 255, 0.25)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <VolumeX size={18} />
+            </div>
+            <span>Click to Unmute & Sync Audio 🔊</span>
+          </div>
+        )}
+
         {canControl && (
           <div
             onClick={handleTogglePlay}
@@ -415,6 +555,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
             </div>
           </div>
         )}
+
 
         {!canControl && (
           <div
