@@ -14,6 +14,8 @@ import {
   ArrowLeft,
   LogIn,
   UserPlus,
+  Menu,
+  X,
 } from 'lucide-react';
 import type { Role } from '../types/party';
 import { ShareModal } from './ShareModal';
@@ -58,6 +60,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isShortcutsOpen, setIsShortcutsOpen] = useState(false);
   const [isSfxMuted, setIsSfxMuted] = useState(() => soundEffects.isMuted());
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleCopyLink = () => {
     if (!roomId) return;
@@ -471,7 +474,103 @@ export const Navbar: React.FC<NavbarProps> = ({
             <LogOut size={13} /> Leave
           </button>
         )}
+
+        {/* Mobile Hamburger Menu Button (Lobby mode) */}
+        {!roomId && (
+          <button
+            type="button"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="btn-secondary mobile-only"
+            style={{ padding: '6px 9px', display: 'flex', alignItems: 'center' }}
+            title="Toggle Navigation Menu"
+          >
+            {isMobileMenuOpen ? <X size={17} color="#f43f5e" /> : <Menu size={17} color="#38bdf8" />}
+          </button>
+        )}
       </div>
+
+      {/* Mobile Drawer Navigation (when in Lobby mode) */}
+      {!roomId && isMobileMenuOpen && (
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            right: 0,
+            background: 'rgba(15, 20, 32, 0.98)',
+            backdropFilter: 'blur(20px)',
+            borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)',
+            padding: '20px 24px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '14px',
+            zIndex: 9999,
+          }}
+          className="animate-fade-in"
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              document.getElementById('launcher-card')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{ background: 'none', border: 'none', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+          >
+            🚀 Create Watch Party
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              document.getElementById('public-parties')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+          >
+            🔥 Live Public Parties
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+          >
+            ⚡ How It Works
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+          >
+            💎 Platform Features
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              document.getElementById('comparison')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+          >
+            📊 Why SyncWave
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
+            }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+          >
+            ❓ Frequently Asked Questions
+          </button>
+        </div>
+      )}
 
       {roomId && (
         <ShareModal

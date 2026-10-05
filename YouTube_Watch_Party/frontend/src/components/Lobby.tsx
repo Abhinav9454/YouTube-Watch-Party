@@ -252,6 +252,28 @@ export const Lobby: React.FC<LobbyProps> = ({
           Experience cinema-grade synchronization (&lt;15ms drift), peer-to-peer WebRTC voice & video calls, floating 3D virtual gifts, synchronized subtitles, and interactive trivia quizzes.
         </p>
 
+        {/* Live Community Activity Simulation Ticker */}
+        <div
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '7px 16px',
+            background: 'rgba(0, 0, 0, 0.45)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '9999px',
+            fontSize: '12px',
+            color: '#94a3b8',
+            marginBottom: '32px',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.4)',
+          }}
+        >
+          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#f43f5e', boxShadow: '0 0 10px #f43f5e' }} />
+          <span>
+            <strong style={{ color: '#fff' }}>Live Activity:</strong> Room <span style={{ color: '#818cf8', fontWeight: 700 }}>#RETRO-SYNTH</span> synced with 6 viewers • <strong style={{ color: '#38bdf8' }}>Maya</strong> answered trivia (+100 XP)
+          </span>
+        </div>
+
         <div
           style={{
             display: 'flex',
@@ -1461,6 +1483,114 @@ export const Lobby: React.FC<LobbyProps> = ({
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      </section>
+
+      {/* 6.5 COMMUNITY TESTIMONIALS */}
+      <section
+        style={{
+          maxWidth: '1240px',
+          margin: '0 auto',
+          padding: '0 24px',
+          width: '100%',
+        }}
+      >
+        <div style={{ textAlign: 'center', marginBottom: '36px' }}>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+            Loved by Communities
+          </span>
+          <h2 style={{ fontSize: '2rem', fontWeight: 800, color: '#fff', margin: '6px 0 10px 0' }}>
+            Built for Real People Watching Together
+          </h2>
+          <p style={{ fontSize: '14px', color: '#94a3b8', margin: 0 }}>
+            Here is how friends, clubs, and remote couples use SyncWave every day.
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '20px' }}>
+          <div
+            className="glass-panel"
+            style={{
+              padding: '24px',
+              borderRadius: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', gap: '4px', color: '#fbbf24', fontSize: '16px' }}>
+              ★★★★★
+            </div>
+            <p style={{ fontSize: '13.5px', color: '#cbd5e1', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>
+              "The WebRTC voice with automatic YouTube audio ducking makes movie dates feel like we're on the same couch. No lag, no awkward countdowns!"
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #ec4899, #f43f5e)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '12px' }}>
+                E&M
+              </div>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Elena & Mark</div>
+                <div style={{ fontSize: '11px', color: '#94a3b8' }}>Long-Distance Movie Night (NYC & Berlin)</div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="glass-panel"
+            style={{
+              padding: '24px',
+              borderRadius: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', gap: '4px', color: '#fbbf24', fontSize: '16px' }}>
+              ★★★★★
+            </div>
+            <p style={{ fontSize: '13.5px', color: '#cbd5e1', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>
+              "We hosted a 35-person anime premiere party. The floating 3D gifts and live trivia quizzes made it 10x more engaging than standard screen shares."
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #8b5cf6, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '12px' }}>
+                K
+              </div>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Kenji Takahashi</div>
+                <div style={{ fontSize: '11px', color: '#94a3b8' }}>Organizer, AnimeSphere Club</div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="glass-panel"
+            style={{
+              padding: '24px',
+              borderRadius: '18px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '14px',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', gap: '4px', color: '#fbbf24', fontSize: '16px' }}>
+              ★★★★★
+            </div>
+            <p style={{ fontSize: '13.5px', color: '#cbd5e1', lineHeight: 1.6, fontStyle: 'italic', margin: 0 }}>
+              "Our university coding group uses SyncWave daily. The 3D bass equalizer and subtitle sync for technical tutorials are pure engineering excellence."
+            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)' }}>
+              <div style={{ width: '34px', height: '34px', borderRadius: '50%', background: 'linear-gradient(135deg, #10b981, #06b6d4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '12px' }}>
+                P
+              </div>
+              <div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Priya Sharma</div>
+                <div style={{ fontSize: '11px', color: '#94a3b8' }}>CS Senior & Study Group Lead</div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

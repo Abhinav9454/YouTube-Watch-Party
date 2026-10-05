@@ -394,3 +394,10 @@ html {
     display: none !important;
   }
 }
+
+@media (min-width: 821px) {
+  .mobile-only {
+    display: none !important;
+  }
+}
+
