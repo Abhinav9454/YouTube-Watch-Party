@@ -8,6 +8,7 @@ COPY YouTube_Watch_Party/backend/src ./src
 RUN mvn clean package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
+RUN apk add --no-cache ca-certificates
 WORKDIR /app
 
 COPY --from=builder /build/target/youtube-watch-party-backend-1.0.0.jar app.jar
@@ -17,4 +18,4 @@ VOLUME /app/data
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-Djdk.tls.client.protocols=TLSv1.2,TLSv1.3", "-jar", "app.jar"]
