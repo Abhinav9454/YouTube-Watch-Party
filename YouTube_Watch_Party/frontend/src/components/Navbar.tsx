@@ -8,7 +8,7 @@ import {
   Shield,
   User,
   QrCode,
-  Keyboard,
+  HelpCircle,
   Volume2,
   VolumeX,
   ArrowLeft,
@@ -90,43 +90,58 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header
-      className="glass-panel"
       style={{
-        borderRadius: 0,
-        borderLeft: 'none',
-        borderRight: 'none',
-        borderTop: 'none',
-        padding: '10px 20px',
+        height: '62px',
+        padding: '0 24px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         position: 'sticky',
         top: 0,
         zIndex: 50,
+        background: 'rgba(9, 12, 22, 0.82)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+        boxShadow: '0 4px 30px rgba(0, 0, 0, 0.35)',
       }}
     >
-      {/* Brand & Room Info + Back Button */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Back to Lobby Button (Visible when inside a room) */}
+      {/* 1. BRAND & ROOM CONTEXT (LEFT) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+        {/* Back to Lobby Pill (When in room) */}
         {roomId && (
           <button
             onClick={onBackToLobby || onLeaveRoom}
-            className="btn-secondary"
             style={{
-              padding: '6px 10px',
-              fontSize: '0.8rem',
               display: 'flex',
               alignItems: 'center',
-              gap: '4px',
-              background: 'rgba(255, 255, 255, 0.08)',
+              gap: '6px',
+              background: 'rgba(255, 255, 255, 0.06)',
+              border: '1px solid rgba(255, 255, 255, 0.12)',
+              color: '#cbd5e1',
+              padding: '6px 12px',
+              borderRadius: '20px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
             }}
-            title="Go back to Home / Lobby"
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)';
+              e.currentTarget.style.color = '#fff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+              e.currentTarget.style.color = '#cbd5e1';
+            }}
+            title="Leave room & return to Lobby"
           >
-            <ArrowLeft size={15} />
+            <ArrowLeft size={14} />
             <span>Lobby</span>
           </button>
         )}
 
+        {/* Brand Logo & Title */}
         <div
           onClick={roomId ? onBackToLobby : undefined}
           style={{
@@ -135,31 +150,53 @@ export const Navbar: React.FC<NavbarProps> = ({
             alignItems: 'center',
             gap: '10px',
           }}
-          title={roomId ? 'Click to return to Lobby' : undefined}
+          title={roomId ? 'Return to Lobby' : undefined}
         >
           <div
             style={{
-              width: '38px',
-              height: '38px',
-              borderRadius: '12px',
+              width: '34px',
+              height: '34px',
+              borderRadius: '10px',
               background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 0 20px rgba(99, 102, 241, 0.45)',
+              boxShadow: '0 0 16px rgba(99, 102, 241, 0.5)',
+              flexShrink: 0,
             }}
           >
-            <Tv size={20} color="#fff" />
+            <Tv size={18} color="#fff" />
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: '1.15rem', letterSpacing: '-0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <div style={{ fontWeight: 800, fontSize: '1.1rem', letterSpacing: '-0.3px', display: 'flex', alignItems: 'center', gap: '6px', color: '#fff' }}>
               <span>SyncWave</span>
-              <span style={{ color: '#818cf8', fontWeight: 600, fontSize: '0.8rem', background: 'rgba(99, 102, 241, 0.15)', padding: '1px 6px', borderRadius: '4px' }}>
+              <span
+                style={{
+                  color: '#818cf8',
+                  fontWeight: 700,
+                  fontSize: '0.68rem',
+                  background: 'rgba(99, 102, 241, 0.15)',
+                  border: '1px solid rgba(99, 102, 241, 0.3)',
+                  padding: '1px 6px',
+                  borderRadius: '10px',
+                  letterSpacing: '0.5px',
+                }}
+              >
                 PARTY
               </span>
             </div>
             {roomName && (
-              <div style={{ fontSize: '0.76rem', color: 'var(--text-muted)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '200px' }}>
+              <div
+                style={{
+                  fontSize: '0.72rem',
+                  color: '#94a3b8',
+                  fontWeight: 500,
+                  maxWidth: '180px',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {roomName}
               </div>
             )}
@@ -167,151 +204,187 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
 
-      {/* Center Navigation Links (when on Landing Page / Lobby) */}
+      {/* 2. CENTER SECTION: ELEGANT NAV (LOBBY) OR SHARE CAPSULE (ROOM) */}
       {!roomId ? (
-        <nav style={{ display: 'flex', alignItems: 'center', gap: '24px' }} className="desktop-only">
-          <button
-            type="button"
-            onClick={() => document.getElementById('launcher-card')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
-          >
-            Create Party
-          </button>
+        /* Minimalist Navigation Links on Lobby */
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '28px' }} className="desktop-only">
           <button
             type="button"
             onClick={() => document.getElementById('public-parties')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
           >
             Live Parties
           </button>
           <button
             type="button"
             onClick={() => document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
           >
             How It Works
           </button>
           <button
             type="button"
             onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
           >
             Features
           </button>
           <button
             type="button"
-            onClick={() => document.getElementById('comparison')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
-            onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
-          >
-            Why Us
-          </button>
-          <button
-            type="button"
             onClick={() => document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' })}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
+            style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '13.5px', fontWeight: 600, cursor: 'pointer', transition: 'color 0.2s' }}
             onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
-            onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#94a3b8')}
           >
             FAQ
           </button>
         </nav>
       ) : (
-        /* Center Room Code & Share Controls (when in room) */
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div
+        /* Unified Room Share Capsule when inside room */
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            background: 'rgba(255, 255, 255, 0.04)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '30px',
+            padding: '3px 4px 3px 12px',
+            gap: '8px',
+          }}
+        >
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 600, letterSpacing: '0.5px' }}>
+            ROOM
+          </span>
+          <span style={{ fontSize: '0.82rem', fontFamily: 'monospace', fontWeight: 700, color: '#a5b4fc', letterSpacing: '0.5px' }}>
+            {roomId}
+          </span>
+
+          <button
             onClick={handleCopyLink}
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              background: copied ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-              border: `1px solid ${copied ? '#10b981' : 'var(--border-subtle)'}`,
-              borderRadius: 'var(--radius-sm)',
+              gap: '4px',
+              background: copied ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+              border: `1px solid ${copied ? '#10b981' : 'rgba(255, 255, 255, 0.1)'}`,
+              color: copied ? '#10b981' : '#cbd5e1',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
               cursor: 'pointer',
-              fontSize: '0.82rem',
               transition: 'all 0.2s',
             }}
-            title="Click to copy room link"
+            title="Copy party invite link"
           >
-            <span style={{ color: 'var(--text-dim)' }}>Room:</span>
-            <span className="code-pill">{roomId}</span>
-            {copied ? <Check size={14} color="#10b981" /> : <Copy size={14} color="#94a3b8" />}
-          </div>
+            {copied ? <Check size={12} /> : <Copy size={12} />}
+            <span>{copied ? 'Copied!' : 'Copy'}</span>
+          </button>
 
           <button
             onClick={() => setIsShareOpen(true)}
-            className="btn-secondary"
-            style={{ padding: '6px 12px', fontSize: '0.8rem', gap: '6px' }}
-            title="Open QR Code & Share modal"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(168, 85, 247, 0.35))',
+              border: '1px solid rgba(168, 85, 247, 0.4)',
+              color: '#d8b4fe',
+              padding: '4px 12px',
+              borderRadius: '20px',
+              fontSize: '0.75rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            title="Invite friends via QR code & social cards"
           >
-            <QrCode size={14} color="#818cf8" />
-            <span>Share & QR</span>
+            <QrCode size={12} />
+            <span>Invite</span>
           </button>
         </div>
       )}
 
-      {/* Right Controls: SFX, Shortcuts, Connection, User / Auth buttons */}
+      {/* 3. RIGHT SECTION: UTILITIES & USER PROFILE */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        {/* Sound Effects Toggle */}
+        {/* Compact Sound Effects Toggle */}
         <button
           onClick={toggleSoundEffects}
-          className="btn-secondary"
-          style={{ padding: '6px 9px', fontSize: '0.8rem' }}
-          title={isSfxMuted ? 'Unmute Sound Effects' : 'Mute Sound Effects'}
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: isSfxMuted ? '#f43f5e' : '#10b981',
+            transition: 'all 0.2s',
+          }}
+          title={isSfxMuted ? 'Sound Effects: Muted' : 'Sound Effects: Active'}
         >
-          {isSfxMuted ? <VolumeX size={15} color="#f43f5e" /> : <Volume2 size={15} color="#10b981" />}
+          {isSfxMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
         </button>
 
-        {/* Keyboard Shortcuts Help */}
+        {/* Compact Keyboard Shortcuts Help */}
         <button
           onClick={() => setIsShortcutsOpen(true)}
-          className="btn-secondary"
-          style={{ padding: '6px 10px', fontSize: '0.8rem', gap: '5px' }}
-          title="Keyboard shortcuts guide (?)"
+          style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '8px',
+            width: '32px',
+            height: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: '#94a3b8',
+            transition: 'all 0.2s',
+          }}
+          title="Keyboard Shortcuts Guide (?)"
         >
-          <Keyboard size={15} color="#818cf8" />
-          <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>Shortcuts</span>
+          <HelpCircle size={15} />
         </button>
 
-        {/* Connection Indicator */}
+        {/* Minimalist Live Connection Dot */}
         <div
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: '5px',
-            fontSize: '0.75rem',
             padding: '4px 8px',
             background: 'rgba(255, 255, 255, 0.03)',
-            borderRadius: 'var(--radius-xs)',
+            borderRadius: '12px',
+            fontSize: '0.72rem',
+            color: '#64748b',
+            fontWeight: 600,
           }}
-          title={isConnected ? 'Connected to real-time server' : 'Disconnected, attempting to reconnect...'}
+          title={isConnected ? 'Connected to WebSocket Server' : 'Disconnected, reconnecting...'}
         >
           <span
             style={{
-              width: '7px',
-              height: '7px',
+              width: '6px',
+              height: '6px',
               borderRadius: '50%',
               backgroundColor: isConnected ? '#10b981' : '#f43f5e',
               boxShadow: isConnected ? '0 0 8px #10b981' : '0 0 8px #f43f5e',
             }}
           />
-          <span style={{ color: 'var(--text-dim)', fontWeight: 600 }}>{isConnected ? 'Live' : 'Offline'}</span>
+          <span className="desktop-only">{isConnected ? 'Live' : 'Offline'}</span>
         </div>
 
-        {/* User Profile or Sign In / Sign Up */}
+        {/* User Profile / Auth Area */}
         {authUser ? (
-          /* LOGGED IN USER PROFILE */
+          /* Logged In User */
           <div style={{ position: 'relative' }}>
             <button
               onClick={() => setShowProfileMenu(!showProfileMenu)}
@@ -321,49 +394,36 @@ export const Navbar: React.FC<NavbarProps> = ({
                 gap: '8px',
                 background: 'rgba(255, 255, 255, 0.06)',
                 border: '1px solid rgba(255, 255, 255, 0.12)',
-                borderRadius: '9999px',
-                padding: '4px 12px 4px 6px',
+                borderRadius: '30px',
+                padding: '4px 10px 4px 6px',
                 color: '#fff',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
               }}
             >
-              <span style={{ fontSize: '1.2rem' }}>{authUser.avatar || '🍿'}</span>
-              <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>{authUser.username}</span>
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  padding: '2px 6px',
-                  borderRadius: '9999px',
-                  background: 'linear-gradient(135deg, #a855f7, #6366f1)',
-                  fontWeight: 700,
-                  letterSpacing: '0.5px',
-                }}
-              >
-                PRO
-              </span>
+              <span style={{ fontSize: '1.1rem' }}>{authUser.avatar || '🍿'}</span>
+              <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{authUser.username}</span>
             </button>
 
-            {/* Profile Dropdown */}
             {showProfileMenu && (
               <div
                 style={{
                   position: 'absolute',
-                  top: '110%',
+                  top: '120%',
                   right: 0,
-                  width: '230px',
-                  background: 'rgba(20, 20, 32, 0.98)',
-                  backdropFilter: 'blur(12px)',
+                  width: '210px',
+                  background: 'rgba(16, 20, 32, 0.98)',
+                  backdropFilter: 'blur(16px)',
                   border: '1px solid rgba(255, 255, 255, 0.12)',
-                  borderRadius: '0.75rem',
-                  boxShadow: '0 15px 35px rgba(0, 0, 0, 0.6)',
-                  padding: '0.75rem',
+                  borderRadius: '12px',
+                  boxShadow: '0 15px 35px rgba(0, 0, 0, 0.7)',
+                  padding: '10px',
                   zIndex: 100,
                 }}
               >
-                <div style={{ paddingBottom: '0.5rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '0.5rem' }}>
-                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f8fafc' }}>{authUser.username}</div>
-                  <div style={{ fontSize: '0.72rem', color: '#94a3b8', wordBreak: 'break-all' }}>{authUser.email}</div>
+                <div style={{ paddingBottom: '8px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff' }}>{authUser.username}</div>
+                  <div style={{ fontSize: '0.72rem', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis' }}>{authUser.email}</div>
                 </div>
 
                 {onLogout && (
@@ -374,20 +434,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                     }}
                     style={{
                       width: '100%',
-                      padding: '0.5rem',
+                      padding: '6px 10px',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.5rem',
+                      gap: '8px',
                       background: 'rgba(239, 68, 68, 0.1)',
-                      border: '1px solid rgba(239, 68, 68, 0.2)',
-                      borderRadius: '0.5rem',
+                      border: '1px solid rgba(239, 68, 68, 0.25)',
+                      borderRadius: '8px',
                       color: '#f87171',
-                      fontSize: '0.8rem',
+                      fontSize: '0.78rem',
                       fontWeight: 600,
                       cursor: 'pointer',
                     }}
                   >
-                    <LogOut size={14} />
+                    <LogOut size={13} />
                     Sign Out
                   </button>
                 )}
@@ -395,9 +455,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             )}
           </div>
         ) : (
-          /* NOT LOGGED IN: SIGN IN & SIGN UP BUTTONS */
+          /* Guest / Not Logged In */
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {/* Guest Identifier (if present) */}
             {username && (
               <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <AvatarCustomizer currentUsername={username} />
@@ -408,9 +467,10 @@ export const Navbar: React.FC<NavbarProps> = ({
                     gap: '4px',
                     background: 'rgba(255, 255, 255, 0.04)',
                     padding: '3px 8px',
-                    borderRadius: 'var(--radius-full)',
-                    border: '1px solid var(--border-subtle)',
-                    fontSize: '0.78rem',
+                    borderRadius: '16px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    fontSize: '0.76rem',
+                    color: '#cbd5e1',
                   }}
                 >
                   {getRoleIcon()}
@@ -419,77 +479,105 @@ export const Navbar: React.FC<NavbarProps> = ({
               </div>
             )}
 
-            {onOpenAuth && (
-              <>
-                <button
-                  onClick={() => onOpenAuth('signin')}
-                  className="btn-secondary"
-                  style={{
-                    padding: '5px 10px',
-                    fontSize: '0.8rem',
-                    fontWeight: 600,
-                    gap: '4px',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <LogIn size={13} />
-                  <span>Sign In</span>
-                </button>
+            {!roomId && onOpenAuth && (
+              <button
+                onClick={() => onOpenAuth('signin')}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: '#cbd5e1',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  padding: '6px 10px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  transition: 'color 0.2s',
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={(e) => (e.currentTarget.style.color = '#cbd5e1')}
+              >
+                <LogIn size={13} />
+                <span>Sign In</span>
+              </button>
+            )}
 
-                <button
-                  onClick={() => onOpenAuth('signup')}
-                  style={{
-                    padding: '5px 12px',
-                    fontSize: '0.8rem',
-                    fontWeight: 700,
-                    borderRadius: '0.5rem',
-                    border: 'none',
-                    background: 'linear-gradient(135deg, #ec4899, #8b5cf6)',
-                    color: '#fff',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    boxShadow: '0 2px 10px rgba(236, 72, 153, 0.35)',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  <UserPlus size={13} />
-                  <span>Sign Up</span>
-                </button>
-              </>
+            {!roomId && onOpenAuth && (
+              <button
+                onClick={() => onOpenAuth('signup')}
+                style={{
+                  padding: '5px 12px',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  borderRadius: '20px',
+                  border: 'none',
+                  background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  boxShadow: '0 2px 10px rgba(99, 102, 241, 0.35)',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <UserPlus size={13} />
+                <span>Get Started</span>
+              </button>
             )}
           </div>
         )}
 
-        {/* Leave Room Button (when in room) */}
+        {/* Distinct Leave Button (inside room) */}
         {roomId && onLeaveRoom && (
           <button
             onClick={onLeaveRoom}
-            className="btn-danger"
-            style={{ padding: '6px 12px', fontSize: '0.8rem', gap: '5px', display: 'flex', alignItems: 'center' }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px',
+              background: 'rgba(239, 68, 68, 0.15)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              color: '#f87171',
+              padding: '5px 10px',
+              borderRadius: '16px',
+              fontSize: '0.76rem',
+              fontWeight: 600,
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
             title="Leave party session"
           >
-            <LogOut size={13} /> Leave
+            <LogOut size={13} />
+            <span>Leave</span>
           </button>
         )}
 
-        {/* Mobile Hamburger Menu Button (Lobby mode) */}
+        {/* Mobile Hamburger Menu (Lobby only) */}
         {!roomId && (
           <button
             type="button"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="btn-secondary mobile-only"
-            style={{ padding: '6px 9px', display: 'flex', alignItems: 'center' }}
-            title="Toggle Navigation Menu"
+            className="mobile-only"
+            style={{
+              background: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              borderRadius: '8px',
+              padding: '6px',
+              display: 'flex',
+              alignItems: 'center',
+              color: '#fff',
+              cursor: 'pointer',
+            }}
+            title="Toggle Menu"
           >
-            {isMobileMenuOpen ? <X size={17} color="#f43f5e" /> : <Menu size={17} color="#38bdf8" />}
+            {isMobileMenuOpen ? <X size={17} color="#f43f5e" /> : <Menu size={17} color="#818cf8" />}
           </button>
         )}
       </div>
 
-      {/* Mobile Drawer Navigation (when in Lobby mode) */}
+      {/* Mobile Drawer (Lobby mode) */}
       {!roomId && isMobileMenuOpen && (
         <div
           style={{
@@ -497,7 +585,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             top: '100%',
             left: 0,
             right: 0,
-            background: 'rgba(15, 20, 32, 0.98)',
+            background: 'rgba(12, 16, 28, 0.98)',
             backdropFilter: 'blur(20px)',
             borderBottom: '1px solid rgba(99, 102, 241, 0.3)',
             boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8)',
@@ -515,7 +603,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               setIsMobileMenuOpen(false);
               document.getElementById('launcher-card')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            style={{ background: 'none', border: 'none', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+            style={{ background: 'none', border: 'none', color: '#fff', fontSize: '15px', fontWeight: 700, cursor: 'pointer', textAlign: 'left' }}
           >
             🚀 Create Watch Party
           </button>
@@ -525,7 +613,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               setIsMobileMenuOpen(false);
               document.getElementById('public-parties')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
           >
             🔥 Live Public Parties
           </button>
@@ -535,7 +623,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               setIsMobileMenuOpen(false);
               document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
           >
             ⚡ How It Works
           </button>
@@ -545,7 +633,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               setIsMobileMenuOpen(false);
               document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
           >
             💎 Platform Features
           </button>
@@ -553,19 +641,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             onClick={() => {
               setIsMobileMenuOpen(false);
-              document.getElementById('comparison')?.scrollIntoView({ behavior: 'smooth' });
-            }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
-          >
-            📊 Why SyncWave
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setIsMobileMenuOpen(false);
               document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth' });
             }}
-            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left', padding: '6px 0' }}
+            style={{ background: 'none', border: 'none', color: '#cbd5e1', fontSize: '14px', fontWeight: 600, cursor: 'pointer', textAlign: 'left' }}
           >
             ❓ Frequently Asked Questions
           </button>
