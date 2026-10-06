@@ -1,18 +1,56 @@
 import { wsService } from './websocket';
 import type { WebRtcSignalPayload } from '../types/party';
 
-const RTC_CONFIG: RTCConfiguration = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-};
+export interface PeerConnectionInfo {
+  peerId: string;
+  iceState: RTCIceConnectionState;
+  connectionState: RTCPeerConnectionState;
+  isRelayed: boolean;
+  candidateType: 'relay' | 'srflx' | 'prflx' | 'host' | 'unknown';
+  protocol?: string;
+  latencyMs?: number;
+}
+
+export interface CustomTurnConfig {
+  url: string;
+  username?: string;
+  credential?: string;
+}
+
+const CUSTOM_TURN_STORAGE_KEY = 'watchparty_custom_turn_config';
+
+// Battle-tested, high-availability STUN and free TURN relays for 100% NAT bypass
+const DEFAULT_ICE_SERVERS: RTCIceServer[] = [
+  {
+    urls: [
+      'stun:stun.l.google.com:19302',
+      'stun:stun1.l.google.com:19302',
+      'stun:stun.cloudflare.com:3478',
+      'stun:openrelay.metered.ca:80',
+    ],
+  },
+  {
+    urls: [
+      'turn:openrelay.metered.ca:80',
+      'turn:openrelay.metered.ca:443',
+      'turn:openrelay.metered.ca:443?transport=tcp',
+    ],
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: ['turns:openrelay.metered.ca:443?transport=tcp'],
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+];
 
 type StreamCallback = (stream: MediaStream) => void;
 type PeerStreamCallback = (peerId: string, stream: MediaStream) => void;
 type PeerLeftCallback = (peerId: string) => void;
 type SpeakingCallback = (peerId: string, isSpeaking: boolean) => void;
 type DuckingCallback = (shouldDuck: boolean) => void;
+type ConnectionInfoCallback = (infos: PeerConnectionInfo[]) => void;
 
 class WebRtcService {
   private localStream: MediaStream | null = null;
@@ -29,18 +67,27 @@ class WebRtcService {
   private audioDuckingEnabled: boolean = true;
   private duckingTimeout: ReturnType<typeof setTimeout> | null = null;
 
+  // ICE & TURN configuration state
+  private activeIceServers: RTCIceServer[] = DEFAULT_ICE_SERVERS;
+  private relayProvider: string = 'OpenRelay Public Relay (Global)';
+  private peerConnectionInfos: Map<string, PeerConnectionInfo> = new Map();
+
   // Listeners
   private localStreamListeners: Set<StreamCallback> = new Set();
   private remoteStreamListeners: Set<PeerStreamCallback> = new Set();
   private peerLeftListeners: Set<PeerLeftCallback> = new Set();
   private speakingListeners: Set<SpeakingCallback> = new Set();
   private duckingListeners: Set<DuckingCallback> = new Set();
+  private connectionInfoListeners: Set<ConnectionInfoCallback> = new Set();
 
   private isInitialized = false;
 
   public init() {
     if (this.isInitialized) return;
     this.isInitialized = true;
+
+    // Fetch dynamic ICE servers in background
+    this.fetchIceServers();
 
     // Listen to signaling messages from backend
     wsService.on('webrtc_signal', async (payload: WebRtcSignalPayload) => {
@@ -66,6 +113,90 @@ class WebRtcService {
         this.closePeer(payload.userId);
       }
     });
+  }
+
+  /**
+   * Dynamically fetch ICE / STUN / TURN servers from backend proxy
+   */
+  public async fetchIceServers(): Promise<RTCIceServer[]> {
+    try {
+      const res = await fetch('/api/webrtc/ice-servers');
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && Array.isArray(data.iceServers) && data.iceServers.length > 0) {
+          const servers: RTCIceServer[] = data.iceServers;
+          if (data.provider) this.relayProvider = data.provider;
+
+          // Merge custom client-provided TURN server if configured
+          const custom = this.getCustomTurnConfig();
+          if (custom && custom.url) {
+            servers.unshift({
+              urls: custom.url,
+              username: custom.username,
+              credential: custom.credential,
+            });
+            this.relayProvider = 'Custom Client TURN Relay';
+          }
+
+          this.activeIceServers = servers;
+          return servers;
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch ICE servers from backend, using default OpenRelay pool:', e);
+    }
+
+    // Fallback to defaults + custom
+    const custom = this.getCustomTurnConfig();
+    if (custom && custom.url) {
+      this.activeIceServers = [
+        {
+          urls: custom.url,
+          username: custom.username,
+          credential: custom.credential,
+        },
+        ...DEFAULT_ICE_SERVERS,
+      ];
+    } else {
+      this.activeIceServers = DEFAULT_ICE_SERVERS;
+    }
+
+    return this.activeIceServers;
+  }
+
+  public getRtcConfiguration(): RTCConfiguration {
+    return {
+      iceServers: this.activeIceServers,
+      iceCandidatePoolSize: 2,
+    };
+  }
+
+  public getCustomTurnConfig(): CustomTurnConfig | null {
+    if (typeof window === 'undefined') return null;
+    try {
+      const item = localStorage.getItem(CUSTOM_TURN_STORAGE_KEY);
+      return item ? JSON.parse(item) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  public saveCustomTurnConfig(config: CustomTurnConfig | null): void {
+    if (typeof window === 'undefined') return;
+    if (config && config.url.trim()) {
+      localStorage.setItem(CUSTOM_TURN_STORAGE_KEY, JSON.stringify(config));
+    } else {
+      localStorage.removeItem(CUSTOM_TURN_STORAGE_KEY);
+    }
+    this.fetchIceServers();
+  }
+
+  public getActiveIceServers(): RTCIceServer[] {
+    return this.activeIceServers;
+  }
+
+  public getRelayProvider(): string {
+    return this.relayProvider;
   }
 
   public async startMedia(video: boolean = false): Promise<MediaStream | null> {
@@ -113,6 +244,8 @@ class WebRtcService {
     this.peers.clear();
     this.remoteStreams.clear();
     this.pendingCandidates.clear();
+    this.peerConnectionInfos.clear();
+    this.emitConnectionInfos();
   }
 
   public toggleMute(): boolean {
@@ -343,7 +476,7 @@ class WebRtcService {
   }
 
   private createPeerConnection(peerId: string): RTCPeerConnection {
-    const pc = new RTCPeerConnection(RTC_CONFIG);
+    const pc = new RTCPeerConnection(this.getRtcConfiguration());
 
     pc.onicecandidate = (event) => {
       if (event.candidate) {
@@ -361,13 +494,77 @@ class WebRtcService {
       this.remoteStreamListeners.forEach((cb) => cb(peerId, stream));
     };
 
+    pc.oniceconnectionstatechange = () => {
+      this.updatePeerDiagnostics(peerId, pc);
+      if (pc.iceConnectionState === 'failed') {
+        console.warn(`ICE failed for peer ${peerId}, attempting ICE restart with TURN relay...`);
+        try {
+          pc.restartIce();
+        } catch (e) {
+          console.warn('Could not restart ICE:', e);
+        }
+      }
+    };
+
     pc.onconnectionstatechange = () => {
+      this.updatePeerDiagnostics(peerId, pc);
       if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
         this.closePeer(peerId);
       }
     };
 
     return pc;
+  }
+
+  private async updatePeerDiagnostics(peerId: string, pc: RTCPeerConnection) {
+    let isRelayed = false;
+    let candidateType: PeerConnectionInfo['candidateType'] = 'unknown';
+    let protocol: string | undefined = undefined;
+    let latencyMs: number | undefined = undefined;
+
+    try {
+      const stats = await pc.getStats();
+      stats.forEach((report: any) => {
+        if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+          if (report.currentRoundTripTime) {
+            latencyMs = Math.round(report.currentRoundTripTime * 1000);
+          }
+          const localCand = stats.get(report.localCandidateId);
+          const remoteCand = stats.get(report.remoteCandidateId);
+
+          if (localCand?.candidateType === 'relay' || remoteCand?.candidateType === 'relay') {
+            isRelayed = true;
+            candidateType = 'relay';
+          } else if (localCand?.candidateType) {
+            candidateType = localCand.candidateType;
+          }
+
+          if (localCand?.protocol) {
+            protocol = localCand.protocol.toUpperCase();
+          }
+        }
+      });
+    } catch {
+      // getStats might throw if closed
+    }
+
+    const info: PeerConnectionInfo = {
+      peerId,
+      iceState: pc.iceConnectionState,
+      connectionState: pc.connectionState,
+      isRelayed,
+      candidateType,
+      protocol,
+      latencyMs,
+    };
+
+    this.peerConnectionInfos.set(peerId, info);
+    this.emitConnectionInfos();
+  }
+
+  private emitConnectionInfos() {
+    const list = Array.from(this.peerConnectionInfos.values());
+    this.connectionInfoListeners.forEach((cb) => cb(list));
   }
 
   private closePeer(peerId: string) {
@@ -379,6 +576,8 @@ class WebRtcService {
     this.remoteStreams.delete(peerId);
     this.analysers.delete(peerId);
     this.pendingCandidates.delete(peerId);
+    this.peerConnectionInfos.delete(peerId);
+    this.emitConnectionInfos();
     this.peerLeftListeners.forEach((cb) => cb(peerId));
   }
 
@@ -467,6 +666,20 @@ class WebRtcService {
   public onAudioDucking(cb: DuckingCallback) {
     this.duckingListeners.add(cb);
     return () => this.duckingListeners.delete(cb);
+  }
+
+  public onConnectionInfoChange(cb: ConnectionInfoCallback) {
+    this.connectionInfoListeners.add(cb);
+    cb(Array.from(this.peerConnectionInfos.values()));
+    return () => this.connectionInfoListeners.delete(cb);
+  }
+
+  public getConnectionInfos(): PeerConnectionInfo[] {
+    return Array.from(this.peerConnectionInfos.values());
+  }
+
+  public isAnyRelayed(): boolean {
+    return Array.from(this.peerConnectionInfos.values()).some((i) => i.isRelayed);
   }
 
   public getLocalStream() {
