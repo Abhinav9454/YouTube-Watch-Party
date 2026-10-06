@@ -15,6 +15,7 @@ import {
   EQ_FREQUENCIES,
   type EqPresetId,
 } from '../services/audioEqService';
+import { Soundboard } from './Soundboard';
 
 interface PartyToolsModalProps {
   isOpen: boolean;
@@ -80,7 +81,7 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
   audioProfile,
   onSelectAudioProfile,
 }) => {
-  const [activeTab, setActiveTab] = useState<'snacks' | 'trivia' | 'audio' | 'looper'>('snacks');
+  const [activeTab, setActiveTab] = useState<'snacks' | 'soundboard' | 'trivia' | 'audio' | 'looper'>('snacks');
   const [lastSentSnack, setLastSentSnack] = useState<string | null>(null);
   const [activeEq, setActiveEq] = useState<EqPresetId>(audioProfile || audioEqService.getProfile());
   const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
@@ -308,7 +309,7 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)',
+            gridTemplateColumns: 'repeat(5, 1fr)',
             padding: '6px',
             background: 'rgba(0, 0, 0, 0.35)',
             borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
@@ -319,18 +320,18 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
             type="button"
             onClick={() => setActiveTab('snacks')}
             style={{
-              padding: '8px',
+              padding: '8px 4px',
               borderRadius: '8px',
               border: 'none',
               background: activeTab === 'snacks' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
               color: activeTab === 'snacks' ? '#f87171' : '#94a3b8',
               fontWeight: 600,
-              fontSize: '12px',
+              fontSize: '11px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
+              gap: '4px',
               transition: 'all 0.2s',
             }}
           >
@@ -340,20 +341,43 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
 
           <button
             type="button"
+            onClick={() => setActiveTab('soundboard')}
+            style={{
+              padding: '8px 4px',
+              borderRadius: '8px',
+              border: 'none',
+              background: activeTab === 'soundboard' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
+              color: activeTab === 'soundboard' ? '#f87171' : '#94a3b8',
+              fontWeight: 600,
+              fontSize: '11px',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '4px',
+              transition: 'all 0.2s',
+            }}
+          >
+            <span>🔊</span>
+            <span>Sounds</span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab('trivia')}
             style={{
-              padding: '8px',
+              padding: '8px 4px',
               borderRadius: '8px',
               border: 'none',
               background: activeTab === 'trivia' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
               color: activeTab === 'trivia' ? '#f87171' : '#94a3b8',
               fontWeight: 600,
-              fontSize: '12px',
+              fontSize: '11px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
+              gap: '4px',
               transition: 'all 0.2s',
             }}
           >
@@ -365,41 +389,41 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
             type="button"
             onClick={() => setActiveTab('audio')}
             style={{
-              padding: '8px',
+              padding: '8px 4px',
               borderRadius: '8px',
               border: 'none',
               background: activeTab === 'audio' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
               color: activeTab === 'audio' ? '#f87171' : '#94a3b8',
               fontWeight: 600,
-              fontSize: '12px',
+              fontSize: '11px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
+              gap: '4px',
               transition: 'all 0.2s',
             }}
           >
             <span>🎚️</span>
-            <span>Cinema FX</span>
+            <span>Audio FX</span>
           </button>
 
           <button
             type="button"
             onClick={() => setActiveTab('looper')}
             style={{
-              padding: '8px',
+              padding: '8px 4px',
               borderRadius: '8px',
               border: 'none',
               background: activeTab === 'looper' ? 'rgba(239, 68, 68, 0.2)' : 'transparent',
               color: activeTab === 'looper' ? '#f87171' : '#94a3b8',
               fontWeight: 600,
-              fontSize: '12px',
+              fontSize: '11px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
+              gap: '4px',
               transition: 'all 0.2s',
             }}
           >
@@ -1054,6 +1078,13 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
                   )}
                 </>
               )}
+            </div>
+          )}
+
+          {/* TAB 5: Soundboard FX */}
+          {activeTab === 'soundboard' && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <Soundboard inline />
             </div>
           )}
         </div>

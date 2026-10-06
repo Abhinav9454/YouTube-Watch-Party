@@ -18,6 +18,7 @@ import type { RoomEntityDto } from '../types/party';
 import { listRecentRoomsApi } from '../services/api';
 import { extractYouTubeVideoId } from '../utils/youtube';
 import { cleanRoomCode } from '../utils/room';
+import { DiscoverModal } from './DiscoverModal';
 
 interface LobbyProps {
   initialRoomCode?: string;
@@ -52,6 +53,7 @@ export const Lobby: React.FC<LobbyProps> = ({
   const [joinPasscode, setJoinPasscode] = useState('');
   const [persistedRooms, setPersistedRooms] = useState<RoomEntityDto[]>([]);
   const [expandedFaq, setExpandedFaq] = useState<number | null>(null);
+  const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
 
   const activeVideoId = useMemo(() => {
     return extractYouTubeVideoId(customVideoUrl.trim() || selectedVideo);
@@ -359,9 +361,40 @@ export const Lobby: React.FC<LobbyProps> = ({
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e0', marginBottom: '8px', fontWeight: 600 }}>
-                  Starting YouTube Video
-                </label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <label style={{ display: 'block', fontSize: '0.82rem', color: '#cbd5e0', fontWeight: 600 }}>
+                    Starting YouTube Video
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setIsDiscoverOpen(true)}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.15)',
+                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                      borderRadius: '6px',
+                      padding: '3px 9px',
+                      color: '#fca5a5',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      transition: 'all 0.2s',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.28)';
+                      e.currentTarget.style.borderColor = '#ef4444';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)';
+                      e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.35)';
+                    }}
+                  >
+                    <Sparkles size={11} color="#f87171" />
+                    <span>Browse 32+ Videos</span>
+                  </button>
+                </div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px', marginBottom: '10px' }}>
                   {PRESET_VIDEOS.map((vid) => {
                     const isSelected = selectedVideo === vid.id && !customVideoUrl;
@@ -829,6 +862,18 @@ export const Lobby: React.FC<LobbyProps> = ({
           })}
         </div>
       </section>
+
+      {/* Discover Modal for Lobby Video Selection */}
+      <DiscoverModal
+        isOpen={isDiscoverOpen}
+        onClose={() => setIsDiscoverOpen(false)}
+        userRole="HOST"
+        onSelectVideo={(id) => {
+          setSelectedVideo(id);
+          setCustomVideoUrl('');
+          setIsDiscoverOpen(false);
+        }}
+      />
     </div>
   );
 };

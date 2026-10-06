@@ -17,6 +17,8 @@ interface DiscoverModalProps {
   isOpen: boolean;
   onClose: () => void;
   userRole: Role;
+  onSelectVideo?: (videoId: string, title?: string) => void;
+  onAddToQueue?: (videoId: string, title?: string) => void;
 }
 
 interface SuggestedVideo {
@@ -302,7 +304,13 @@ const DISCOVER_VIDEOS: SuggestedVideo[] = [
 
 const CATEGORIES = ['All', 'Music', 'Trailers', 'Gaming', 'Science', 'Nature', 'Trending'];
 
-export const DiscoverModal: React.FC<DiscoverModalProps> = ({ isOpen, onClose, userRole }) => {
+export const DiscoverModal: React.FC<DiscoverModalProps> = ({
+  isOpen,
+  onClose,
+  userRole,
+  onSelectVideo,
+  onAddToQueue,
+}) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchInput, setSearchInput] = useState<string>('');
   const [page, setPage] = useState<number>(1);
@@ -375,27 +383,43 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({ isOpen, onClose, u
     }
   };
 
-  const handlePlayNow = (videoId: string) => {
-    wsService.changeVideo(videoId);
+  const handlePlayNow = (videoId: string, title?: string) => {
+    if (onSelectVideo) {
+      onSelectVideo(videoId, title);
+    } else {
+      wsService.changeVideo(videoId);
+    }
     onClose();
   };
 
   const handleAddToQueue = (videoId: string, title: string) => {
-    wsService.addToQueue(videoId, title);
+    if (onAddToQueue) {
+      onAddToQueue(videoId, title);
+    } else {
+      wsService.addToQueue(videoId, title);
+    }
     setAddedQueueId(videoId);
     setTimeout(() => setAddedQueueId(null), 1400);
   };
 
   const handleDirectPlay = () => {
     if (!directVideoId) return;
-    wsService.changeVideo(directVideoId);
+    if (onSelectVideo) {
+      onSelectVideo(directVideoId);
+    } else {
+      wsService.changeVideo(directVideoId);
+    }
     setSearchInput('');
     onClose();
   };
 
   const handleDirectQueue = () => {
     if (!directVideoId) return;
-    wsService.addToQueue(directVideoId, 'Direct YouTube Video');
+    if (onAddToQueue) {
+      onAddToQueue(directVideoId, 'Direct YouTube Video');
+    } else {
+      wsService.addToQueue(directVideoId, 'Direct YouTube Video');
+    }
     setSearchInput('');
     onClose();
   };

@@ -31,6 +31,7 @@ import { SubtitlesOverlay } from './SubtitlesOverlay';
 import { ShareModal } from './ShareModal';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { PartyToolsModal } from './PartyToolsModal';
+import { Soundboard, PARTY_SOUNDS } from './Soundboard';
 import { audioEqService, type EqPresetId } from '../services/audioEqService';
 import { wsService } from '../services/websocket';
 import type { Bookmark, ChatMessage, ControlRequestedPayload, GiftItem, Participant, PlayState, Poll, QueueItem, ReactionItem, Role, TriviaEndedPayload, TriviaQuestion } from '../types/party';
@@ -138,6 +139,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   const lastLoopSeekRef = useRef<number>(0);
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [recentPartySound, setRecentPartySound] = useState<{ soundId: string; senderName: string } | null>(null);
 
   const formatSec = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -159,6 +161,20 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
       }
     }
   }, [liveCurrentTime, loopRange, onSeek]);
+
+  // Synchronized Soundboard celebration listener
+  useEffect(() => {
+    const unsub = wsService.on('sound_played', (payload: { soundId: string; senderName?: string }) => {
+      if (payload && payload.soundId) {
+        setRecentPartySound({
+          soundId: payload.soundId,
+          senderName: payload.senderName || 'Someone',
+        });
+        setTimeout(() => setRecentPartySound(null), 2500);
+      }
+    });
+    return () => unsub();
+  }, []);
 
   const handleCopyRoomCode = () => {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -374,6 +390,9 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             <span className="hide-on-mobile">Party Tools</span>
           </button>
 
+          {/* Real-time Party Soundboard Trigger */}
+          <Soundboard />
+
           {/* Keyboard Shortcuts Button */}
           {onOpenShortcuts && (
             <button
@@ -534,6 +553,33 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             >
               ✕
             </button>
+          </div>
+        )}
+
+        {/* Real-time Party Soundboard Celebration Pill */}
+        {recentPartySound && (
+          <div
+            className="glass-card animate-fade-in"
+            style={{
+              padding: '8px 18px',
+              background: 'rgba(239, 68, 68, 0.18)',
+              border: '1px solid rgba(239, 68, 68, 0.5)',
+              borderRadius: '9999px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '10px',
+              boxShadow: '0 8px 24px rgba(0, 0, 0, 0.6), 0 0 20px rgba(239, 68, 68, 0.3)',
+              alignSelf: 'center',
+              zIndex: 37,
+            }}
+          >
+            <span style={{ fontSize: '20px' }}>
+              {PARTY_SOUNDS.find((s) => s.id === recentPartySound.soundId)?.icon || '🔊'}
+            </span>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+              <span style={{ color: '#fca5a5' }}>{recentPartySound.senderName}</span> dropped{' '}
+              {PARTY_SOUNDS.find((s) => s.id === recentPartySound.soundId)?.label || recentPartySound.soundId}!
+            </span>
           </div>
         )}
 

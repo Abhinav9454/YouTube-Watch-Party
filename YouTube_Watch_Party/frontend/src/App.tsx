@@ -9,6 +9,8 @@ import { ToastContainer } from './components/Toast';
 import type { ToastMessage } from './components/Toast';
 import { wsService } from './services/websocket';
 import { webrtcService } from './services/webrtc';
+import { soundEffects } from './services/soundEffects';
+import { PARTY_SOUNDS } from './components/Soundboard';
 import { createRoomApi, getChatHistoryApi } from './services/api';
 import { cleanRoomCode, getRoomFromUrl, getPasscodeFromUrl } from './utils/room';
 import type {
@@ -380,6 +382,15 @@ export function App() {
 
       wsService.on('mute_all', () => {
         showToast('Host requested silence / muted all microphones 🔇', 'info');
+      }),
+
+      wsService.on('sound_played', (payload: { soundId: string; senderName?: string }) => {
+        if (payload && payload.soundId) {
+          soundEffects.play(payload.soundId);
+          const icon = PARTY_SOUNDS.find((s) => s.id === payload.soundId)?.icon || '🔊';
+          const label = PARTY_SOUNDS.find((s) => s.id === payload.soundId)?.label || payload.soundId;
+          showToast(`${icon} ${payload.senderName || 'Someone'} played ${label}!`, 'info');
+        }
       }),
     ];
 
