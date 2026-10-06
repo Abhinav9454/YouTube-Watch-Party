@@ -838,6 +838,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           >
           {/* Tabs Switcher */}
           <div
+            className="mobile-tabs-scroll"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(5, 1fr)',

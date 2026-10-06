@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
-import { Play, Pause, RotateCcw, Volume2, VolumeX, Maximize, Lock, Check, Hand, Gauge, Monitor, PictureInPicture } from 'lucide-react';
+import { Play, Pause, RotateCcw, Volume2, VolumeX, Maximize, Minimize, Lock, Check, Hand, Gauge, Monitor, PictureInPicture } from 'lucide-react';
 import type { PlayState, Role } from '../types/party';
 import { extractYouTubeVideoId } from '../utils/youtube';
 import { audioEqService, type EqPresetId } from '../services/audioEqService';
@@ -77,6 +77,13 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   const [needsUserUnmute, setNeedsUserUnmute] = useState(false);
   const [showTouchControls, setShowTouchControls] = useState(false);
   const touchControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Mobile Touch Gestures & Fullscreen State
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [seekRipple, setSeekRipple] = useState<{ side: 'left' | 'right'; text: string } | null>(null);
+  const rippleTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTapRef = useRef<{ time: number; x: number }>({ time: 0, x: 0 });
+  const singleTapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const triggerMobileControls = useCallback(() => {
     setShowTouchControls(true);
@@ -585,15 +592,138 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     } catch {}
   };
 
-  const handleFullscreen = () => {
-    if (containerRef.current) {
-      if (!document.fullscreenElement) {
-        containerRef.current.requestFullscreen().catch(() => {});
-      } else {
+  // Fullscreen event listener to keep isFullscreen state in sync across browser engines
+  useEffect(() => {
+    const handleFsChange = () => {
+      const isFs = Boolean(
+        document.fullscreenElement ||
+        (document as any).webkitFullscreenElement ||
+        (document as any).mozFullScreenElement
+      );
+      setIsFullscreen(isFs);
+    };
+
+    document.addEventListener('fullscreenchange', handleFsChange);
+    document.addEventListener('webkitfullscreenchange', handleFsChange);
+    document.addEventListener('mozfullscreenchange', handleFsChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFsChange);
+      document.removeEventListener('webkitfullscreenchange', handleFsChange);
+      document.removeEventListener('mozfullscreenchange', handleFsChange);
+    };
+  }, []);
+
+  const handleFullscreen = useCallback(() => {
+    const target = containerRef.current as any;
+    if (!target) return;
+
+    const isFs = Boolean(
+      document.fullscreenElement ||
+      (document as any).webkitFullscreenElement ||
+      (document as any).mozFullScreenElement
+    );
+
+    if (!isFs) {
+      if (target.requestFullscreen) {
+        target.requestFullscreen().catch(() => {});
+      } else if (target.webkitRequestFullscreen) {
+        target.webkitRequestFullscreen();
+      } else if (target.mozRequestFullScreen) {
+        target.mozRequestFullScreen();
+      }
+    } else {
+      if (document.exitFullscreen) {
         document.exitFullscreen().catch(() => {});
+      } else if ((document as any).webkitExitFullscreen) {
+        (document as any).webkitExitFullscreen();
+      } else if ((document as any).mozCancelFullScreen) {
+        (document as any).mozCancelFullScreen();
       }
     }
-  };
+  }, []);
+
+  // YouTube Native-style Double-Tap Gestures (Left = -10s, Right = +10s)
+  const handleVideoTouchOrClick = useCallback((clientX: number) => {
+    if (needsUserUnmute) {
+      handleUserUnmute();
+      return;
+    }
+
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) {
+      triggerMobileControls();
+      return;
+    }
+
+    const clickX = clientX - rect.left;
+    const relX = clickX / rect.width;
+    const now = Date.now();
+    const timeDiff = now - lastTapRef.current.time;
+    const distDiff = Math.abs(clickX - lastTapRef.current.x);
+
+    // Double-tap detected (within 320ms and within 80px distance)
+    if (timeDiff < 320 && distDiff < 80) {
+      if (singleTapTimerRef.current) {
+        clearTimeout(singleTapTimerRef.current);
+        singleTapTimerRef.current = null;
+      }
+      lastTapRef.current = { time: 0, x: 0 };
+
+      // Double tap LEFT (< 38% width): Seek backward 10s
+      if (relX < 0.38) {
+        if (canControl) {
+          const target = Math.max(0, currentTime - 10);
+          setCurrentTime(target);
+          lastSeekTimestampRef.current = Date.now();
+          lastActionTimestampRef.current = Date.now();
+          try {
+            playerRef.current?.seekTo(target, true);
+          } catch {}
+          onSeek(target);
+        }
+        setSeekRipple({ side: 'left', text: '-10s' });
+        if (rippleTimerRef.current) clearTimeout(rippleTimerRef.current);
+        rippleTimerRef.current = setTimeout(() => setSeekRipple(null), 750);
+        triggerMobileControls();
+        return;
+      }
+
+      // Double tap RIGHT (> 62% width): Seek forward 10s
+      if (relX > 0.62) {
+        if (canControl) {
+          const target = Math.min(duration || 9999, currentTime + 10);
+          setCurrentTime(target);
+          lastSeekTimestampRef.current = Date.now();
+          lastActionTimestampRef.current = Date.now();
+          try {
+            playerRef.current?.seekTo(target, true);
+          } catch {}
+          onSeek(target);
+        }
+        setSeekRipple({ side: 'right', text: '+10s' });
+        if (rippleTimerRef.current) clearTimeout(rippleTimerRef.current);
+        rippleTimerRef.current = setTimeout(() => setSeekRipple(null), 750);
+        triggerMobileControls();
+        return;
+      }
+
+      // Double tap CENTER: Toggle play/pause if host/moderator
+      if (canControl) {
+        handleTogglePlay();
+      }
+      triggerMobileControls();
+      return;
+    }
+
+    // Single tap: Wait 260ms before toggling controls to allow second tap
+    lastTapRef.current = { time: now, x: clickX };
+    if (singleTapTimerRef.current) clearTimeout(singleTapTimerRef.current);
+    singleTapTimerRef.current = setTimeout(() => {
+      setShowTouchControls((prev) => !prev);
+      triggerMobileControls();
+    }, 260);
+  }, [needsUserUnmute, handleUserUnmute, triggerMobileControls, canControl, currentTime, duration, onSeek, handleTogglePlay]);
 
   const handleVideoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -797,47 +927,69 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           </div>
         )}
 
-        {/* Big Center Play/Pause Overlay for Host */}
+        {/* Universal Touch & Double-Tap Surface for Mobile/Desktop */}
+        <div
+          onClick={(e) => handleVideoTouchOrClick(e.clientX)}
+          onTouchStart={(e) => {
+            if (e.touches && e.touches.length > 0) {
+              handleVideoTouchOrClick(e.touches[0].clientX);
+            }
+          }}
+          style={{
+            position: 'absolute',
+            inset: 0,
+            cursor: 'pointer',
+            zIndex: 15,
+            touchAction: 'manipulation',
+          }}
+        />
+
+        {/* Double-Tap Seek Animated Ripple (YouTube Mobile Style) */}
+        {seekRipple && (
+          <div
+            className={`seek-ripple-indicator ${seekRipple.side === 'left' ? 'seek-ripple-left' : 'seek-ripple-right'}`}
+          >
+            <div style={{ fontSize: '20px' }}>{seekRipple.side === 'left' ? '⏪' : '⏩'}</div>
+            <div style={{ fontSize: '13px', fontWeight: 800 }}>{seekRipple.text}</div>
+          </div>
+        )}
+
+        {/* Big Center Play/Pause Overlay for Host / Moderator */}
         {canControl && (
           <div
-            onClick={() => {
-              if (areControlsVisible) {
-                handleTogglePlay();
-              } else {
-                triggerMobileControls();
-              }
+            onClick={(e) => {
+              e.stopPropagation();
+              handleTogglePlay();
             }}
             style={{
               position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
               cursor: 'pointer',
-              background: 'rgba(0, 0, 0, 0.15)',
               opacity: areControlsVisible ? 1 : 0,
               pointerEvents: areControlsVisible ? 'auto' : 'none',
-              transition: 'opacity 0.25s ease',
-              zIndex: 20,
+              transition: 'opacity 0.25s ease, transform 0.2s ease',
+              zIndex: 22,
             }}
           >
             <div
               style={{
-                width: '68px',
-                height: '68px',
+                width: '72px',
+                height: '72px',
                 borderRadius: '50%',
-                background: 'rgba(239, 68, 68, 0.9)',
-                backdropFilter: 'blur(8px)',
+                background: 'rgba(239, 68, 68, 0.92)',
+                backdropFilter: 'blur(10px)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 color: '#fff',
-                boxShadow: '0 0 30px rgba(239, 68, 68, 0.65)',
+                boxShadow: '0 0 35px rgba(239, 68, 68, 0.7)',
                 transition: 'transform 0.2s',
-                transform: isHoveringControls ? 'scale(1.08)' : 'scale(1)',
+                transform: isHoveringControls ? 'scale(1.1)' : 'scale(1)',
               }}
             >
-              {serverPlayState === 'PLAYING' ? <Pause size={30} /> : <Play size={30} style={{ marginLeft: '4px' }} />}
+              {serverPlayState === 'PLAYING' ? <Pause size={32} /> : <Play size={32} style={{ marginLeft: '4px' }} />}
             </div>
           </div>
         )}
@@ -1197,14 +1349,17 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: '#fff',
+                  color: isFullscreen ? '#ef4444' : '#fff',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
+                  padding: '4px',
+                  borderRadius: '4px',
+                  transition: 'color 0.2s',
                 }}
-                title="Fullscreen"
+                title={isFullscreen ? 'Exit Fullscreen' : 'Fullscreen'}
               >
-                <Maximize size={18} />
+                {isFullscreen ? <Minimize size={18} /> : <Maximize size={18} />}
               </button>
             </div>
           </div>

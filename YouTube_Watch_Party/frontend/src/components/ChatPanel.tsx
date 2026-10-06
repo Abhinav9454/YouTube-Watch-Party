@@ -101,14 +101,18 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           <button
             key={emoji}
             onClick={() => onSendReaction(emoji)}
+            type="button"
             style={{
               background: 'none',
               border: 'none',
-              fontSize: '1.15rem',
+              fontSize: '1.25rem',
               cursor: 'pointer',
-              padding: '2px 4px',
-              borderRadius: '4px',
+              padding: '4px 6px',
+              minWidth: '34px',
+              minHeight: '34px',
+              borderRadius: '6px',
               transition: 'transform 0.15s',
+              touchAction: 'manipulation',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.25)')}
             onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
@@ -226,13 +230,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           placeholder="Type a message..."
           value={inputText}
           onChange={handleInputChange}
-          style={{ padding: '8px 12px', fontSize: '0.88rem' }}
+          enterKeyHint="send"
+          style={{ padding: '10px 14px', fontSize: '16px', borderRadius: '10px' }}
         />
         <button
           type="submit"
           disabled={!inputText.trim()}
           className="btn-primary"
-          style={{ padding: '8px 12px', minWidth: '42px' }}
+          style={{ padding: '8px 14px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <Send size={16} />
         </button>

@@ -6,7 +6,25 @@ function createClient(name) {
     const ws = new globalThis.WebSocket(WS_URL);
     const messages = [];
 
-    ws.onopen = () => resolve({ ws, messages });
+    const client = {
+      ws,
+      messages,
+      send: (type, payload = {}) => ws.send(JSON.stringify({ type, payload })),
+      waitFor: (type, timeout = 4000) => {
+        return new Promise((res, rej) => {
+          const start = Date.now();
+          const check = () => {
+            const found = messages.find((m) => m.type === type);
+            if (found) return res(found);
+            if (Date.now() - start > timeout) return rej(new Error(`Timeout waiting for ${type} on ${name}`));
+            setTimeout(check, 50);
+          };
+          check();
+        });
+      },
+    };
+
+    ws.onopen = () => resolve(client);
     ws.onerror = (err) => reject(err);
     ws.onmessage = (event) => {
       try {
@@ -32,93 +50,54 @@ async function runTests() {
 
   // Join Room
   const testRoomId = 'TEST' + Math.floor(1000 + Math.random() * 9000);
-  host.ws.send(JSON.stringify({
-    type: 'join_room',
-    payload: { roomId: testRoomId, username: 'HostUser' },
-  }));
-
-  await wait(500);
+  host.send('join_room', { roomId: testRoomId, username: 'HostUser', userId: 'host-1' });
+  await host.waitFor('sync_state');
 
   // 2. Connect Guest
   const guest = await createClient('Guest');
   console.log('✅ Guest WebSocket connected');
 
-  guest.ws.send(JSON.stringify({
-    type: 'join_room',
-    payload: { roomId: testRoomId, username: 'GuestUser' },
-  }));
-
-  await wait(600);
+  guest.send('join_room', { roomId: testRoomId, username: 'GuestUser', userId: 'guest-2' });
+  await guest.waitFor('sync_state');
 
   // 3. Test WebRTC Media State & Ducking Signal
   console.log('Testing WebRTC Signaling...');
-  host.ws.send(JSON.stringify({
-    type: 'webrtc_media_state',
-    payload: { isAudioMuted: false, isVideoEnabled: true, isSpeaking: true },
-  }));
+  host.send('webrtc_media_state', { isAudioMuted: false, isVideoEnabled: true, isSpeaking: true });
 
   await wait(400);
 
   // 4. Test Virtual Gifts / Snacks Broadcast
   console.log('Testing Virtual Snacks & Gifts...');
-  guest.ws.send(JSON.stringify({
-    type: 'send_gift',
-    payload: { giftType: 'popcorn', giftIcon: '🍿', giftName: 'Butter Popcorn' },
-  }));
-
+  guest.send('send_gift', { giftType: 'popcorn', giftIcon: '🍿', giftName: 'Butter Popcorn' });
   await wait(400);
 
   // 5. Test Live Trivia Quiz
   console.log('Testing Live Trivia Quiz...');
-  host.ws.send(JSON.stringify({
-    type: 'start_trivia',
-    payload: {
-      question: 'What year was YouTube founded?',
-      options: ['2003', '2005', '2008', '2010'],
-      correctIndex: 1,
-      duration: 15,
-    },
-  }));
-
+  host.send('start_trivia', {
+    question: 'What year was YouTube founded?',
+    options: ['2003', '2005', '2008', '2010'],
+    correctIndex: 1,
+    duration: 15,
+  });
   await wait(400);
 
-  guest.ws.send(JSON.stringify({
-    type: 'answer_trivia',
-    payload: { optionIndex: 1 },
-  }));
-
+  guest.send('answer_trivia', { optionIndex: 1 });
   await wait(400);
 
-  host.ws.send(JSON.stringify({
-    type: 'end_trivia',
-    payload: {},
-  }));
-
+  host.send('end_trivia', {});
   await wait(400);
 
   // 6. Test Key Moments Bookmarking
   console.log('Testing Bookmarks & Highlights...');
-  host.ws.send(JSON.stringify({
-    type: 'add_bookmark',
-    payload: { time: 42.5, title: 'Epic Guitar Solo' },
-  }));
-
+  host.send('add_bookmark', { time: 42.5, title: 'Epic Guitar Solo' });
   await wait(400);
 
   // 7. Test Host Moderation Announcement & Clear Chat
   console.log('Testing Host Moderation...');
-  host.ws.send(JSON.stringify({
-    type: 'broadcast_announcement',
-    payload: { announcement: 'Movie starts in 2 minutes!' },
-  }));
-
+  host.send('broadcast_announcement', { announcement: 'Movie starts in 2 minutes!' });
   await wait(400);
 
-  host.ws.send(JSON.stringify({
-    type: 'clear_chat',
-    payload: {},
-  }));
-
+  host.send('clear_chat', {});
   await wait(500);
 
   // Verification
