@@ -19,6 +19,7 @@ import { listRecentRoomsApi } from '../services/api';
 import { extractYouTubeVideoId } from '../utils/youtube';
 import { cleanRoomCode } from '../utils/room';
 import { DiscoverModal } from './DiscoverModal';
+import { AvatarCustomizer } from './AvatarCustomizer';
 
 interface LobbyProps {
   initialRoomCode?: string;
@@ -268,23 +269,7 @@ export const Lobby: React.FC<LobbyProps> = ({
               </div>
             </div>
 
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '50%',
-                background: 'linear-gradient(135deg, #ff2a2a, #dc2626)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: '15px',
-                boxShadow: '0 0 15px rgba(239, 68, 68, 0.35)',
-              }}
-            >
-              {username ? username[0].toUpperCase() : 'U'}
-            </div>
+            <AvatarCustomizer currentUsername={username} />
           </div>
 
           {/* Tab Switcher */}

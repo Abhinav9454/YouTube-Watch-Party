@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Mic, MicOff, Video, VideoOff, Volume2, VolumeX, Sparkles, ChevronDown, ChevronUp, PhoneCall, PhoneOff } from 'lucide-react';
+import { Mic, MicOff, Video, VideoOff, Volume2, VolumeX, Sparkles, ChevronDown, ChevronUp, PhoneCall, PhoneOff, MonitorUp } from 'lucide-react';
 import { webrtcService } from '../services/webrtc';
 import type { Participant } from '../types/party';
 
@@ -26,6 +26,7 @@ export const VoiceVideoOverlay: React.FC<VoiceVideoOverlayProps> = ({
   const [inCall, setInCall] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOn, setIsVideoOn] = useState(false);
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
   const [isDeafened, setIsDeafened] = useState(false);
   const [isDucking, setIsDucking] = useState(true);
   const [isMinimized, setIsMinimized] = useState(false);
@@ -117,6 +118,7 @@ export const VoiceVideoOverlay: React.FC<VoiceVideoOverlayProps> = ({
     webrtcService.stopMedia();
     setLocalStream(null);
     setInCall(false);
+    setIsScreenSharing(false);
     setRemotePeers(new Map());
   };
 
@@ -128,6 +130,11 @@ export const VoiceVideoOverlay: React.FC<VoiceVideoOverlayProps> = ({
   const handleToggleVideo = async () => {
     const next = await webrtcService.toggleVideo();
     setIsVideoOn(next);
+  };
+
+  const handleToggleScreenShare = async () => {
+    const next = await webrtcService.toggleScreenShare();
+    setIsScreenSharing(next);
   };
 
   const handleToggleDeafen = () => {
@@ -264,6 +271,30 @@ export const VoiceVideoOverlay: React.FC<VoiceVideoOverlayProps> = ({
               >
                 {isVideoOn ? <Video size={14} /> : <VideoOff size={14} />}
                 <span>{isVideoOn ? 'Cam On' : 'Cam Off'}</span>
+              </button>
+
+              {/* Screen Share Toggle */}
+              <button
+                type="button"
+                onClick={handleToggleScreenShare}
+                style={{
+                  background: isScreenSharing ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                  border: isScreenSharing ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.15)',
+                  color: isScreenSharing ? '#34d399' : '#a0aec0',
+                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  transition: 'all 0.2s ease',
+                }}
+                title={isScreenSharing ? 'Stop Screen Sharing' : 'Share Your Screen'}
+              >
+                <MonitorUp size={14} />
+                <span>{isScreenSharing ? 'Sharing' : 'Screen'}</span>
               </button>
 
               {/* Deafen Toggle */}

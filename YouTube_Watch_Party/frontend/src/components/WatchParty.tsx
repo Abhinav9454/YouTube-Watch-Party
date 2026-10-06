@@ -32,6 +32,7 @@ import { ShareModal } from './ShareModal';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { PartyToolsModal } from './PartyToolsModal';
 import { Soundboard, PARTY_SOUNDS } from './Soundboard';
+import { AvatarCustomizer } from './AvatarCustomizer';
 import { audioEqService, type EqPresetId } from '../services/audioEqService';
 import { wsService } from '../services/websocket';
 import type { Bookmark, ChatMessage, ControlRequestedPayload, GiftItem, Participant, PlayState, Poll, QueueItem, ReactionItem, Role, TriviaEndedPayload, TriviaQuestion } from '../types/party';
@@ -338,6 +339,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             <span>{roomId}</span>
             {copiedCode && <span style={{ fontSize: '10px', color: '#34d399' }}>Copied!</span>}
           </button>
+
+          <AvatarCustomizer currentUsername={participants.find((p) => p.id === currentUserId)?.username || 'User'} />
         </div>
 
         {/* Right: Videos + Share/Invite + Party Tools + Shortcuts + Live Indicator */}

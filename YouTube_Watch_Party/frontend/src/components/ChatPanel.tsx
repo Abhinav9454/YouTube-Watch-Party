@@ -2,6 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Send, Smile } from 'lucide-react';
 import type { ChatMessage, Role } from '../types/party';
 import { wsService } from '../services/websocket';
+import { AVATAR_OPTIONS } from './AvatarCustomizer';
+
+const getSenderAvatar = (senderName: string, isSelf: boolean) => {
+  if (isSelf && typeof window !== 'undefined') {
+    return localStorage.getItem('watchparty_avatar') || '🦊';
+  }
+  let hash = 0;
+  for (let i = 0; i < senderName.length; i++) {
+    hash = senderName.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_OPTIONS[Math.abs(hash) % AVATAR_OPTIONS.length].emoji;
+};
 
 interface ChatPanelProps {
   messages: ChatMessage[];
@@ -156,6 +168,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem' }}>
+                <span style={{ fontSize: '13px', lineHeight: 1 }}>
+                  {getSenderAvatar(m.senderName, isSelf)}
+                </span>
                 <span style={{ fontWeight: 600, color: getRoleColor(m.senderRole) }}>
                   {m.senderName}
                 </span>

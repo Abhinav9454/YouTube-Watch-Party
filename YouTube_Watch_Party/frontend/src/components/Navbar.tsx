@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Tv, LogOut, LogIn, Sparkles } from 'lucide-react';
+import { AvatarCustomizer } from './AvatarCustomizer';
 
 interface AuthUser {
   id: string;
@@ -201,6 +202,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 <span>Sign In</span>
               </button>
             )}
+
+            <AvatarCustomizer currentUsername="Guest" />
 
             <button
               type="button"

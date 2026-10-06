@@ -24,6 +24,8 @@ class WebRtcService {
   private isAudioMuted: boolean = false;
   private isVideoEnabled: boolean = false;
   private isDeafened: boolean = false;
+  private isScreenSharing: boolean = false;
+  private screenStream: MediaStream | null = null;
   private audioDuckingEnabled: boolean = true;
   private duckingTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -102,6 +104,7 @@ class WebRtcService {
   }
 
   public stopMedia() {
+    this.stopScreenShare();
     if (this.localStream) {
       this.localStream.getTracks().forEach((t) => t.stop());
       this.localStream = null;
@@ -154,6 +157,76 @@ class WebRtcService {
 
     wsService.sendWebRtcMediaState(this.isAudioMuted, this.isVideoEnabled);
     return this.isVideoEnabled;
+  }
+
+  public async toggleScreenShare(): Promise<boolean> {
+    if (this.isScreenSharing) {
+      this.stopScreenShare();
+      return false;
+    }
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        console.warn('getDisplayMedia is not supported in this browser');
+        return false;
+      }
+
+      const stream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+
+      this.screenStream = stream;
+      this.isScreenSharing = true;
+
+      const screenTrack = stream.getVideoTracks()[0];
+      screenTrack.onended = () => {
+        this.stopScreenShare();
+      };
+
+      if (this.localStream) {
+        const oldTrack = this.localStream.getVideoTracks()[0];
+        if (oldTrack) {
+          this.localStream.removeTrack(oldTrack);
+          oldTrack.stop();
+        }
+        this.localStream.addTrack(screenTrack);
+      } else {
+        this.localStream = stream;
+      }
+      this.isVideoEnabled = true;
+
+      this.peers.forEach((pc) => {
+        const senders = pc.getSenders();
+        const videoSender = senders.find((s) => s.track && s.track.kind === 'video');
+        if (videoSender) {
+          videoSender.replaceTrack(screenTrack);
+        } else if (this.localStream) {
+          pc.addTrack(screenTrack, this.localStream);
+        }
+      });
+
+      this.localStreamListeners.forEach((cb) => cb(this.localStream!));
+      wsService.sendWebRtcMediaState(this.isAudioMuted, true);
+      return true;
+    } catch (err) {
+      console.warn('Screen share canceled or failed:', err);
+      this.isScreenSharing = false;
+      return false;
+    }
+  }
+
+  public stopScreenShare(): void {
+    if (this.screenStream) {
+      this.screenStream.getTracks().forEach((t) => t.stop());
+      this.screenStream = null;
+    }
+    this.isScreenSharing = false;
+    wsService.sendWebRtcMediaState(this.isAudioMuted, this.isVideoEnabled);
+  }
+
+  public isSharingScreen(): boolean {
+    return this.isScreenSharing;
   }
 
   public toggleDeafen(): boolean {

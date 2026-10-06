@@ -1,6 +1,29 @@
 import React from 'react';
 import { Crown, Shield, User, ShieldAlert, ShieldCheck, UserX, ArrowRightLeft, Hand } from 'lucide-react';
 import type { Participant, Role } from '../types/party';
+import { AVATAR_OPTIONS, BADGE_OPTIONS } from './AvatarCustomizer';
+
+const getParticipantAvatar = (username: string, isSelf: boolean) => {
+  if (isSelf && typeof window !== 'undefined') {
+    return localStorage.getItem('watchparty_avatar') || '🦊';
+  }
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return AVATAR_OPTIONS[Math.abs(hash) % AVATAR_OPTIONS.length].emoji;
+};
+
+const getParticipantBadge = (username: string, isSelf: boolean) => {
+  if (isSelf && typeof window !== 'undefined') {
+    return localStorage.getItem('watchparty_badge') || 'VIP Guest';
+  }
+  let hash = 0;
+  for (let i = 0; i < username.length; i++) {
+    hash = username.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return BADGE_OPTIONS[Math.abs(hash) % BADGE_OPTIONS.length].label;
+};
 
 interface ParticipantListProps {
   participants: Participant[];
@@ -97,19 +120,19 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <div
                     style={{
-                      width: '30px',
-                      height: '30px',
-                      borderRadius: '50%',
-                      background: p.role === 'HOST' ? '#f59e0b' : p.role === 'MODERATOR' ? '#38bdf8' : '#ef4444',
+                      width: '34px',
+                      height: '34px',
+                      borderRadius: '10px',
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px solid rgba(255, 255, 255, 0.12)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      color: '#fff',
-                      fontWeight: 700,
-                      fontSize: '0.85rem',
+                      fontSize: '18px',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
                     }}
                   >
-                    {p.username.charAt(0).toUpperCase()}
+                    {getParticipantAvatar(p.username, isSelf)}
                   </div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -117,6 +140,12 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                       {isSelf && (
                         <span style={{ fontSize: '0.7rem', color: '#ef4444', fontWeight: 700 }}>(You)</span>
                       )}
+                    </div>
+                    <div style={{ fontSize: '10px', color: '#c084fc', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '3px' }}>
+                      <span>🌟</span>
+                      <span>{getParticipantBadge(p.username, isSelf)}</span>
+                    </div>
+                  </div>
                       {p.handRaised && (
                         <span
                           title="Hand raised"
@@ -132,12 +161,10 @@ export const ParticipantList: React.FC<ParticipantListProps> = ({
                           ✋
                         </span>
                       )}
-                    </div>
                   </div>
-                </div>
 
-                {getRoleBadge(p.role)}
-              </div>
+                  {getRoleBadge(p.role)}
+                </div>
 
               {/* Host Administrative Controls */}
               {isHost && !isSelf && (
