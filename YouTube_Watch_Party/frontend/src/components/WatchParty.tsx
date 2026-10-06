@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   MessageSquare,
   Users,
@@ -14,6 +14,7 @@ import {
   Shield,
   HelpCircle,
   Sparkles,
+  Repeat,
 } from 'lucide-react';
 import { YouTubePlayer } from './YouTubePlayer';
 import { ParticipantList } from './ParticipantList';
@@ -131,8 +132,31 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isPartyToolsOpen, setIsPartyToolsOpen] = useState(false);
+  const [loopRange, setLoopRange] = useState<{ pointA: number; pointB: number; active: boolean } | null>(null);
+  const lastLoopSeekRef = useRef<number>(0);
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
+
+  const formatSec = (secs: number) => {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  // A-B Video Looper Engine: when playback reaches Point B, seamlessly jump back to Point A
+  useEffect(() => {
+    if (!loopRange || !loopRange.active) return;
+    if (loopRange.pointB <= loopRange.pointA) return;
+
+    if (liveCurrentTime >= loopRange.pointB) {
+      const now = Date.now();
+      // Debounce seek by 750ms so player buffer has time to snap back to Point A
+      if (now - lastLoopSeekRef.current > 750) {
+        lastLoopSeekRef.current = now;
+        onSeek(loopRange.pointA);
+      }
+    }
+  }, [liveCurrentTime, loopRange, onSeek]);
 
   const handleCopyRoomCode = () => {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
@@ -691,6 +715,53 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           />
         </div>
 
+        {/* Active A-B Loop Floating Status Bar */}
+        {loopRange && loopRange.active && (
+          <div
+            className="glass-card animate-fade-in"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 14px',
+              borderRadius: '10px',
+              background: 'rgba(239, 68, 68, 0.12)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              color: '#fff',
+              fontSize: '12px',
+              boxShadow: '0 4px 16px rgba(0, 0, 0, 0.4)',
+              gap: '8px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Repeat size={14} style={{ color: '#f87171' }} />
+              <span>
+                <strong style={{ color: '#f87171' }}>A-B Loop Active:</strong> {formatSec(loopRange.pointA)} ➔ {formatSec(loopRange.pointB)}
+              </span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => onSeek(loopRange.pointA)}
+                className="btn-secondary"
+                style={{ padding: '3px 10px', fontSize: '11px' }}
+              >
+                Jump to A
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoopRange((prev) => (prev ? { ...prev, active: false } : null))}
+                className="btn-danger"
+                style={{ padding: '3px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+              >
+                <X size={12} />
+                <span>Stop Loop</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* In-Browser WebRTC Voice Chat & Video Grid */}
         <VoiceVideoOverlay
           currentUserId={currentUserId}
@@ -943,6 +1014,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
         ambientGlow={ambientGlow}
         onToggleGlow={() => setAmbientGlow(!ambientGlow)}
         onOpenAnalytics={() => setIsAnalyticsOpen(true)}
+        loopRange={loopRange}
+        onUpdateLoopRange={setLoopRange}
       />
     </div>
   );

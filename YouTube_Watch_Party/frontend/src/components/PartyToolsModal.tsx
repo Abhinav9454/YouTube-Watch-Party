@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Repeat,
   RotateCcw,
@@ -19,6 +19,8 @@ interface PartyToolsModalProps {
   ambientGlow: boolean;
   onToggleGlow: () => void;
   onOpenAnalytics: () => void;
+  loopRange?: { pointA: number; pointB: number; active: boolean } | null;
+  onUpdateLoopRange?: (range: { pointA: number; pointB: number; active: boolean } | null) => void;
 }
 
 const SNACK_LIST = [
@@ -66,9 +68,12 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
   onClose,
   userRole,
   liveCurrentTime,
+  onSeek,
   ambientGlow,
   onToggleGlow,
   onOpenAnalytics,
+  loopRange,
+  onUpdateLoopRange,
 }) => {
   const [activeTab, setActiveTab] = useState<'snacks' | 'trivia' | 'audio' | 'looper'>('snacks');
   const [lastSentSnack, setLastSentSnack] = useState<string | null>(null);
@@ -78,6 +83,19 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
   const [pointA, setPointA] = useState<number | null>(null);
   const [pointB, setPointB] = useState<number | null>(null);
   const [isLooping, setIsLooping] = useState(false);
+
+  // Sync looper state from loopRange prop
+  useEffect(() => {
+    if (loopRange) {
+      setPointA(loopRange.pointA);
+      setPointB(loopRange.pointB);
+      setIsLooping(loopRange.active);
+    } else {
+      setPointA(null);
+      setPointB(null);
+      setIsLooping(false);
+    }
+  }, [loopRange]);
 
   // Custom Trivia state
   const [customQ, setCustomQ] = useState('');
@@ -109,21 +127,67 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
   };
 
   const handleSetA = () => {
-    setPointA(Math.floor(liveCurrentTime));
+    const cur = Math.floor(liveCurrentTime);
+    setPointA(cur);
+    if (pointB !== null && cur >= pointB) {
+      const newB = cur + 5;
+      setPointB(newB);
+      onUpdateLoopRange?.({ pointA: cur, pointB: newB, active: isLooping });
+    } else if (pointB !== null) {
+      onUpdateLoopRange?.({ pointA: cur, pointB, active: isLooping });
+    }
   };
 
   const handleSetB = () => {
-    const candidate = Math.ceil(liveCurrentTime);
-    if (pointA === null || candidate > pointA) {
-      setPointB(candidate);
-      setIsLooping(true);
+    const cur = Math.ceil(liveCurrentTime);
+    const validA = pointA !== null ? pointA : Math.max(0, cur - 5);
+    if (pointA === null) setPointA(validA);
+    const validB = cur > validA ? cur : validA + 5;
+    setPointB(validB);
+    setIsLooping(true);
+    onUpdateLoopRange?.({ pointA: validA, pointB: validB, active: true });
+  };
+
+  const handleNudgeA = (delta: number) => {
+    const curA = pointA ?? Math.floor(liveCurrentTime);
+    const newA = Math.max(0, curA + delta);
+    if (pointB !== null && newA >= pointB) return;
+    setPointA(newA);
+    if (pointB !== null) {
+      onUpdateLoopRange?.({ pointA: newA, pointB, active: isLooping });
     }
+  };
+
+  const handleNudgeB = (delta: number) => {
+    if (pointB === null) {
+      const curB = Math.ceil(liveCurrentTime);
+      const validA = pointA ?? Math.max(0, curB - 5);
+      const targetB = Math.max(validA + 1, curB + delta);
+      setPointA(validA);
+      setPointB(targetB);
+      setIsLooping(true);
+      onUpdateLoopRange?.({ pointA: validA, pointB: targetB, active: true });
+      return;
+    }
+    const targetB = Math.max((pointA ?? 0) + 1, pointB + delta);
+    setPointB(targetB);
+    if (pointA !== null) {
+      onUpdateLoopRange?.({ pointA, pointB: targetB, active: isLooping });
+    }
+  };
+
+  const handleToggleLoop = () => {
+    if (pointA === null || pointB === null) return;
+    const nextState = !isLooping;
+    setIsLooping(nextState);
+    onUpdateLoopRange?.({ pointA, pointB, active: nextState });
   };
 
   const handleClearLoop = () => {
     setPointA(null);
     setPointB(null);
     setIsLooping(false);
+    onUpdateLoopRange?.(null);
   };
 
   const formatSec = (secs: number) => {
@@ -640,78 +704,186 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
           {activeTab === 'looper' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.5 }}>
-                Repeat any section of the video seamlessly. Set Start (Point A) and End (Point B) to loop your favourite song drop, meme, or clip.
+                Repeat any section of the video seamlessly. Set Start (Point A) and End (Point B) to loop your favourite song drop, meme, or clip for the room.
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '12px',
-                  padding: '14px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  borderRadius: '12px',
-                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Point A (Start):</div>
-                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#f87171', fontFamily: 'monospace' }}>
-                    {pointA !== null ? formatSec(pointA) : '--:--'}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSetA}
-                    className="btn-secondary"
-                    style={{ marginTop: '8px', width: '100%', padding: '6px', fontSize: '11px' }}
-                  >
-                    Set A to Current
-                  </button>
-                </div>
-
-                <div>
-                  <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Point B (End):</div>
-                  <div style={{ fontSize: '18px', fontWeight: 700, color: '#38bdf8', fontFamily: 'monospace' }}>
-                    {pointB !== null ? formatSec(pointB) : '--:--'}
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSetB}
-                    className="btn-secondary"
-                    style={{ marginTop: '8px', width: '100%', padding: '6px', fontSize: '11px' }}
-                  >
-                    Set B to Current
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsLooping(!isLooping)}
-                  disabled={pointA === null || pointB === null}
-                  className="btn-primary"
+              {!canHost ? (
+                <div
                   style={{
-                    flex: 1,
-                    padding: '8px',
-                    fontSize: '12px',
-                    opacity: pointA === null || pointB === null ? 0.5 : 1,
+                    padding: '24px',
+                    textAlign: 'center',
+                    background: 'rgba(255, 255, 255, 0.03)',
+                    borderRadius: '12px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    color: '#94a3b8',
+                    fontSize: '13px',
                   }}
                 >
-                  <Repeat size={14} />
-                  <span>{isLooping ? 'Pause Loop' : 'Start Looping'}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleClearLoop}
-                  className="btn-secondary"
-                  style={{ padding: '8px 12px', fontSize: '12px' }}
-                  title="Clear loop points"
-                >
-                  <RotateCcw size={14} />
-                  <span>Reset</span>
-                </button>
-              </div>
+                  <span style={{ fontSize: '24px', display: 'block', marginBottom: '8px' }}>🔒</span>
+                  Only the <b>Host</b> or <b>Moderator</b> can control the playback loop for the room.
+                  <div style={{ marginTop: '6px', fontSize: '11px', color: '#64748b' }}>
+                    Ask the host to loop your favorite clip or request playback control from the header!
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: '1fr 1fr',
+                      gap: '12px',
+                      padding: '14px',
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Point A (Start):</div>
+                      <div style={{ fontSize: '20px', fontWeight: 700, color: '#f87171', fontFamily: 'monospace' }}>
+                        {pointA !== null ? formatSec(pointA) : '--:--'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={handleSetA}
+                          className="btn-secondary"
+                          style={{ flex: 1, padding: '6px 4px', fontSize: '11px' }}
+                        >
+                          Set Current
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleNudgeA(-1)}
+                          className="btn-secondary"
+                          style={{ padding: '6px 8px', fontSize: '11px' }}
+                          title="Nudge A -1s"
+                        >
+                          -1s
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleNudgeA(1)}
+                          className="btn-secondary"
+                          style={{ padding: '6px 8px', fontSize: '11px' }}
+                          title="Nudge A +1s"
+                        >
+                          +1s
+                        </button>
+                      </div>
+                      {pointA !== null && onSeek && (
+                        <button
+                          type="button"
+                          onClick={() => onSeek(pointA)}
+                          className="btn-secondary"
+                          style={{ marginTop: '6px', width: '100%', padding: '4px', fontSize: '10px', color: '#cbd5e1' }}
+                        >
+                          ▶ Jump to A
+                        </button>
+                      )}
+                    </div>
+
+                    <div>
+                      <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>Point B (End):</div>
+                      <div style={{ fontSize: '20px', fontWeight: 700, color: '#38bdf8', fontFamily: 'monospace' }}>
+                        {pointB !== null ? formatSec(pointB) : '--:--'}
+                      </div>
+                      <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={handleSetB}
+                          className="btn-secondary"
+                          style={{ flex: 1, padding: '6px 4px', fontSize: '11px' }}
+                        >
+                          Set Current
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleNudgeB(-1)}
+                          className="btn-secondary"
+                          style={{ padding: '6px 8px', fontSize: '11px' }}
+                          title="Nudge B -1s"
+                        >
+                          -1s
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleNudgeB(1)}
+                          className="btn-secondary"
+                          style={{ padding: '6px 8px', fontSize: '11px' }}
+                          title="Nudge B +1s"
+                        >
+                          +1s
+                        </button>
+                      </div>
+                      {pointB !== null && onSeek && (
+                        <button
+                          type="button"
+                          onClick={() => onSeek(pointB)}
+                          className="btn-secondary"
+                          style={{ marginTop: '6px', width: '100%', padding: '4px', fontSize: '10px', color: '#cbd5e1' }}
+                        >
+                          ▶ Jump to B
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button
+                      type="button"
+                      onClick={handleToggleLoop}
+                      disabled={pointA === null || pointB === null}
+                      className={isLooping ? 'btn-danger' : 'btn-primary'}
+                      style={{
+                        flex: 1,
+                        padding: '9px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        opacity: pointA === null || pointB === null ? 0.5 : 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <Repeat size={14} />
+                      <span>{isLooping ? 'Stop Looping' : 'Activate Looper'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleClearLoop}
+                      className="btn-secondary"
+                      style={{ padding: '9px 14px', fontSize: '12px' }}
+                      title="Clear loop points"
+                    >
+                      <RotateCcw size={14} />
+                      <span>Reset</span>
+                    </button>
+                  </div>
+
+                  {isLooping && pointA !== null && pointB !== null && (
+                    <div
+                      style={{
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        border: '1px solid rgba(16, 185, 129, 0.3)',
+                        color: '#34d399',
+                        fontSize: '11px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                      }}
+                    >
+                      <span className="live-dot" />
+                      <span>
+                        Active! When playback reaches <b>{formatSec(pointB)}</b>, it will instantly jump back to <b>{formatSec(pointA)}</b>.
+                      </span>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>
