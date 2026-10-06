@@ -92,6 +92,7 @@ export interface SyncStatePayload {
   serverTimestamp?: number;
   assignedRole?: Role;
   userId?: string;
+  activeSubtitles?: SubtitlesSyncPayload | null;
 }
 
 export interface UserJoinedPayload {
@@ -177,6 +178,20 @@ export interface PollEndedPayload {
 
 export interface BookmarksUpdatedPayload {
   bookmarks: Bookmark[];
+}
+
+export interface SubtitleCueItem {
+  id: number;
+  start: number;
+  end: number;
+  text: string;
+}
+
+export interface SubtitlesSyncPayload {
+  cues: SubtitleCueItem[];
+  isEnabled: boolean;
+  fileName?: string;
+  offsetSeconds?: number;
 }
 
 export interface SoundPlayedPayload {

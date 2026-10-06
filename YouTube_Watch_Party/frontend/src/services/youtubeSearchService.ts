@@ -179,6 +179,81 @@ class YouTubeSearchService {
       message: 'No YouTube API Key provided.',
     };
   }
+
+  /**
+   * Fetch all videos in a YouTube Playlist by Playlist ID or full YouTube URL
+   */
+  async fetchPlaylistVideos(playlistIdOrUrl: string, maxResults: number = 25): Promise<{
+    success: boolean;
+    hasApiKey: boolean;
+    items: Array<{ videoId: string; title: string; channel?: string; thumbnail?: string }>;
+    message?: string;
+  }> {
+    let cleanId = playlistIdOrUrl.trim();
+    if (cleanId.includes('list=')) {
+      const idx = cleanId.indexOf('list=');
+      cleanId = cleanId.substring(idx + 5);
+      const amp = cleanId.indexOf('&');
+      if (amp !== -1) cleanId = cleanId.substring(0, amp);
+    }
+
+    const apiKey = this.getStoredApiKey();
+
+    // 1. Try backend endpoint /api/youtube/playlist
+    try {
+      const url = `/api/youtube/playlist?playlistId=${encodeURIComponent(cleanId)}&maxResults=${maxResults}${apiKey ? `&key=${encodeURIComponent(apiKey)}` : ''}`;
+      const res = await fetch(url);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.items && data.items.length > 0) {
+          return {
+            success: true,
+            hasApiKey: data.hasApiKey ?? Boolean(apiKey),
+            items: data.items,
+          };
+        }
+      }
+    } catch {
+      // Backend request failed, fallback to direct client call if key available
+    }
+
+    // 2. Direct client call if apiKey is set
+    if (apiKey) {
+      try {
+        const directUrl = `https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=${maxResults}&playlistId=${encodeURIComponent(cleanId)}&key=${encodeURIComponent(apiKey)}`;
+        const res = await fetch(directUrl);
+        if (res.ok) {
+          const data = await res.json();
+          const items = (data.items || []).map((i: any) => ({
+            videoId: i.snippet?.resourceId?.videoId || '',
+            title: i.snippet?.title || 'Untitled',
+            channel: i.snippet?.channelTitle || '',
+            thumbnail: i.snippet?.thumbnails?.medium?.url || `https://i.ytimg.com/vi/${i.snippet?.resourceId?.videoId}/mqdefault.jpg`,
+          })).filter((i: any) => Boolean(i.videoId));
+
+          return {
+            success: true,
+            hasApiKey: true,
+            items,
+          };
+        }
+      } catch (err: any) {
+        return {
+          success: false,
+          hasApiKey: true,
+          items: [],
+          message: err.message,
+        };
+      }
+    }
+
+    return {
+      success: false,
+      hasApiKey: false,
+      items: [],
+      message: 'YouTube API key required to auto-fetch playlist items. Please add your key in Discover settings.',
+    };
+  }
 }
 
 export const youtubeSearchService = new YouTubeSearchService();

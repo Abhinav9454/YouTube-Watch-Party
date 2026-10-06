@@ -311,6 +311,10 @@ class WebSocketClient {
     this.send('mute_all', {});
   }
 
+  public syncSubtitles(cues: any[], isEnabled: boolean, fileName?: string, offsetSeconds: number = 0) {
+    this.send('sync_subtitles', { cues, isEnabled, fileName, offsetSeconds });
+  }
+
   public disconnect() {
     this.isExplicitlyClosed = true;
     if (this.socket) {

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { ListPlus, Play, Trash2, Plus, Sparkles } from 'lucide-react';
+import { ListPlus, Play, Trash2, Plus, Sparkles, Layers, Loader2, Check } from 'lucide-react';
 import type { QueueItem, Role } from '../types/party';
 import { extractYouTubeVideoId } from '../utils/youtube';
+import { youtubeSearchService } from '../services/youtubeSearchService';
 
 interface PlaylistPanelProps {
   playlist: QueueItem[];
@@ -29,6 +30,13 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
   const [titleInput, setTitleInput] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
 
+  // Playlist Batch Import State
+  const [showPlaylistForm, setShowPlaylistForm] = useState(false);
+  const [playlistInput, setPlaylistInput] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
+  const [importStatus, setImportStatus] = useState<string | null>(null);
+  const [importedItems, setImportedItems] = useState<Array<{ videoId: string; title: string; channel?: string }>>([]);
+
   const canControl = userRole === 'HOST' || userRole === 'MODERATOR';
 
   const handleAddSubmit = (e: React.FormEvent) => {
@@ -42,6 +50,43 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
     }
   };
 
+  const handleFetchPlaylist = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!playlistInput.trim()) return;
+
+    setIsImporting(true);
+    setImportStatus(null);
+    setImportedItems([]);
+
+    try {
+      const res = await youtubeSearchService.fetchPlaylistVideos(playlistInput.trim(), 25);
+      if (res.success && res.items.length > 0) {
+        setImportedItems(res.items);
+        setImportStatus(`Found ${res.items.length} videos in playlist!`);
+      } else {
+        setImportStatus(res.message || 'No videos found in this playlist.');
+      }
+    } catch (err: any) {
+      setImportStatus(err.message || 'Failed to fetch playlist.');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
+  const handleAddAllImported = () => {
+    if (importedItems.length === 0) return;
+    importedItems.forEach((item) => {
+      onAddToQueue(item.videoId, item.title);
+    });
+    setImportedItems([]);
+    setPlaylistInput('');
+    setImportStatus(`Successfully queued ${importedItems.length} videos!`);
+    setTimeout(() => {
+      setShowPlaylistForm(false);
+      setImportStatus(null);
+    }, 1500);
+  };
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', gap: '12px' }}>
       {/* Header and Add button */}
@@ -51,14 +96,106 @@ export const PlaylistPanel: React.FC<PlaylistPanelProps> = ({
           <span>Up Next ({playlist.length})</span>
         </div>
 
-        <button
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="btn-secondary"
-          style={{ padding: '4px 10px', fontSize: '0.76rem', gap: '4px' }}
-        >
-          <Plus size={14} /> Add Video
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <button
+            onClick={() => {
+              setShowPlaylistForm(!showPlaylistForm);
+              setShowAddForm(false);
+            }}
+            className="btn-secondary"
+            style={{ padding: '4px 8px', fontSize: '0.74rem', gap: '4px', color: '#a855f7', borderColor: 'rgba(168, 85, 247, 0.3)' }}
+            title="Batch Import YouTube Playlist"
+          >
+            <Layers size={13} /> Playlist
+          </button>
+          <button
+            onClick={() => {
+              setShowAddForm(!showAddForm);
+              setShowPlaylistForm(false);
+            }}
+            className="btn-secondary"
+            style={{ padding: '4px 10px', fontSize: '0.76rem', gap: '4px' }}
+          >
+            <Plus size={14} /> Add Video
+          </button>
+        </div>
       </div>
+
+      {/* Playlist Batch Import Form */}
+      {showPlaylistForm && (
+        <div
+          style={{
+            background: 'rgba(168, 85, 247, 0.06)',
+            padding: '12px',
+            borderRadius: 'var(--radius-sm)',
+            border: '1px solid rgba(168, 85, 247, 0.25)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '8px',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', fontWeight: 700, color: '#c084fc' }}>
+            <Layers size={14} /> Import YouTube Playlist
+          </div>
+          <form onSubmit={handleFetchPlaylist} style={{ display: 'flex', gap: '6px' }}>
+            <input
+              type="text"
+              className="input-field"
+              placeholder="Paste Playlist URL or ID (e.g. list=PL...)"
+              value={playlistInput}
+              onChange={(e) => setPlaylistInput(e.target.value)}
+              style={{ fontSize: '0.82rem', padding: '6px 10px', flex: 1 }}
+              required
+            />
+            <button
+              type="submit"
+              disabled={isImporting}
+              className="btn-primary"
+              style={{ padding: '6px 12px', fontSize: '0.78rem', background: 'linear-gradient(135deg, #a855f7, #7c3aed)' }}
+            >
+              {isImporting ? <Loader2 size={13} className="animate-spin" /> : 'Fetch'}
+            </button>
+          </form>
+
+          {importStatus && (
+            <div style={{ fontSize: '0.75rem', color: importedItems.length > 0 ? '#4ade80' : '#f87171' }}>
+              {importStatus}
+            </div>
+          )}
+
+          {importedItems.length > 0 && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '140px', overflowY: 'auto' }}>
+              <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>Preview (First {importedItems.length} videos):</div>
+              {importedItems.slice(0, 5).map((v, i) => (
+                <div key={v.videoId + i} style={{ fontSize: '0.74rem', color: '#e2e8f0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {i + 1}. {v.title}
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={handleAddAllImported}
+                style={{
+                  marginTop: '4px',
+                  padding: '6px',
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 700,
+                  fontSize: '0.78rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                }}
+              >
+                <Check size={14} /> Add All {importedItems.length} Videos to Queue
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Add to Queue Form */}
       {showAddForm && (

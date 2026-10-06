@@ -168,6 +168,9 @@ public class WatchPartyWebSocketHandler extends TextWebSocketHandler {
                 case "mute_all":
                     handleMuteAll(session);
                     break;
+                case "sync_subtitles":
+                    handleSyncSubtitles(session, payload);
+                    break;
                 default:
                     log.warn("Unknown message type received: {}", type);
             }
@@ -237,6 +240,9 @@ public class WatchPartyWebSocketHandler extends TextWebSocketHandler {
         syncPayload.put("serverTimestamp", System.currentTimeMillis());
         syncPayload.put("assignedRole", participant.getRole().name());
         syncPayload.put("userId", userId);
+        if (room.getActiveSubtitles() != null) {
+            syncPayload.put("activeSubtitles", room.getActiveSubtitles());
+        }
         sendDirect(session, "sync_state", syncPayload);
     }
 
@@ -950,6 +956,20 @@ public class WatchPartyWebSocketHandler extends TextWebSocketHandler {
                     "mutedBy", userId,
                     "timestamp", System.currentTimeMillis()
             ));
+        }
+    }
+
+    private void handleSyncSubtitles(WebSocketSession session, Map<String, Object> payload) {
+        String roomId = sessionRoomMap.get(session.getId());
+        String userId = sessionUserMap.get(session.getId());
+        if (roomId == null || userId == null) return;
+
+        Room room = roomManager.getRoom(roomId);
+        if (room == null) return;
+
+        if (roomManager.canControlPlayback(roomId, userId)) {
+            room.setActiveSubtitles(payload);
+            broadcastToRoom(roomId, "subtitles_updated", payload);
         }
     }
 }

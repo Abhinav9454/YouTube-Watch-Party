@@ -282,6 +282,16 @@ public class Room {
         return false;
     }
 
+    private Map<String, Object> activeSubtitles;
+
+    public Map<String, Object> getActiveSubtitles() {
+        return activeSubtitles;
+    }
+
+    public void setActiveSubtitles(Map<String, Object> activeSubtitles) {
+        this.activeSubtitles = activeSubtitles;
+    }
+
     public Map<String, Object> endTrivia() {
         if (this.activeTrivia == null) return null;
 

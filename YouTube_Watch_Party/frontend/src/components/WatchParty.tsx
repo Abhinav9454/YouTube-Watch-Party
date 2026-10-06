@@ -755,7 +755,11 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             audioProfile={audioProfile}
             onSelectAudioProfile={setAudioProfile}
           />
-          <SubtitlesOverlay currentTime={liveCurrentTime} />
+          <SubtitlesOverlay
+            currentTime={liveCurrentTime}
+            userRole={currentUserRole}
+            showFloatingButton={true}
+          />
           <ReactionOverlay reactions={reactions} />
           <GiftsOverlay gifts={gifts} showControls={false} />
           <TriviaModal

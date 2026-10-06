@@ -183,4 +183,124 @@ public class YouTubeSearchController {
 
         return ResponseEntity.ok(Collections.emptyList());
     }
+
+    /**
+     * Fetch all items in a YouTube playlist by playlistId or full playlist URL.
+     */
+    @GetMapping("/playlist")
+    public ResponseEntity<Map<String, Object>> getPlaylistItems(
+            @RequestParam("playlistId") String rawPlaylistInput,
+            @RequestParam(value = "maxResults", defaultValue = "25") int maxResults,
+            @RequestParam(value = "key", required = false) String clientKey
+    ) {
+        if (rawPlaylistInput == null || rawPlaylistInput.trim().isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "success", false,
+                    "error", "Playlist parameter cannot be empty",
+                    "items", Collections.emptyList()
+            ));
+        }
+
+        // Clean playlist ID if full URL is passed
+        String playlistId = rawPlaylistInput.trim();
+        if (playlistId.contains("list=")) {
+            int idx = playlistId.indexOf("list=");
+            playlistId = playlistId.substring(idx + 5);
+            int amp = playlistId.indexOf("&");
+            if (amp != -1) {
+                playlistId = playlistId.substring(0, amp);
+            }
+        }
+
+        String apiKey = clientKey != null && !clientKey.trim().isEmpty()
+                ? clientKey.trim()
+                : System.getenv("YOUTUBE_API_KEY");
+
+        if (apiKey == null || apiKey.trim().isEmpty()) {
+            return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "hasApiKey", false,
+                    "playlistId", playlistId,
+                    "message", "YOUTUBE_API_KEY not configured on server. Provide a YouTube API key in Settings to import playlists automatically.",
+                    "items", Collections.emptyList()
+            ));
+        }
+
+        try {
+            String url = String.format(
+                    "https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&maxResults=%d&playlistId=%s&key=%s",
+                    Math.min(Math.max(1, maxResults), 50),
+                    URLEncoder.encode(playlistId, StandardCharsets.UTF_8),
+                    apiKey.trim()
+            );
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .timeout(Duration.ofSeconds(8))
+                    .header("User-Agent", "SyncWave-WatchParty/1.0")
+                    .GET()
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() != 200) {
+                JsonNode errNode = objectMapper.readTree(response.body());
+                String errMsg = errNode.has("error") && errNode.get("error").has("message")
+                        ? errNode.get("error").get("message").asText()
+                        : "YouTube playlist request failed (HTTP " + response.statusCode() + ")";
+                return ResponseEntity.ok(Map.of(
+                        "success", false,
+                        "hasApiKey", true,
+                        "playlistId", playlistId,
+                        "error", errMsg,
+                        "items", Collections.emptyList()
+                ));
+            }
+
+            JsonNode root = objectMapper.readTree(response.body());
+            JsonNode items = root.get("items");
+            List<Map<String, Object>> results = new ArrayList<>();
+
+            if (items != null && items.isArray()) {
+                for (JsonNode item : items) {
+                    JsonNode snippet = item.get("snippet");
+                    if (snippet != null && snippet.has("resourceId")) {
+                        JsonNode resId = snippet.get("resourceId");
+                        if (resId.has("videoId")) {
+                            String videoId = resId.get("videoId").asText();
+                            String title = snippet.has("title") ? snippet.get("title").asText() : "Untitled Video";
+                            String channel = snippet.has("channelTitle") ? snippet.get("channelTitle").asText() : "";
+                            String thumbnail = String.format("https://i.ytimg.com/vi/%s/mqdefault.jpg", videoId);
+                            if (snippet.has("thumbnails") && snippet.get("thumbnails").has("medium")) {
+                                thumbnail = snippet.get("thumbnails").get("medium").get("url").asText();
+                            }
+
+                            Map<String, Object> entry = new HashMap<>();
+                            entry.put("videoId", videoId);
+                            entry.put("title", title);
+                            entry.put("channel", channel);
+                            entry.put("thumbnail", thumbnail);
+                            results.add(entry);
+                        }
+                    }
+                }
+            }
+
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "hasApiKey", true,
+                    "playlistId", playlistId,
+                    "count", results.size(),
+                    "items", results
+            ));
+        } catch (Exception e) {
+            log.error("Failed to fetch playlist items for {}: {}", playlistId, e.getMessage(), e);
+            return ResponseEntity.ok(Map.of(
+                    "success", false,
+                    "hasApiKey", true,
+                    "error", "Exception fetching playlist: " + e.getMessage(),
+                    "items", Collections.emptyList()
+            ));
+        }
+    }
 }

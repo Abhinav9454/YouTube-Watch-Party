@@ -1,22 +1,68 @@
-import React, { useState } from 'react';
-import { Subtitles, Upload, Trash2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Subtitles, Upload, Trash2, Sparkles, Globe, Radio } from 'lucide-react';
 import { parseSubtitles, getActiveCue, DEMO_SUBTITLES, type SubtitleCue } from '../services/subtitleParser';
+import { wsService } from '../services/websocket';
+import type { Role, SubtitlesSyncPayload } from '../types/party';
 
 interface SubtitlesOverlayProps {
   currentTime: number;
+  userRole?: Role;
+  initialSubtitles?: SubtitlesSyncPayload | null;
+  showFloatingButton?: boolean;
 }
 
-export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime }) => {
-  const [cues, setCues] = useState<SubtitleCue[]>([]);
-  const [isEnabled, setIsEnabled] = useState(false);
+export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({
+  currentTime,
+  userRole = 'PARTICIPANT',
+  initialSubtitles = null,
+  showFloatingButton = true,
+}) => {
+  const [cues, setCues] = useState<SubtitleCue[]>(initialSubtitles?.cues || []);
+  const [isEnabled, setIsEnabled] = useState<boolean>(initialSubtitles?.isEnabled ?? false);
   const [isOpenModal, setIsOpenModal] = useState(false);
   const [rawText, setRawText] = useState('');
-  const [offsetSeconds, setOffsetSeconds] = useState(0);
+  const [offsetSeconds, setOffsetSeconds] = useState<number>(initialSubtitles?.offsetSeconds || 0);
   const [fontSize, setFontSize] = useState<'sm' | 'md' | 'lg' | 'xl'>('md');
   const [colorTheme, setColorTheme] = useState<'white' | 'yellow' | 'cyan'>('yellow');
-  const [fileName, setFileName] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(initialSubtitles?.fileName || null);
+  const [broadcastToRoom, setBroadcastToRoom] = useState(true);
+  const [isHostSynced, setIsHostSynced] = useState(Boolean(initialSubtitles));
+
+  const isHostOrMod = userRole === 'HOST' || userRole === 'MODERATOR';
+
+  // Listen for real-time room subtitles sync from host
+  useEffect(() => {
+    const unsub = wsService.on('subtitles_updated', (payload: any) => {
+      if (payload) {
+        setCues(payload.cues || []);
+        setIsEnabled(payload.isEnabled ?? false);
+        if (payload.fileName !== undefined) setFileName(payload.fileName);
+        if (typeof payload.offsetSeconds === 'number') setOffsetSeconds(payload.offsetSeconds);
+        setIsHostSynced(true);
+      }
+    });
+    return unsub;
+  }, []);
+
+  // Update if initialSubtitles prop changes
+  useEffect(() => {
+    if (initialSubtitles) {
+      setCues(initialSubtitles.cues || []);
+      setIsEnabled(initialSubtitles.isEnabled ?? false);
+      if (initialSubtitles.fileName) setFileName(initialSubtitles.fileName);
+      if (typeof initialSubtitles.offsetSeconds === 'number') setOffsetSeconds(initialSubtitles.offsetSeconds);
+      setIsHostSynced(true);
+    }
+  }, [initialSubtitles]);
 
   const activeCue = isEnabled ? getActiveCue(cues, currentTime) : null;
+
+  const broadcastIfHost = (newCues: SubtitleCue[], newEnabled: boolean, name: string | null, offset: number) => {
+    if (isHostOrMod && broadcastToRoom) {
+      wsService.syncSubtitles(newCues, newEnabled, name || undefined, offset);
+      setIsHostSynced(true);
+    }
+  };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -31,6 +77,7 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
         const parsed = parseSubtitles(content, offsetSeconds);
         setCues(parsed);
         setIsEnabled(true);
+        broadcastIfHost(parsed, true, file.name, offsetSeconds);
       }
     };
     reader.readAsText(file);
@@ -42,6 +89,7 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
     setCues(parsed);
     setIsEnabled(true);
     setFileName('Pasted Subtitles');
+    broadcastIfHost(parsed, true, 'Pasted Subtitles', offsetSeconds);
   };
 
   const handleLoadDemo = () => {
@@ -50,6 +98,7 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
     setCues(parsed);
     setIsEnabled(true);
     setFileName('Demo Subtitles (Sample)');
+    broadcastIfHost(parsed, true, 'Demo Subtitles (Sample)', offsetSeconds);
   };
 
   const handleClear = () => {
@@ -57,6 +106,13 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
     setRawText('');
     setFileName(null);
     setIsEnabled(false);
+    broadcastIfHost([], false, null, 0);
+  };
+
+  const handleToggleEnable = () => {
+    const nextState = !isEnabled;
+    setIsEnabled(nextState);
+    broadcastIfHost(cues, nextState, fileName, offsetSeconds);
   };
 
   const handleOffsetChange = (delta: number) => {
@@ -65,6 +121,9 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
     if (rawText.trim()) {
       const parsed = parseSubtitles(rawText, newOffset);
       setCues(parsed);
+      broadcastIfHost(parsed, isEnabled, fileName, newOffset);
+    } else if (cues.length > 0) {
+      broadcastIfHost(cues, isEnabled, fileName, newOffset);
     }
   };
 
@@ -107,8 +166,8 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
           <div
             style={{
               display: 'inline-block',
-              background: 'rgba(0, 0, 0, 0.78)',
-              backdropFilter: 'blur(4px)',
+              background: 'rgba(0, 0, 0, 0.82)',
+              backdropFilter: 'blur(5px)',
               padding: '6px 14px',
               borderRadius: '8px',
               border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -126,29 +185,51 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
         </div>
       )}
 
-      {/* Subtitles Trigger Button for Toolbar */}
-      <button
-        type="button"
-        onClick={() => setIsOpenModal(true)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '5px',
-          background: isEnabled ? 'rgba(234, 179, 8, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-          border: isEnabled ? '1px solid #eab308' : '1px solid rgba(255, 255, 255, 0.12)',
-          borderRadius: '8px',
-          padding: '6px 10px',
-          color: isEnabled ? '#facc15' : '#a0aec0',
-          fontSize: '12px',
-          fontWeight: 600,
-          cursor: 'pointer',
-          transition: 'all 0.2s ease',
-        }}
-        title="Subtitle & Closed Captions Manager (SRT / VTT)"
-      >
-        <Subtitles size={13} />
-        <span>CC {isEnabled ? `(${cues.length})` : 'Off'}</span>
-      </button>
+      {/* Floating Subtitles Trigger Button on Player Top-Right */}
+      {showFloatingButton && (
+        <button
+          type="button"
+          onClick={() => setIsOpenModal(true)}
+          style={{
+            position: 'absolute',
+            top: '12px',
+            right: '12px',
+            zIndex: 28,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: isEnabled ? 'rgba(234, 179, 8, 0.28)' : 'rgba(0, 0, 0, 0.65)',
+            backdropFilter: 'blur(6px)',
+            border: isEnabled ? '1px solid #facc15' : '1px solid rgba(255, 255, 255, 0.18)',
+            borderRadius: '8px',
+            padding: '5px 10px',
+            color: isEnabled ? '#fef08a' : '#cbd5e1',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.4)',
+          }}
+          title="Subtitle & Closed Captions (SRT / VTT)"
+        >
+          <Subtitles size={13} color={isEnabled ? '#facc15' : '#94a3b8'} />
+          <span>CC {isEnabled ? 'ON' : 'OFF'}</span>
+          {isHostSynced && (
+            <span
+              style={{
+                fontSize: '9px',
+                background: 'rgba(234, 179, 8, 0.35)',
+                color: '#fef08a',
+                padding: '1px 5px',
+                borderRadius: '4px',
+                fontWeight: 700,
+              }}
+            >
+              SYNCED
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Modal / Popout for Subtitle Configuration */}
       {isOpenModal && (
@@ -247,7 +328,7 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
 
               <button
                 type="button"
-                onClick={() => setIsEnabled(!isEnabled)}
+                onClick={handleToggleEnable}
                 disabled={cues.length === 0}
                 style={{
                   padding: '6px 14px',
@@ -266,6 +347,52 @@ export const SubtitlesOverlay: React.FC<SubtitlesOverlayProps> = ({ currentTime 
                 {isEnabled ? 'ON' : 'OFF'}
               </button>
             </div>
+
+            {/* Room Sync Control / Status Banner */}
+            {isHostOrMod ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '8px 12px',
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  border: '1px solid rgba(56, 189, 248, 0.25)',
+                  borderRadius: '10px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Globe size={15} color="#38bdf8" />
+                  <span style={{ fontSize: '12px', color: '#bae6fd', fontWeight: 600 }}>
+                    Broadcast subtitles to all viewers in room
+                  </span>
+                </div>
+                <input
+                  type="checkbox"
+                  checked={broadcastToRoom}
+                  onChange={(e) => setBroadcastToRoom(e.target.checked)}
+                  style={{ accentColor: '#38bdf8', cursor: 'pointer', width: '16px', height: '16px' }}
+                />
+              </div>
+            ) : isHostSynced ? (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '8px 12px',
+                  background: 'rgba(234, 179, 8, 0.1)',
+                  border: '1px solid rgba(234, 179, 8, 0.28)',
+                  borderRadius: '10px',
+                  fontSize: '12px',
+                  color: '#fef08a',
+                  fontWeight: 600,
+                }}
+              >
+                <Radio size={14} color="#facc15" />
+                <span>Synchronized by Host. Captions will play automatically for you.</span>
+              </div>
+            ) : null}
 
             {/* Quick Demo & File Upload */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
