@@ -5,18 +5,18 @@ function createClient(name, userId) {
   const ws = new WebSocket(WS_URL);
   const events = [];
 
-  ws.on('message', (data) => {
+  ws.onmessage = (event) => {
     try {
-      const parsed = JSON.parse(data.toString());
+      const parsed = JSON.parse(event.data);
       events.push(parsed);
       console.log(`[${name} RECV ${parsed.type}]`, JSON.stringify(parsed.payload || {}).substring(0, 100));
     } catch (e) {
       console.error(e);
     }
-  });
+  };
 
-  return new Promise((resolve) => {
-    ws.on('open', () => {
+  return new Promise((resolve, reject) => {
+    ws.onopen = () => {
       resolve({
         ws,
         events,
@@ -34,7 +34,8 @@ function createClient(name, userId) {
           });
         },
       });
-    });
+    };
+    ws.onerror = (err) => reject(err);
   });
 }
 

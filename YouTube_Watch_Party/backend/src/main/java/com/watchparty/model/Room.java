@@ -125,10 +125,17 @@ public class Room {
     public Participant removeParticipant(String participantId) {
         Participant removed = participants.remove(participantId);
         // If the removed participant was the host, reassign host to another participant if available
-        if (participantId.equals(hostId) && !participants.isEmpty()) {
-            Participant newHost = participants.values().iterator().next();
-            newHost.setRole(Role.HOST);
-            this.hostId = newHost.getId();
+        if (participantId != null && participantId.equals(hostId)) {
+            var it = participants.values().iterator();
+            if (it.hasNext()) {
+                Participant newHost = it.next();
+                if (newHost != null) {
+                    newHost.setRole(Role.HOST);
+                    this.hostId = newHost.getId();
+                }
+            } else {
+                this.hostId = null;
+            }
         }
         return removed;
     }
