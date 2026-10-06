@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Search,
   Sparkles,
@@ -8,10 +8,25 @@ import {
   Check,
   X,
   Compass,
+  Key,
+  ExternalLink,
 } from 'lucide-react';
 import type { Role } from '../types/party';
 import { wsService } from '../services/websocket';
 import { extractYouTubeVideoId } from '../utils/youtube';
+import { youtubeSearchService, type YouTubeSearchResult } from '../services/youtubeSearchService';
+
+const YouTubeIcon: React.FC<{ size?: number; color?: string }> = ({ size = 16, color = '#ef4444' }) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="currentColor"
+    style={{ color, flexShrink: 0 }}
+  >
+    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
+  </svg>
+);
 
 interface DiscoverModalProps {
   isOpen: boolean;
@@ -317,17 +332,8 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
   const [addedQueueId, setAddedQueueId] = useState<string | null>(null);
 
-  // Reset page when switching categories or search query
-  useEffect(() => {
-    setPage(1);
-  }, [selectedCategory, searchInput]);
-
-  if (!isOpen) return null;
-
-  const canPlayNow = userRole === 'HOST' || userRole === 'MODERATOR';
-
   // Check if input is a direct YouTube URL or 11-char Video ID
-  const isDirectUrl = (() => {
+  const isDirectUrl = useMemo(() => {
     const trimmed = searchInput.trim();
     if (!trimmed) return false;
     return (
@@ -336,9 +342,101 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({
       trimmed.includes('<iframe') ||
       /^[a-zA-Z0-9_-]{11}$/.test(trimmed)
     );
-  })();
+  }, [searchInput]);
 
-  const directVideoId = isDirectUrl ? extractYouTubeVideoId(searchInput.trim()) : null;
+  const directVideoId = useMemo(() => {
+    return isDirectUrl ? extractYouTubeVideoId(searchInput.trim()) : null;
+  }, [isDirectUrl, searchInput]);
+
+  // Real YouTube Search API & Suggestion state
+  const [liveSuggestions, setLiveSuggestions] = useState<string[]>([]);
+  const [isSearchingApi, setIsSearchingApi] = useState<boolean>(false);
+  const [apiSearchResults, setApiSearchResults] = useState<YouTubeSearchResult[]>([]);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(Boolean(youtubeSearchService.getStoredApiKey()));
+  const [showApiKeyDrawer, setShowApiKeyDrawer] = useState<boolean>(false);
+  const [apiKeyInput, setApiKeyInput] = useState<string>(youtubeSearchService.getStoredApiKey());
+  const [apiKeySavedSuccess, setApiKeySavedSuccess] = useState<boolean>(false);
+  const [apiErrorMessage, setApiErrorMessage] = useState<string | null>(null);
+  const [showSuggestionsDropdown, setShowSuggestionsDropdown] = useState<boolean>(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  // Reset page when switching categories or search query
+  useEffect(() => {
+    setPage(1);
+  }, [selectedCategory, searchInput]);
+
+  // Debounced Live YouTube Search Autocomplete (Zero API Key Needed)
+  useEffect(() => {
+    if (isDirectUrl || searchInput.trim().length < 2) {
+      setLiveSuggestions([]);
+      setShowSuggestionsDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      const suggestions = await youtubeSearchService.getLiveSuggestions(searchInput);
+      setLiveSuggestions(suggestions.slice(0, 6));
+      setShowSuggestionsDropdown(suggestions.length > 0);
+    }, 220);
+
+    return () => clearTimeout(timer);
+  }, [searchInput, isDirectUrl]);
+
+  // Click outside to close suggestions dropdown
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestionsDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handlePerformApiSearch = async (termToSearch?: string) => {
+    const term = (termToSearch !== undefined ? termToSearch : searchInput).trim();
+    if (!term || isDirectUrl) return;
+
+    setShowSuggestionsDropdown(false);
+    setIsSearchingApi(true);
+    setApiErrorMessage(null);
+
+    const result = await youtubeSearchService.search(term, apiKeyInput);
+    setIsSearchingApi(false);
+
+    if (result.success && result.results.length > 0) {
+      setApiSearchResults(result.results);
+      setHasApiKey(true);
+    } else {
+      setApiSearchResults([]);
+      if (!result.hasApiKey) {
+        setHasApiKey(false);
+        setApiErrorMessage(result.message || 'No YouTube Data API key configured. Enter your key to search YouTube.');
+      } else if (result.message) {
+        setApiErrorMessage(result.message);
+      }
+    }
+  };
+
+  const handleSelectSuggestion = (suggestion: string) => {
+    setSearchInput(suggestion);
+    setShowSuggestionsDropdown(false);
+    handlePerformApiSearch(suggestion);
+  };
+
+  const handleSaveApiKey = () => {
+    youtubeSearchService.saveApiKey(apiKeyInput.trim());
+    setHasApiKey(Boolean(apiKeyInput.trim()));
+    setApiKeySavedSuccess(true);
+    setTimeout(() => setApiKeySavedSuccess(false), 2500);
+    if (apiKeyInput.trim() && searchInput.trim()) {
+      handlePerformApiSearch();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const canPlayNow = userRole === 'HOST' || userRole === 'MODERATOR';
 
   // Filter videos by category and search keyword
   const filteredVideos = useMemo(() => {
@@ -514,8 +612,22 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({
         </div>
 
         {/* Search & URL Input Bar */}
-        <div style={{ padding: '12px 20px', background: 'rgba(0, 0, 0, 0.3)', borderBottom: '1px solid rgba(255, 255, 255, 0.06)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}>
+        <div
+          ref={searchContainerRef}
+          style={{
+            padding: '12px 20px',
+            background: 'rgba(0, 0, 0, 0.3)',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+            position: 'relative',
+          }}
+        >
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handlePerformApiSearch();
+            }}
+            style={{ display: 'flex', alignItems: 'center', gap: '8px', position: 'relative' }}
+          >
             <div
               style={{
                 position: 'absolute',
@@ -532,7 +644,10 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({
               type="text"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search by title, genre, artist, or paste any YouTube URL / embed code..."
+              onFocus={() => {
+                if (liveSuggestions.length > 0 && !isDirectUrl) setShowSuggestionsDropdown(true);
+              }}
+              placeholder="Search YouTube videos, songs, trailers, or paste YouTube link..."
               style={{
                 flex: 1,
                 background: 'rgba(255, 255, 255, 0.06)',
@@ -540,17 +655,21 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({
                 borderRadius: '8px',
                 padding: '9px 12px 9px 36px',
                 color: '#fff',
-                fontSize: '12px',
+                fontSize: '13px',
                 outline: 'none',
               }}
             />
             {searchInput && (
               <button
                 type="button"
-                onClick={() => setSearchInput('')}
+                onClick={() => {
+                  setSearchInput('');
+                  setApiSearchResults([]);
+                  setShowSuggestionsDropdown(false);
+                }}
                 style={{
                   position: 'absolute',
-                  right: isDirectUrl ? '195px' : '10px',
+                  right: isDirectUrl ? '195px' : '155px',
                   background: 'none',
                   border: 'none',
                   color: '#94a3b8',
@@ -561,6 +680,45 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({
                 ✕
               </button>
             )}
+
+            {!isDirectUrl && (
+              <button
+                type="submit"
+                disabled={!searchInput.trim() || isSearchingApi}
+                className="btn-primary"
+                style={{
+                  padding: '8px 14px',
+                  fontSize: '12px',
+                  whiteSpace: 'nowrap',
+                  gap: '5px',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+              >
+                {isSearchingApi ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
+                <span>Search</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => setShowApiKeyDrawer(!showApiKeyDrawer)}
+              className="btn-secondary"
+              style={{
+                padding: '8px 10px',
+                fontSize: '11px',
+                gap: '4px',
+                display: 'flex',
+                alignItems: 'center',
+                background: hasApiKey ? 'rgba(16, 185, 129, 0.15)' : 'rgba(255, 255, 255, 0.06)',
+                borderColor: hasApiKey ? 'rgba(16, 185, 129, 0.4)' : 'rgba(255, 255, 255, 0.12)',
+                color: hasApiKey ? '#34d399' : '#94a3b8',
+              }}
+              title="Configure YouTube Data API v3 Key"
+            >
+              <Key size={12} />
+              <span className="hide-on-mobile">{hasApiKey ? 'API Key Active' : 'API Key'}</span>
+            </button>
 
             {isDirectUrl && (
               <div style={{ display: 'flex', gap: '6px' }}>
@@ -584,8 +742,182 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({
                 </button>
               </div>
             )}
-          </div>
+          </form>
+
+          {/* Live Autocomplete Suggestions Dropdown */}
+          {showSuggestionsDropdown && liveSuggestions.length > 0 && (
+            <div
+              className="glass-card animate-fade-in"
+              style={{
+                position: 'absolute',
+                top: '100%',
+                left: '20px',
+                right: '20px',
+                background: 'rgba(15, 20, 35, 0.98)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                marginTop: '4px',
+                zIndex: 60,
+                boxShadow: '0 12px 30px rgba(0, 0, 0, 0.85)',
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  padding: '6px 12px',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  color: '#94a3b8',
+                  background: 'rgba(255, 255, 255, 0.03)',
+                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <YouTubeIcon size={12} color="#ef4444" />
+                <span>YOUTUBE SEARCH SUGGESTIONS</span>
+              </div>
+              {liveSuggestions.map((suggestion, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => handleSelectSuggestion(suggestion)}
+                  style={{
+                    padding: '8px 14px',
+                    fontSize: '12px',
+                    color: '#e2e8f0',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    borderBottom: idx < liveSuggestions.length - 1 ? '1px solid rgba(255, 255, 255, 0.04)' : 'none',
+                    transition: 'background 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(239, 68, 68, 0.15)')}
+                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                >
+                  <Search size={12} color="#94a3b8" />
+                  <span>{suggestion}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Expandable YouTube Data API Key Configuration Drawer */}
+        {showApiKeyDrawer && (
+          <div
+            className="animate-fade-in"
+            style={{
+              padding: '14px 20px',
+              background: 'rgba(12, 16, 28, 0.95)',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '10px',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Key size={15} color="#ef4444" />
+                <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+                  YouTube Data API v3 Key Setup
+                </span>
+                <span
+                  style={{
+                    fontSize: '10px',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    background: hasApiKey ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+                    color: hasApiKey ? '#34d399' : '#fbbf24',
+                    fontWeight: 700,
+                  }}
+                >
+                  {hasApiKey ? 'KEY ACTIVE' : 'FREE / OPTIONAL'}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowApiKeyDrawer(false)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '14px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8', lineHeight: 1.5 }}>
+              Enter your free Google Cloud YouTube API Key to search any of the 800M+ videos on YouTube directly inside this modal. Free quota gives 10,000 queries per day.
+            </p>
+
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="AIzaSy..."
+                style={{
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  borderRadius: '6px',
+                  padding: '7px 10px',
+                  color: '#fff',
+                  fontSize: '12px',
+                  fontFamily: 'monospace',
+                }}
+              />
+              <button
+                type="button"
+                onClick={handleSaveApiKey}
+                className="btn-primary"
+                style={{ padding: '7px 14px', fontSize: '11px', whiteSpace: 'nowrap' }}
+              >
+                Save Key
+              </button>
+              {hasApiKey && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    youtubeSearchService.clearApiKey();
+                    setApiKeyInput('');
+                    setHasApiKey(false);
+                  }}
+                  className="btn-secondary"
+                  style={{ padding: '7px 10px', fontSize: '11px' }}
+                >
+                  Remove
+                </button>
+              )}
+            </div>
+
+            {apiKeySavedSuccess && (
+              <div style={{ fontSize: '11px', color: '#34d399', fontWeight: 600 }}>
+                ✅ YouTube API Key saved successfully! Live search is now active.
+              </div>
+            )}
+
+            <div
+              style={{
+                fontSize: '10px',
+                color: '#64748b',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              <span>Need a free key?</span>
+              <a
+                href="https://console.cloud.google.com/apis/credentials"
+                target="_blank"
+                rel="noreferrer"
+                style={{ color: '#ef4444', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '2px' }}
+              >
+                Get it on Google Cloud Console <ExternalLink size={10} />
+              </a>
+              <span>(Enable YouTube Data API v3 ➔ Create Credentials ➔ API Key)</span>
+            </div>
+          </div>
+        )}
 
         {/* Category Pills Bar */}
         <div
@@ -657,6 +989,246 @@ export const DiscoverModal: React.FC<DiscoverModalProps> = ({
             gap: '12px',
           }}
         >
+          {/* YouTube Search Loading Indicator */}
+          {isSearchingApi && (
+            <div
+              className="animate-fade-in"
+              style={{
+                padding: '28px 20px',
+                textAlign: 'center',
+                background: 'rgba(239, 68, 68, 0.05)',
+                borderRadius: '12px',
+                border: '1px dashed rgba(239, 68, 68, 0.35)',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '8px',
+              }}
+            >
+              <Loader2 size={24} className="animate-spin" color="#ef4444" />
+              <span style={{ fontSize: '13px', color: '#fff', fontWeight: 600 }}>Searching YouTube...</span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>Querying YouTube Data API v3</span>
+            </div>
+          )}
+
+          {/* YouTube Search Error / Key Required Alert */}
+          {apiErrorMessage && !isSearchingApi && (
+            <div
+              className="animate-fade-in"
+              style={{
+                padding: '10px 14px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                borderRadius: '10px',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '12px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Key size={15} color="#ef4444" />
+                <span style={{ fontSize: '12px', color: '#fca5a5' }}>{apiErrorMessage}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowApiKeyDrawer(true)}
+                className="btn-primary"
+                style={{ padding: '5px 10px', fontSize: '11px', whiteSpace: 'nowrap' }}
+              >
+                Configure Key
+              </button>
+            </div>
+          )}
+
+          {/* Live YouTube Search Results Grid */}
+          {apiSearchResults.length > 0 && !isSearchingApi && (
+            <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '8px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  padding: '0 2px',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <YouTubeIcon size={15} color="#ef4444" />
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+                    YouTube Search Results ({apiSearchResults.length})
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setApiSearchResults([])}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#94a3b8',
+                    fontSize: '11px',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Clear Search
+                </button>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                  gap: '12px',
+                }}
+              >
+                {apiSearchResults.map((video) => {
+                  const isJustAdded = addedQueueId === video.id;
+                  return (
+                    <div
+                      key={video.id}
+                      className="glass-card"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.03)',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        transition: 'transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = '#ef4444';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.25)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                      }}
+                    >
+                      {/* Video Thumbnail */}
+                      <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%', background: '#090d16' }}>
+                        <img
+                          src={video.thumbnail || `https://img.youtube.com/vi/${video.id}/mqdefault.jpg`}
+                          alt={video.title}
+                          loading="lazy"
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover',
+                          }}
+                        />
+                        <span
+                          style={{
+                            position: 'absolute',
+                            top: '6px',
+                            right: '6px',
+                            background: 'rgba(239, 68, 68, 0.9)',
+                            backdropFilter: 'blur(4px)',
+                            color: '#fff',
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                          }}
+                        >
+                          YouTube API
+                        </span>
+                      </div>
+
+                      {/* Info & Action Buttons */}
+                      <div
+                        style={{
+                          padding: '10px 12px 12px 12px',
+                          flex: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          gap: '10px',
+                        }}
+                      >
+                        <div>
+                          <h4
+                            style={{
+                              margin: '0 0 4px 0',
+                              fontSize: '12px',
+                              color: '#fff',
+                              fontWeight: 600,
+                              lineHeight: '1.4',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                            }}
+                            title={video.title}
+                          >
+                            {video.title}
+                          </h4>
+                          <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                            {video.channel}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          {canPlayNow && (
+                            <button
+                              type="button"
+                              onClick={() => handlePlayNow(video.id, video.title)}
+                              className="btn-primary"
+                              style={{
+                                flex: 1,
+                                padding: '6px 8px',
+                                fontSize: '11px',
+                                fontWeight: 700,
+                                gap: '4px',
+                              }}
+                            >
+                              <Play size={12} />
+                              <span>Play Now</span>
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleAddToQueue(video.id, video.title)}
+                            className="btn-secondary"
+                            style={{
+                              flex: 1,
+                              padding: '6px 8px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              gap: '4px',
+                              borderColor: isJustAdded ? '#10b981' : undefined,
+                              color: isJustAdded ? '#34d399' : undefined,
+                            }}
+                          >
+                            {isJustAdded ? <Check size={12} /> : <Plus size={12} />}
+                            <span>{isJustAdded ? 'Added!' : '+ Queue'}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  margin: '10px 0 2px 0',
+                }}
+              >
+                <div style={{ height: '1px', flex: 1, background: 'rgba(255, 255, 255, 0.08)' }} />
+                <span style={{ fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+                  Curated Catalog Picks
+                </span>
+                <div style={{ height: '1px', flex: 1, background: 'rgba(255, 255, 255, 0.08)' }} />
+              </div>
+            </div>
+          )}
           {filteredVideos.length === 0 ? (
             <div
               style={{
