@@ -783,8 +783,14 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         handleFullscreen();
       } else if (e.key === 't' || e.key === 'T') {
         if (onToggleTheater) onToggleTheater();
-      } else if (e.key === 'p' || e.key === 'P') {
+      } else if (e.key === 'i' || e.key === 'I' || e.key === 'p' || e.key === 'P') {
         if (onToggleMiniPlayer) onToggleMiniPlayer();
+      } else if (e.key === 'Escape') {
+        if (isTheaterMode && onToggleTheater) {
+          onToggleTheater();
+        } else if (isMiniPlayer && onToggleMiniPlayer) {
+          onToggleMiniPlayer();
+        }
       } else if (e.key === 'ArrowLeft' && canControl) {
         e.preventDefault();
         const target = Math.max(0, currentTime - 5);
@@ -806,7 +812,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [canControl, currentTime, duration, serverPlayState, isMuted, onToggleTheater, onToggleMiniPlayer]);
+  }, [canControl, currentTime, duration, serverPlayState, isMuted, onToggleTheater, onToggleMiniPlayer, isTheaterMode, isMiniPlayer]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -975,8 +981,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           >
             <div
               style={{
-                width: '72px',
-                height: '72px',
+                width: isMiniPlayer ? '48px' : '72px',
+                height: isMiniPlayer ? '48px' : '72px',
                 borderRadius: '50%',
                 background: 'rgba(239, 68, 68, 0.92)',
                 backdropFilter: 'blur(10px)',
@@ -989,13 +995,17 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                 transform: isHoveringControls ? 'scale(1.1)' : 'scale(1)',
               }}
             >
-              {serverPlayState === 'PLAYING' ? <Pause size={32} /> : <Play size={32} style={{ marginLeft: '4px' }} />}
+              {serverPlayState === 'PLAYING' ? (
+                <Pause size={isMiniPlayer ? 22 : 32} />
+              ) : (
+                <Play size={isMiniPlayer ? 22 : 32} style={{ marginLeft: isMiniPlayer ? '2px' : '4px' }} />
+              )}
             </div>
           </div>
         )}
 
         {/* Managed by Host Badge for Viewers */}
-        {!canControl && (
+        {!canControl && !isMiniPlayer && (
           <div
             style={{
               position: 'absolute',
@@ -1040,23 +1050,29 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         <div
           style={{
             position: 'absolute',
-            top: '16px',
-            right: '16px',
+            top: isMiniPlayer ? '8px' : '16px',
+            right: isMiniPlayer ? '8px' : '16px',
             background: 'rgba(15, 20, 35, 0.85)',
             backdropFilter: 'blur(8px)',
-            padding: '5px 12px',
+            padding: isMiniPlayer ? '2px 8px' : '5px 12px',
             borderRadius: 'var(--radius-full)',
             border: '1px solid var(--border-subtle)',
             display: 'flex',
             alignItems: 'center',
-            gap: '8px',
-            fontSize: '0.78rem',
+            gap: isMiniPlayer ? '4px' : '8px',
+            fontSize: isMiniPlayer ? '0.68rem' : '0.78rem',
             fontWeight: 600,
             zIndex: 20,
           }}
         >
           <span className="live-dot" />
-          <span>{serverPlayState === 'PLAYING' ? `SYNCED (${serverPlaybackSpeed}x)` : 'PAUSED'}</span>
+          <span>
+            {serverPlayState === 'PLAYING'
+              ? isMiniPlayer
+                ? 'SYNC'
+                : `SYNCED (${serverPlaybackSpeed}x)`
+              : 'PAUSED'}
+          </span>
         </div>
 
         {/* Player Bottom Control Bar */}
@@ -1067,7 +1083,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
             left: 0,
             right: 0,
             background: 'linear-gradient(to top, rgba(0,0,0,0.92) 0%, rgba(0,0,0,0.6) 70%, transparent 100%)',
-            padding: '24px 16px 12px 16px',
+            padding: isMiniPlayer ? '16px 10px 8px 10px' : '24px 16px 12px 16px',
             display: 'flex',
             flexDirection: 'column',
             gap: '8px',
@@ -1215,34 +1231,36 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                 />
 
                 {/* Sound Profile Preset Badge */}
-                <button
-                  type="button"
-                  onClick={handleCycleAudioProfile}
-                  className="hide-on-mobile"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.08)',
-                    border: '1px solid rgba(255, 255, 255, 0.14)',
-                    borderRadius: '6px',
-                    padding: '2px 7px',
-                    color: '#e2e8f0',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    marginLeft: '4px',
-                    transition: 'all 0.2s',
-                  }}
-                  title={`Audio EQ Profile: ${currentAudioMeta.name} (Click to cycle profile)`}
-                >
-                  <span>{currentAudioMeta.icon}</span>
-                  <span>{currentAudioMeta.name.split(' ')[0]}</span>
-                </button>
+                {!isMiniPlayer && (
+                  <button
+                    type="button"
+                    onClick={handleCycleAudioProfile}
+                    className="hide-on-mobile"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.14)',
+                      borderRadius: '6px',
+                      padding: '2px 7px',
+                      color: '#e2e8f0',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                      marginLeft: '4px',
+                      transition: 'all 0.2s',
+                    }}
+                    title={`Audio EQ Profile: ${currentAudioMeta.name} (Click to cycle profile)`}
+                  >
+                    <span>{currentAudioMeta.icon}</span>
+                    <span>{currentAudioMeta.name.split(' ')[0]}</span>
+                  </button>
+                )}
               </div>
 
               {/* Playback Speed Selector */}
-              {canControl && onSpeedChange && (
+              {!isMiniPlayer && canControl && onSpeedChange && (
                 <div style={{ position: 'relative' }}>
                   <button
                     onClick={() => setShowSpeedMenu(!showSpeedMenu)}
@@ -1297,8 +1315,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
             </div>
 
             {/* Right Action Icons: Change Video, Theater, MiniPlayer, Fullscreen */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              {canControl && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: isMiniPlayer ? '4px' : '8px' }}>
+              {canControl && !isMiniPlayer && (
                 <button
                   onClick={() => setShowUrlInput(!showUrlInput)}
                   className="btn-secondary hide-on-mobile"
@@ -1308,19 +1326,21 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                 </button>
               )}
 
-              {onToggleTheater && (
+              {onToggleTheater && !isMiniPlayer && (
                 <button
                   onClick={onToggleTheater}
-                  className="hide-on-mobile"
                   style={{
-                    background: 'none',
-                    border: 'none',
+                    background: isTheaterMode ? 'rgba(239, 68, 68, 0.25)' : 'none',
+                    border: isTheaterMode ? '1px solid rgba(239, 68, 68, 0.45)' : 'none',
                     color: isTheaterMode ? '#ef4444' : '#fff',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
+                    padding: '4px 6px',
+                    borderRadius: '6px',
+                    transition: 'all 0.2s',
                   }}
-                  title={isTheaterMode ? 'Standard View' : 'Theater Mode'}
+                  title={isTheaterMode ? 'Exit Theater Mode (T / Esc)' : 'Cinema Theater Mode (T)'}
                 >
                   <Monitor size={17} />
                 </button>
@@ -1329,16 +1349,18 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               {onToggleMiniPlayer && (
                 <button
                   onClick={onToggleMiniPlayer}
-                  className="hide-on-mobile"
                   style={{
-                    background: 'none',
-                    border: 'none',
+                    background: isMiniPlayer ? 'rgba(239, 68, 68, 0.25)' : 'none',
+                    border: isMiniPlayer ? '1px solid rgba(239, 68, 68, 0.5)' : 'none',
                     color: isMiniPlayer ? '#ef4444' : '#fff',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
+                    padding: '4px 6px',
+                    borderRadius: '6px',
+                    transition: 'all 0.2s',
                   }}
-                  title={isMiniPlayer ? 'Exit Mini-Player' : 'Picture-in-Picture Mini-Player'}
+                  title={isMiniPlayer ? 'Restore Video (I / Esc)' : 'Picture-in-Picture Mini-Player (I)'}
                 >
                   <PictureInPicture size={17} />
                 </button>

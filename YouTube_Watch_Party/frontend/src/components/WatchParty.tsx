@@ -15,6 +15,10 @@ import {
   HelpCircle,
   Sparkles,
   Repeat,
+  Monitor,
+  PictureInPicture,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { YouTubePlayer } from './YouTubePlayer';
 import { ParticipantList } from './ParticipantList';
@@ -128,10 +132,13 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'chat' | 'playlist' | 'participants' | 'polls' | 'moments'>('chat');
   const [isTheaterMode, setIsTheaterMode] = useState(false);
+  const [isCinemaDrawerOpen, setIsCinemaDrawerOpen] = useState(false);
   const [isDiscoverOpen, setIsDiscoverOpen] = useState(false);
   const [ambientGlow, setAmbientGlow] = useState(true);
   const [liveCurrentTime, setLiveCurrentTime] = useState(currentTime);
   const [isMiniPlayer, setIsMiniPlayer] = useState(false);
+  const [miniPlayerCorner, setMiniPlayerCorner] = useState<'bottom-right' | 'bottom-left'>('bottom-right');
+  const [miniPlayerSize, setMiniPlayerSize] = useState<'standard' | 'compact'>('standard');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isPartyToolsOpen, setIsPartyToolsOpen] = useState(false);
@@ -141,6 +148,29 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
   const [recentPartySound, setRecentPartySound] = useState<{ soundId: string; senderName: string } | null>(null);
+
+  // Global Escape key handler for Modals, Theater Mode & Mini-Player
+  useEffect(() => {
+    const handleGlobalKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isShareModalOpen) {
+          setIsShareModalOpen(false);
+        } else if (isAnalyticsOpen) {
+          setIsAnalyticsOpen(false);
+        } else if (isPartyToolsOpen) {
+          setIsPartyToolsOpen(false);
+        } else if (isDiscoverOpen) {
+          setIsDiscoverOpen(false);
+        } else if (isTheaterMode) {
+          setIsTheaterMode(false);
+        } else if (isMiniPlayer) {
+          setIsMiniPlayer(false);
+        }
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKey);
+    return () => window.removeEventListener('keydown', handleGlobalKey);
+  }, [isShareModalOpen, isAnalyticsOpen, isPartyToolsOpen, isDiscoverOpen, isTheaterMode, isMiniPlayer]);
 
   const formatSec = (secs: number) => {
     const m = Math.floor(secs / 60);
@@ -418,6 +448,48 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             </button>
           )}
 
+          {/* Theater Mode Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsTheaterMode(!isTheaterMode)}
+            className="hide-on-mobile"
+            style={{
+              background: isTheaterMode ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+              border: `1px solid ${isTheaterMode ? 'rgba(239, 68, 68, 0.5)' : 'rgba(255, 255, 255, 0.1)'}`,
+              borderRadius: '8px',
+              padding: '6px 9px',
+              color: isTheaterMode ? '#ef4444' : '#cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            title={isTheaterMode ? 'Standard View (T / Esc)' : 'Cinema Theater Mode (T)'}
+          >
+            <Monitor size={14} />
+          </button>
+
+          {/* Mini-Player Toggle */}
+          <button
+            type="button"
+            onClick={() => setIsMiniPlayer(!isMiniPlayer)}
+            className="hide-on-mobile"
+            style={{
+              background: isMiniPlayer ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.05)',
+              border: `1px solid ${isMiniPlayer ? 'rgba(239, 68, 68, 0.5)' : 'rgba(255, 255, 255, 0.1)'}`,
+              borderRadius: '8px',
+              padding: '6px 9px',
+              color: isMiniPlayer ? '#ef4444' : '#cbd5e1',
+              display: 'flex',
+              alignItems: 'center',
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+            }}
+            title={isMiniPlayer ? 'Restore Video (I / Esc)' : 'Floating Mini-Player (I)'}
+          >
+            <PictureInPicture size={14} />
+          </button>
+
           {/* Connection Status / Live Pill */}
           <div
             style={{
@@ -636,37 +708,68 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           </div>
         )}
 
-        {/* Mini-Player Placeholder when Video is Floating */}
+        {/* Interactive Workspace Banner when Mini-Player is Floating */}
         {isMiniPlayer && (
           <div
-            className="glass-panel"
+            className="glass-panel animate-fade-in"
             style={{
-              padding: '36px 20px',
-              textAlign: 'center',
+              padding: '16px 20px',
               display: 'flex',
-              flexDirection: 'column',
               alignItems: 'center',
-              gap: '10px',
+              justifyContent: 'space-between',
               borderRadius: '12px',
-              border: '1px dashed rgba(239, 68, 68, 0.4)',
-              background: 'rgba(239, 68, 68, 0.04)',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(15, 20, 35, 0.7))',
+              gap: '12px',
+              flexWrap: 'wrap',
             }}
           >
-            <div style={{ fontSize: '32px' }}>📺</div>
-            <div style={{ fontSize: '15px', fontWeight: 700, color: '#fff' }}>
-              Mini-Player (Picture-in-Picture) Active
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  borderRadius: '10px',
+                  background: 'rgba(239, 68, 68, 0.25)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  boxShadow: '0 0 15px rgba(239, 68, 68, 0.35)',
+                }}
+              >
+                📺
+              </div>
+              <div>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>
+                  Floating Mini-Player (Picture-in-Picture) Active
+                </div>
+                <div style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                  Video is playing in the floating window. Browse chat, manage the playlist, or vote! (Press <kbd style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 5px', borderRadius: '4px' }}>I</kbd> or <kbd style={{ background: 'rgba(255,255,255,0.15)', padding: '1px 5px', borderRadius: '4px' }}>Esc</kbd> to restore)
+                </div>
+              </div>
             </div>
-            <p style={{ margin: 0, fontSize: '12px', color: '#94a3b8' }}>
-              The video is floating at the bottom-right corner while you browse chat & playlist.
-            </p>
-            <button
-              type="button"
-              onClick={() => setIsMiniPlayer(false)}
-              className="btn-primary"
-              style={{ padding: '6px 14px', fontSize: '12px' }}
-            >
-              Restore to Main View
-            </button>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setMiniPlayerCorner(miniPlayerCorner === 'bottom-right' ? 'bottom-left' : 'bottom-right')}
+                className="btn-secondary"
+                style={{ padding: '6px 12px', fontSize: '11px' }}
+                title="Move floating mini-player to opposite corner"
+              >
+                <span>⇄ Swap Corner</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsMiniPlayer(false)}
+                className="btn-primary"
+                style={{ padding: '6px 14px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <Maximize2 size={13} />
+                <span>Restore Video</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -676,8 +779,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
               ? {
                   position: 'fixed',
                   bottom: '24px',
-                  right: '24px',
-                  width: '380px',
+                  ...(miniPlayerCorner === 'bottom-left' ? { left: '24px' } : { right: '24px' }),
+                  width: miniPlayerSize === 'compact' ? '320px' : '400px',
                   maxWidth: '92vw',
                   zIndex: 9999,
                   borderRadius: '14px',
@@ -685,13 +788,16 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                   boxShadow: '0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(239, 68, 68, 0.45)',
                   border: '2px solid #ef4444',
                   background: '#090d16',
+                  transition: 'all 0.25s ease',
                 }
               : {
                   position: 'relative',
                   width: '100%',
                   borderRadius: '12px',
                   boxShadow: ambientGlow
-                    ? '0 0 60px rgba(239, 68, 68, 0.22), 0 0 100px rgba(0, 0, 0, 0.85)'
+                    ? isTheaterMode
+                      ? '0 25px 70px rgba(0, 0, 0, 0.95), 0 0 60px rgba(239, 68, 68, 0.3)'
+                      : '0 0 60px rgba(239, 68, 68, 0.22), 0 0 100px rgba(0, 0, 0, 0.85)'
                     : 'none',
                   transition: 'box-shadow 0.4s ease',
                 }
@@ -703,8 +809,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '6px 10px',
-                background: 'rgba(15, 20, 35, 0.95)',
+                padding: '6px 12px',
+                background: 'rgba(15, 20, 35, 0.96)',
                 borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
                 fontSize: '11px',
                 fontWeight: 700,
@@ -715,21 +821,62 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
                 <span className="live-dot" />
                 <span>Mini-Player (PiP)</span>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsMiniPlayer(false)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: '#94a3b8',
-                  cursor: 'pointer',
-                  fontSize: '12px',
-                  padding: '2px 6px',
-                }}
-                title="Restore to main window"
-              >
-                ✕
-              </button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => setMiniPlayerSize(miniPlayerSize === 'compact' ? 'standard' : 'compact')}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '4px',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '10px',
+                    fontWeight: 600,
+                    padding: '2px 6px',
+                  }}
+                  title={miniPlayerSize === 'compact' ? 'Enlarge mini-player to 400px' : 'Compact mini-player to 320px'}
+                >
+                  {miniPlayerSize === 'compact' ? '400px' : '320px'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setMiniPlayerCorner(miniPlayerCorner === 'bottom-right' ? 'bottom-left' : 'bottom-right')}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '4px',
+                    color: '#94a3b8',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    padding: '2px 6px',
+                  }}
+                  title="Move to opposite corner"
+                >
+                  ⇄
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsMiniPlayer(false)}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                    borderRadius: '4px',
+                    color: '#fca5a5',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    padding: '2px 7px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '3px',
+                  }}
+                  title="Restore video to main screen (I / Esc)"
+                >
+                  <Maximize2 size={10} />
+                  <span>Restore</span>
+                </button>
+              </div>
             </div>
           )}
 
@@ -758,19 +905,73 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           <SubtitlesOverlay
             currentTime={liveCurrentTime}
             userRole={currentUserRole}
-            showFloatingButton={true}
+            showFloatingButton={!isMiniPlayer}
           />
           <ReactionOverlay reactions={reactions} />
           <GiftsOverlay gifts={gifts} showControls={false} />
-          <TriviaModal
-            activeTrivia={activeTrivia}
-            lastTriviaResult={lastTriviaResult}
-            userRole={currentUserRole}
-            userId={currentUserId}
-            onClearResult={onClearTriviaResult}
-            showButton={false}
-          />
         </div>
+
+        {/* Cinema Theater Mode Control Banner */}
+        {isTheaterMode && (
+          <div
+            className="glass-card animate-fade-in"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 16px',
+              borderRadius: '10px',
+              background: 'rgba(15, 20, 35, 0.95)',
+              border: '1px solid rgba(239, 68, 68, 0.35)',
+              boxShadow: '0 4px 20px rgba(0, 0, 0, 0.5)',
+              gap: '12px',
+              flexWrap: 'wrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '15px' }}>🎬</span>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+                Cinema Theater Mode
+              </span>
+              <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                (Press <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: '4px', color: '#fff' }}>T</kbd> or <kbd style={{ background: 'rgba(255,255,255,0.1)', padding: '1px 5px', borderRadius: '4px', color: '#fff' }}>Esc</kbd> to return to standard view)
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setIsCinemaDrawerOpen(!isCinemaDrawerOpen)}
+                className={isCinemaDrawerOpen ? 'btn-primary' : 'btn-secondary'}
+                style={{ padding: '4px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                title="Toggle Party Sidebar Drawer in Theater Mode"
+              >
+                <MessageSquare size={13} />
+                <span>{isCinemaDrawerOpen ? 'Hide Cinema Drawer' : 'Show Chat & Queue'}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsTheaterMode(false)}
+                className="btn-secondary"
+                style={{ padding: '4px 12px', fontSize: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                title="Return to standard split view"
+              >
+                <Minimize2 size={13} />
+                <span>Exit Theater</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        <TriviaModal
+          activeTrivia={activeTrivia}
+          lastTriviaResult={lastTriviaResult}
+          userRole={currentUserRole}
+          userId={currentUserId}
+          onClearResult={onClearTriviaResult}
+          showButton={false}
+        />
 
         {/* Active A-B Loop Floating Status Bar */}
         {loopRange && loopRange.active && (
@@ -827,19 +1028,27 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
         />
       </div>
 
-      {/* Right Sidebar: Chat / Playlist / People (hidden or side in non-theater) */}
-        {!isTheaterMode && (
-          <div
-            className="glass-panel watch-party-sidebar"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              height: '100%',
-              overflow: 'hidden',
-              padding: '16px',
-              gap: '14px',
-            }}
-          >
+      {/* Right Sidebar: Chat / Playlist / People (in standard view OR when cinema drawer is open) */}
+      {(!isTheaterMode || isCinemaDrawerOpen) && (
+        <div
+          className={`glass-panel watch-party-sidebar ${isTheaterMode ? 'cinema-drawer-mode' : ''}`}
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            height: isTheaterMode ? '520px' : '100%',
+            overflow: 'hidden',
+            padding: '16px',
+            gap: '14px',
+            ...(isTheaterMode
+              ? {
+                  width: '100%',
+                  marginTop: '8px',
+                  border: '1px solid rgba(239, 68, 68, 0.35)',
+                  boxShadow: '0 10px 30px rgba(0, 0, 0, 0.75)',
+                }
+              : {}),
+          }}
+        >
           {/* Tabs Switcher */}
           <div
             className="mobile-tabs-scroll"

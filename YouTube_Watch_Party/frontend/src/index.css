@@ -487,3 +487,31 @@ button, input, select, textarea {
   display: none !important;
 }
 
+/* Cinema Theater Mode & Drawer Styles */
+.cinema-drawer-mode {
+  animation: slideDown 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  backdrop-filter: blur(24px) !important;
+  -webkit-backdrop-filter: blur(24px) !important;
+  border-radius: var(--radius-md) !important;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Floating Mini-Player card hover elevation */
+.mini-player-floating-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.mini-player-floating-card:hover {
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.98), 0 0 45px rgba(239, 68, 68, 0.6) !important;
+}
+
+

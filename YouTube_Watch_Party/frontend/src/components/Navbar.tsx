@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Tv, LogOut, LogIn, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Tv, LogOut, LogIn, Sparkles, Download } from 'lucide-react';
 import { AvatarCustomizer } from './AvatarCustomizer';
 
 interface AuthUser {
@@ -22,6 +22,25 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
 }) => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    const handleBeforeInstall = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const choice = await deferredPrompt.userChoice;
+    if (choice.outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
+  };
 
   const scrollToLauncher = () => {
     const el = document.getElementById('launcher-card');
@@ -102,6 +121,32 @@ export const Navbar: React.FC<NavbarProps> = ({
 
       {/* Right Controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {deferredPrompt && (
+          <button
+            type="button"
+            onClick={handleInstallClick}
+            className="animate-fade-in"
+            style={{
+              padding: '6px 12px',
+              fontSize: '0.8rem',
+              fontWeight: 700,
+              borderRadius: '20px',
+              border: '1px solid rgba(239, 68, 68, 0.4)',
+              background: 'rgba(239, 68, 68, 0.12)',
+              color: '#fca5a5',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+            title="Install SyncWave as a Desktop or Mobile App"
+          >
+            <Download size={13} />
+            <span>Install App</span>
+          </button>
+        )}
+
         {authUser ? (
           <div style={{ position: 'relative' }}>
             <button
