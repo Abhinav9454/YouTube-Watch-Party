@@ -5,9 +5,16 @@ import {
   BarChart3,
   X,
   Check,
+  Volume2,
 } from 'lucide-react';
 import type { Role } from '../types/party';
 import { wsService } from '../services/websocket';
+import {
+  audioEqService,
+  SOUND_PROFILES,
+  EQ_FREQUENCIES,
+  type EqPresetId,
+} from '../services/audioEqService';
 
 interface PartyToolsModalProps {
   isOpen: boolean;
@@ -21,6 +28,8 @@ interface PartyToolsModalProps {
   onOpenAnalytics: () => void;
   loopRange?: { pointA: number; pointB: number; active: boolean } | null;
   onUpdateLoopRange?: (range: { pointA: number; pointB: number; active: boolean } | null) => void;
+  audioProfile?: EqPresetId;
+  onSelectAudioProfile?: (profile: EqPresetId) => void;
 }
 
 const SNACK_LIST = [
@@ -55,13 +64,7 @@ const PRESET_TRIVIA = [
   },
 ];
 
-const EQ_PRESETS = [
-  { id: 'flat', name: 'Standard (Flat)', icon: '🎵' },
-  { id: 'cinema', name: 'Cinema 3D', icon: '🎬' },
-  { id: 'bass', name: 'Bass Boost', icon: '💥' },
-  { id: 'vocal', name: 'Vocal Clarity', icon: '🗣️' },
-  { id: 'night', name: 'Night Mode', icon: '🌙' },
-];
+
 
 export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
   isOpen,
@@ -74,10 +77,31 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
   onOpenAnalytics,
   loopRange,
   onUpdateLoopRange,
+  audioProfile,
+  onSelectAudioProfile,
 }) => {
   const [activeTab, setActiveTab] = useState<'snacks' | 'trivia' | 'audio' | 'looper'>('snacks');
   const [lastSentSnack, setLastSentSnack] = useState<string | null>(null);
-  const [activeEq, setActiveEq] = useState('flat');
+  const [activeEq, setActiveEq] = useState<EqPresetId>(audioProfile || audioEqService.getProfile());
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+
+  useEffect(() => {
+    if (audioProfile) {
+      setActiveEq(audioProfile);
+    }
+  }, [audioProfile]);
+
+  const handleSelectEq = (id: EqPresetId) => {
+    setActiveEq(id);
+    audioEqService.setProfile(id);
+    onSelectAudioProfile?.(id);
+  };
+
+  const handleTestAudio = (id: EqPresetId) => {
+    setIsPreviewPlaying(true);
+    audioEqService.playPreview(id);
+    setTimeout(() => setIsPreviewPlaying(false), 700);
+  };
 
   // Looper state
   const [pointA, setPointA] = useState<number | null>(null);
@@ -632,39 +656,185 @@ export const PartyToolsModal: React.FC<PartyToolsModalProps> = ({
 
               {/* Sound Equalizer Presets */}
               <div>
-                <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff', marginBottom: '8px' }}>
-                  🎚️ Sound Profile Presets
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+                    🎚️ Sound Profile Presets (Acoustic EQ)
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    Web Audio DSP
+                  </span>
                 </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-                  {EQ_PRESETS.map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setActiveEq(p.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        padding: '10px 14px',
-                        borderRadius: '10px',
-                        background: activeEq === p.id ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.04)',
-                        border: `1px solid ${activeEq === p.id ? '#ef4444' : 'rgba(255, 255, 255, 0.08)'}`,
-                        color: activeEq === p.id ? '#f87171' : '#cbd5e1',
-                        fontSize: '12px',
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>{p.icon}</span>
-                        <span>{p.name}</span>
-                      </div>
-                      {activeEq === p.id && <Check size={14} />}
-                    </button>
-                  ))}
+                  {SOUND_PROFILES.map((p) => {
+                    const isSelected = activeEq === p.id;
+                    return (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => handleSelectEq(p.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '10px 12px',
+                          borderRadius: '10px',
+                          background: isSelected ? 'rgba(239, 68, 68, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                          border: `1px solid ${isSelected ? '#ef4444' : 'rgba(255, 255, 255, 0.08)'}`,
+                          color: isSelected ? '#f87171' : '#cbd5e1',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                          textAlign: 'left',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '16px' }}>{p.icon}</span>
+                          <div>
+                            <div>{p.name}</div>
+                            <div style={{ fontSize: '10px', color: isSelected ? '#fca5a5' : '#64748b', fontWeight: 400 }}>
+                              {p.tagline}
+                            </div>
+                          </div>
+                        </div>
+                        {isSelected && <Check size={14} style={{ color: '#ef4444' }} />}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
+              {/* Selected Profile Details & Live Acoustic Test */}
+              {(() => {
+                const meta = audioEqService.getProfileMeta(activeEq);
+                return (
+                  <div
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.03)',
+                      borderRadius: '12px',
+                      padding: '14px',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '20px' }}>{meta.icon}</span>
+                        <div>
+                          <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+                            {meta.name} Active
+                          </div>
+                          <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                            {meta.tagline}
+                          </div>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleTestAudio(activeEq)}
+                        className="btn-secondary"
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: '11px',
+                          gap: '6px',
+                          background: isPreviewPlaying ? 'rgba(239, 68, 68, 0.25)' : undefined,
+                          borderColor: isPreviewPlaying ? '#ef4444' : undefined,
+                        }}
+                        title="Hear acoustic filter response"
+                      >
+                        <Volume2 size={13} className={isPreviewPlaying ? 'animate-bounce' : ''} />
+                        <span>{isPreviewPlaying ? 'Playing Chime...' : 'Test Sound'}</span>
+                      </button>
+                    </div>
+
+                    <div style={{ fontSize: '11px', color: '#94a3b8', lineHeight: 1.5 }}>
+                      {meta.description}
+                    </div>
+
+                    {/* 5-Band Acoustic Equalizer Curve Spectrum Graph */}
+                    <div>
+                      <div style={{ fontSize: '10px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '8px' }}>
+                        5-Band Frequency Spectrum (dB)
+                      </div>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(5, 1fr)',
+                          gap: '8px',
+                          background: 'rgba(0, 0, 0, 0.4)',
+                          borderRadius: '8px',
+                          padding: '10px 8px 6px',
+                          border: '1px solid rgba(255, 255, 255, 0.05)',
+                        }}
+                      >
+                        {EQ_FREQUENCIES.map((band, idx) => {
+                          const gain = meta.gains[idx];
+                          const clamped = Math.max(-8, Math.min(8, gain));
+                          const heightPct = Math.round(((clamped + 8) / 16) * 100);
+                          const isBoost = gain > 0;
+                          const isCut = gain < 0;
+                          const barColor = isBoost ? '#f87171' : isCut ? '#38bdf8' : '#94a3b8';
+
+                          return (
+                            <div
+                              key={band.freq}
+                              style={{
+                                display: 'flex',
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                gap: '6px',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  fontSize: '10px',
+                                  fontWeight: 700,
+                                  color: barColor,
+                                  fontFamily: 'monospace',
+                                }}
+                              >
+                                {gain > 0 ? `+${gain.toFixed(1)}` : `${gain.toFixed(1)}`}
+                              </div>
+
+                              {/* Vertical Meter Track */}
+                              <div
+                                style={{
+                                  width: '12px',
+                                  height: '46px',
+                                  background: 'rgba(255, 255, 255, 0.06)',
+                                  borderRadius: '6px',
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                  display: 'flex',
+                                  alignItems: 'flex-end',
+                                }}
+                              >
+                                <div
+                                  style={{
+                                    width: '100%',
+                                    height: `${Math.max(8, heightPct)}%`,
+                                    background: barColor,
+                                    borderRadius: '6px',
+                                    transition: 'height 0.25s ease',
+                                    boxShadow: isBoost ? '0 0 8px rgba(239, 68, 68, 0.6)' : 'none',
+                                  }}
+                                />
+                              </div>
+
+                              <div style={{ fontSize: '9px', fontWeight: 600, color: '#94a3b8' }}>
+                                {band.freq >= 1000 ? `${band.freq / 1000}k` : `${band.freq}`}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Host Analytics Launcher */}
               <div

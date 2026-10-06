@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Play, Pause, RotateCcw, Volume2, VolumeX, Maximize, Lock, Check, Hand, Gauge, Monitor, PictureInPicture } from 'lucide-react';
 import type { PlayState, Role } from '../types/party';
 import { extractYouTubeVideoId } from '../utils/youtube';
+import { audioEqService, type EqPresetId } from '../services/audioEqService';
 
 declare global {
   interface Window {
@@ -29,6 +30,8 @@ interface YouTubePlayerProps {
   isMiniPlayer?: boolean;
   onToggleMiniPlayer?: () => void;
   onTimeUpdate?: (time: number) => void;
+  audioProfile?: EqPresetId;
+  onSelectAudioProfile?: (profile: EqPresetId) => void;
 }
 
 const SPEED_OPTIONS = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
@@ -52,6 +55,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   isMiniPlayer,
   onToggleMiniPlayer,
   onTimeUpdate,
+  audioProfile,
+  onSelectAudioProfile,
 }) => {
   const playerRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -120,6 +125,30 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
     onSeekRef.current = onSeek;
     onVideoEndedRef.current = onVideoEnded;
   });
+
+  const currentAudioMeta = audioEqService.getProfileMeta(audioProfile || 'flat');
+
+  const handleCycleAudioProfile = () => {
+    const list: EqPresetId[] = ['flat', 'cinema', 'bass', 'vocal', 'night'];
+    const curIdx = list.indexOf(audioProfile || 'flat');
+    const nextProfile = list[(curIdx + 1) % list.length];
+    audioEqService.setProfile(nextProfile);
+    if (onSelectAudioProfile) {
+      onSelectAudioProfile(nextProfile);
+    }
+  };
+
+  // Night Mode Sound Leveling: dynamically softens loud volume peaks
+  useEffect(() => {
+    if (audioProfile === 'night' && volume > 55) {
+      setVolume(50);
+      if (playerRef.current && typeof playerRef.current.setVolume === 'function') {
+        try {
+          playerRef.current.setVolume(50);
+        } catch {}
+      }
+    }
+  }, [audioProfile]);
 
   const handleUserUnmute = useCallback(() => {
     hasUserInteractedRef.current = true;
@@ -1032,6 +1061,32 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                     cursor: 'pointer',
                   }}
                 />
+
+                {/* Sound Profile Preset Badge */}
+                <button
+                  type="button"
+                  onClick={handleCycleAudioProfile}
+                  className="hide-on-mobile"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.14)',
+                    borderRadius: '6px',
+                    padding: '2px 7px',
+                    color: '#e2e8f0',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    marginLeft: '4px',
+                    transition: 'all 0.2s',
+                  }}
+                  title={`Audio EQ Profile: ${currentAudioMeta.name} (Click to cycle profile)`}
+                >
+                  <span>{currentAudioMeta.icon}</span>
+                  <span>{currentAudioMeta.name.split(' ')[0]}</span>
+                </button>
               </div>
 
               {/* Playback Speed Selector */}

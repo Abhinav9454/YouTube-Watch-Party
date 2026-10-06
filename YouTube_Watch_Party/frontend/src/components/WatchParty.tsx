@@ -31,6 +31,7 @@ import { SubtitlesOverlay } from './SubtitlesOverlay';
 import { ShareModal } from './ShareModal';
 import { AnalyticsDashboard } from './AnalyticsDashboard';
 import { PartyToolsModal } from './PartyToolsModal';
+import { audioEqService, type EqPresetId } from '../services/audioEqService';
 import { wsService } from '../services/websocket';
 import type { Bookmark, ChatMessage, ControlRequestedPayload, GiftItem, Participant, PlayState, Poll, QueueItem, ReactionItem, Role, TriviaEndedPayload, TriviaQuestion } from '../types/party';
 
@@ -133,6 +134,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   const [isPartyToolsOpen, setIsPartyToolsOpen] = useState(false);
   const [loopRange, setLoopRange] = useState<{ pointA: number; pointB: number; active: boolean } | null>(null);
+  const [audioProfile, setAudioProfile] = useState<EqPresetId>(() => audioEqService.getProfile());
   const lastLoopSeekRef = useRef<number>(0);
   const [activeAnnouncement, setActiveAnnouncement] = useState<string | null>(null);
   const [copiedCode, setCopiedCode] = useState(false);
@@ -701,6 +703,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             isMiniPlayer={isMiniPlayer}
             onToggleMiniPlayer={() => setIsMiniPlayer(!isMiniPlayer)}
             onTimeUpdate={(t) => setLiveCurrentTime(t)}
+            audioProfile={audioProfile}
+            onSelectAudioProfile={setAudioProfile}
           />
           <SubtitlesOverlay currentTime={liveCurrentTime} />
           <ReactionOverlay reactions={reactions} />
@@ -1016,6 +1020,8 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
         onOpenAnalytics={() => setIsAnalyticsOpen(true)}
         loopRange={loopRange}
         onUpdateLoopRange={setLoopRange}
+        audioProfile={audioProfile}
+        onSelectAudioProfile={setAudioProfile}
       />
     </div>
   );
