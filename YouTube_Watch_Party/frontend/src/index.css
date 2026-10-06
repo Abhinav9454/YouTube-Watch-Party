@@ -351,17 +351,53 @@ html {
 }
 
 @media (max-width: 900px) {
+  .watch-party-root {
+    height: 100dvh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+
   .watch-party-grid {
-    grid-template-columns: 1fr !important;
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: none !important;
     gap: 12px !important;
     padding: 8px !important;
     height: auto !important;
-    overflow-y: auto !important;
+    min-height: calc(100dvh - 54px) !important;
+    overflow: visible !important;
+  }
+
+  .watch-party-video-col {
+    overflow: visible !important;
+    padding-right: 0 !important;
+    gap: 10px !important;
+  }
+
+  .watch-party-sidebar {
+    height: auto !important;
+    min-height: 520px !important;
+    padding: 12px !important;
+    gap: 10px !important;
+    border-radius: 14px !important;
+    flex: 1 !important;
+  }
+
+  .watch-party-sidebar .tab-content-container {
+    height: 440px !important;
+    min-height: 440px !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .watch-party-header {
-    padding: 0 10px !important;
+    padding: 0 8px !important;
     height: 50px !important;
+  }
+
+  .room-title-text {
+    max-width: 95px !important;
+    font-size: 13px !important;
   }
 
   .hide-on-mobile {
@@ -370,6 +406,10 @@ html {
 }
 
 @media (max-width: 600px) {
+  header {
+    padding: 0 12px !important;
+  }
+
   .hero-heading {
     font-size: 1.8rem !important;
     line-height: 1.25 !important;
@@ -377,5 +417,11 @@ html {
   
   .lobby-card {
     padding: 16px !important;
+    margin: 0 4px !important;
+  }
+
+  /* Safe Area for iOS Notch and Bottom Navigation Bar */
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }

@@ -70,6 +70,18 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
   const [scrubberHoverTime, setScrubberHoverTime] = useState<number | null>(null);
   const [scrubberHoverX, setScrubberHoverX] = useState<number>(0);
   const [needsUserUnmute, setNeedsUserUnmute] = useState(false);
+  const [showTouchControls, setShowTouchControls] = useState(false);
+  const touchControlsTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const triggerMobileControls = useCallback(() => {
+    setShowTouchControls(true);
+    if (touchControlsTimerRef.current) {
+      clearTimeout(touchControlsTimerRef.current);
+    }
+    touchControlsTimerRef.current = setTimeout(() => {
+      setShowTouchControls(false);
+    }, 4000);
+  }, []);
 
   // Smooth scrubber dragging state to prevent WebSocket flooding
   const [isScrubbing, setIsScrubbing] = useState(false);
@@ -652,6 +664,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
 
   const displayTime = isScrubbing ? scrubValue : currentTime;
   const progressPercent = duration > 0 ? (displayTime / duration) * 100 : 0;
+  const areControlsVisible = isHoveringControls || showTouchControls || serverPlayState === 'PAUSED';
 
   return (
     <div
@@ -666,6 +679,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
       <div
         onMouseEnter={() => setIsHoveringControls(true)}
         onMouseLeave={() => setIsHoveringControls(false)}
+        onClick={triggerMobileControls}
+        onTouchStart={triggerMobileControls}
         style={{
           position: 'relative',
           width: '100%',
@@ -692,16 +707,17 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
           <div id="yt-player-iframe" style={{ width: '100%', height: '100%' }} />
         </div>
 
-        {/* Full-player click target to unmute for non-host participants */}
-        {!canControl && needsUserUnmute && (
+        {/* Full-player click target to unmute for any viewer when audio is muted by browser policy */}
+        {needsUserUnmute && (
           <div
             onClick={handleUserUnmute}
-            title="Click anywhere to unmute"
+            onTouchStart={handleUserUnmute}
+            title="Tap anywhere to unmute"
             style={{
               position: 'absolute',
               inset: 0,
               cursor: 'pointer',
-              zIndex: 22,
+              zIndex: 34,
             }}
           />
         )}
@@ -710,6 +726,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
         {needsUserUnmute && (
           <div
             onClick={handleUserUnmute}
+            onTouchStart={handleUserUnmute}
             className="animate-pulse"
             style={{
               position: 'absolute',
@@ -747,14 +764,20 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
             >
               <VolumeX size={18} />
             </div>
-            <span>Click to Unmute & Sync Audio 🔊</span>
+            <span>Tap to Unmute & Sync Audio 🔊</span>
           </div>
         )}
 
         {/* Big Center Play/Pause Overlay for Host */}
         {canControl && (
           <div
-            onClick={handleTogglePlay}
+            onClick={() => {
+              if (areControlsVisible) {
+                handleTogglePlay();
+              } else {
+                triggerMobileControls();
+              }
+            }}
             style={{
               position: 'absolute',
               inset: 0,
@@ -763,7 +786,8 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               justifyContent: 'center',
               cursor: 'pointer',
               background: 'rgba(0, 0, 0, 0.15)',
-              opacity: isHoveringControls || serverPlayState === 'PAUSED' ? 1 : 0,
+              opacity: areControlsVisible ? 1 : 0,
+              pointerEvents: areControlsVisible ? 'auto' : 'none',
               transition: 'opacity 0.25s ease',
               zIndex: 20,
             }}
@@ -868,7 +892,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
             gap: '8px',
             zIndex: 25,
             transition: 'opacity 0.25s ease',
-            opacity: isHoveringControls || serverPlayState === 'PAUSED' ? 1 : 0.85,
+            opacity: areControlsVisible ? 1 : 0.85,
           }}
         >
           {/* Timeline Scrubber */}
@@ -934,7 +958,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
 
           {/* Action Buttons Row */}
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {canControl ? (
                 <button
                   onClick={handleTogglePlay}
@@ -959,6 +983,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               {canControl && (
                 <button
                   onClick={handleReplay}
+                  className="hide-on-mobile"
                   style={{
                     background: 'none',
                     border: 'none',
@@ -973,12 +998,12 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                 </button>
               )}
 
-              <span style={{ fontSize: '0.82rem', color: 'var(--text-muted)', fontFamily: 'monospace' }}>
+              <span style={{ fontSize: '0.80rem', color: 'var(--text-muted)', fontFamily: 'monospace', whiteSpace: 'nowrap' }}>
                 {formatTime(displayTime)} / {formatTime(duration)}
               </span>
 
               {/* Volume & Mute Controls */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginLeft: '4px' }}>
                 <button
                   onClick={handleToggleMute}
                   style={{
@@ -989,6 +1014,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                     display: 'flex',
                     alignItems: 'center',
                   }}
+                  title={isMuted || volume === 0 ? 'Unmute' : 'Mute'}
                 >
                   {isMuted || volume === 0 ? <VolumeX size={18} /> : <Volume2 size={18} />}
                 </button>
@@ -998,6 +1024,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                   max={100}
                   value={isMuted ? 0 : volume}
                   onChange={handleVolumeChange}
+                  className="hide-on-mobile"
                   style={{
                     width: '60px',
                     height: '4px',
@@ -1013,7 +1040,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                   <button
                     onClick={() => setShowSpeedMenu(!showSpeedMenu)}
                     className="btn-secondary"
-                    style={{ padding: '3px 8px', fontSize: '0.74rem', gap: '4px' }}
+                    style={{ padding: '3px 7px', fontSize: '0.72rem', gap: '3px' }}
                     title="Change Playback Speed"
                   >
                     <Gauge size={13} /> {serverPlaybackSpeed}x
@@ -1026,7 +1053,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
                         bottom: '100%',
                         left: 0,
                         marginBottom: '6px',
-                        background: 'rgba(15, 20, 35, 0.95)',
+                        background: 'rgba(15, 20, 32, 0.95)',
                         border: '1px solid var(--border-subtle)',
                         borderRadius: 'var(--radius-sm)',
                         padding: '4px',
@@ -1067,7 +1094,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               {canControl && (
                 <button
                   onClick={() => setShowUrlInput(!showUrlInput)}
-                  className="btn-secondary"
+                  className="btn-secondary hide-on-mobile"
                   style={{ padding: '4px 10px', fontSize: '0.78rem' }}
                 >
                   Change Video
@@ -1077,6 +1104,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               {onToggleTheater && (
                 <button
                   onClick={onToggleTheater}
+                  className="hide-on-mobile"
                   style={{
                     background: 'none',
                     border: 'none',
@@ -1094,6 +1122,7 @@ export const YouTubePlayer: React.FC<YouTubePlayerProps> = ({
               {onToggleMiniPlayer && (
                 <button
                   onClick={onToggleMiniPlayer}
+                  className="hide-on-mobile"
                   style={{
                     background: 'none',
                     border: 'none',

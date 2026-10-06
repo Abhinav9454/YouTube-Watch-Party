@@ -219,7 +219,7 @@ export const Lobby: React.FC<LobbyProps> = ({
         {/* 2. THE LAUNCHER CARD (FRONT & CENTER) */}
         <div
           id="launcher-card"
-          className="glass-panel"
+          className="glass-panel lobby-card"
           style={{
             maxWidth: '560px',
             width: '100%',

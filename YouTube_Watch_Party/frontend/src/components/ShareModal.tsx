@@ -41,7 +41,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     // Local Wi-Fi network mode
     const port = window.location.port ? `:${window.location.port}` : ':5173';
     const host = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-      ? '10.106.39.147'
+      ? '10.55.66.147'
       : window.location.hostname;
     return `http://${host}${port}/?room=${encodeURIComponent(cleanId)}`;
   }, [roomId, networkMode]);

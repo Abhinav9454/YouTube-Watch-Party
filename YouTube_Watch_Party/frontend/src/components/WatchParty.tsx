@@ -136,7 +136,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
 
   const handleCopyRoomCode = () => {
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-    const origin = isLocalhost ? 'http://10.106.39.147:5173' : window.location.origin;
+    const origin = isLocalhost ? 'http://10.55.66.147:5173' : window.location.origin;
     const url = `${origin}/?room=${roomId}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedCode(true);
@@ -164,10 +164,12 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
 
   return (
     <div
+      className="watch-party-root"
       style={{
         display: 'flex',
         flexDirection: 'column',
-        height: '100vh',
+        height: '100dvh',
+        minHeight: '100vh',
         width: '100%',
         overflow: 'hidden',
         background: '#090c16',
@@ -216,6 +218,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           {/* Room Name & Role */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span
+              className="room-title-text"
               style={{
                 fontSize: '14px',
                 fontWeight: 700,
@@ -264,7 +267,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             >
               {currentUserRole === 'HOST' && <Crown size={11} />}
               {currentUserRole === 'MODERATOR' && <Shield size={11} />}
-              <span>{currentUserRole}</span>
+              <span className="hide-on-mobile">{currentUserRole}</span>
             </span>
           </div>
 
@@ -310,7 +313,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             title="Pick or search YouTube video"
           >
             <span>✨</span>
-            <span>Videos</span>
+            <span className="hide-on-mobile">Videos</span>
           </button>
 
           {/* Invite & QR Modal Button */}
@@ -326,7 +329,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             title="Share Room Link & QR Code"
           >
             <QrCode size={13} />
-            <span>Invite</span>
+            <span className="hide-on-mobile">Invite</span>
           </button>
 
           {/* Party Tools Modal Trigger */}
@@ -350,6 +353,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             <button
               type="button"
               onClick={onOpenShortcuts}
+              className="hide-on-mobile"
               style={{
                 background: 'rgba(255, 255, 255, 0.05)',
                 border: '1px solid rgba(255, 255, 255, 0.1)',
@@ -382,7 +386,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
             }}
           >
             <span className="live-dot" style={{ width: '6px', height: '6px' }} />
-            <span>{participants.length} watching</span>
+            <span>{participants.length} <span className="hide-on-mobile">watching</span></span>
           </div>
         </div>
       </header>
@@ -406,6 +410,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
       >
         {/* Video & Player Column */}
         <div
+          className="watch-party-video-col"
           style={{
             display: 'flex',
             flexDirection: 'column',
@@ -695,18 +700,18 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
       </div>
 
       {/* Right Sidebar: Chat / Playlist / People (hidden or side in non-theater) */}
-      {!isTheaterMode && (
-        <div
-          className="glass-panel"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            height: '100%',
-            overflow: 'hidden',
-            padding: '16px',
-            gap: '14px',
-          }}
-        >
+        {!isTheaterMode && (
+          <div
+            className="glass-panel watch-party-sidebar"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              height: '100%',
+              overflow: 'hidden',
+              padding: '16px',
+              gap: '14px',
+            }}
+          >
           {/* Tabs Switcher */}
           <div
             style={{
@@ -844,7 +849,7 @@ export const WatchParty: React.FC<WatchPartyProps> = ({
           </div>
 
           {/* Tab Content */}
-          <div style={{ flex: 1, overflow: 'hidden' }}>
+          <div className="tab-content-container" style={{ flex: 1, overflow: 'hidden' }}>
             {activeTab === 'chat' && (
               <ChatPanel
                 messages={chatMessages}
