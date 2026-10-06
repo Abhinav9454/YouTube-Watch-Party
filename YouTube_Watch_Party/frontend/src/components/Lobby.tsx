@@ -13,9 +13,11 @@ import {
   Zap,
   Flame,
   Check,
+  History,
+  LogOut,
 } from 'lucide-react';
 import type { RoomEntityDto } from '../types/party';
-import { listRecentRoomsApi } from '../services/api';
+import { listRecentRoomsApi, getUserRoomsApi } from '../services/api';
 import { extractYouTubeVideoId } from '../utils/youtube';
 import { cleanRoomCode } from '../utils/room';
 import { DiscoverModal } from './DiscoverModal';
@@ -25,6 +27,9 @@ interface LobbyProps {
   initialRoomCode?: string;
   onJoinRoom: (roomId: string, username: string, passcode?: string) => void;
   onCreateRoom: (roomName: string, username: string, videoId: string, passcode?: string) => void;
+  authUser?: { id: string; username: string; email: string; avatar: string } | null;
+  onOpenAuth?: (mode: 'signin' | 'signup') => void;
+  onLogout?: () => void;
 }
 
 const PRESET_VIDEOS = [
@@ -38,11 +43,15 @@ export const Lobby: React.FC<LobbyProps> = ({
   initialRoomCode = '',
   onJoinRoom,
   onCreateRoom,
+  authUser,
+  onOpenAuth,
+  onLogout,
 }) => {
   const [tab, setTab] = useState<'create' | 'join'>('create');
   const [username, setUsername] = useState(
-    () => localStorage.getItem('watchparty_username') || `User_${Math.floor(1000 + Math.random() * 9000)}`
+    () => authUser?.username || localStorage.getItem('watchparty_username') || `User_${Math.floor(1000 + Math.random() * 9000)}`
   );
+  const [myRooms, setMyRooms] = useState<RoomEntityDto[]>([]);
 
   const [roomName, setRoomName] = useState('Epic Movie Night');
   const [selectedVideo, setSelectedVideo] = useState(PRESET_VIDEOS[0].id);
@@ -74,6 +83,17 @@ export const Lobby: React.FC<LobbyProps> = ({
   useEffect(() => {
     localStorage.setItem('watchparty_username', username);
   }, [username]);
+
+  useEffect(() => {
+    if (authUser && authUser.username) {
+      setUsername(authUser.username);
+      getUserRoomsApi(authUser.username)
+        .then((rooms) => setMyRooms(rooms))
+        .catch(() => {});
+    } else {
+      setMyRooms([]);
+    }
+  }, [authUser]);
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -234,6 +254,129 @@ export const Lobby: React.FC<LobbyProps> = ({
             textAlign: 'left',
           }}
         >
+          {/* Account Status / Sign In Callout */}
+          {authUser ? (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(168, 85, 247, 0.15))',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                marginBottom: '18px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <div
+                  style={{
+                    width: '34px',
+                    height: '34px',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #ef4444, #8b5cf6)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 800,
+                    color: '#fff',
+                    fontSize: '14px',
+                    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+                  }}
+                >
+                  {authUser.avatar || authUser.username[0].toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontWeight: 800, color: '#fff', fontSize: '13px' }}>{authUser.username}</span>
+                    <span
+                      style={{
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        background: 'rgba(239, 68, 68, 0.25)',
+                        color: '#fca5a5',
+                        border: '1px solid rgba(239, 68, 68, 0.4)',
+                        borderRadius: '999px',
+                        padding: '1px 7px',
+                      }}
+                    >
+                      ⭐ Verified Host
+                    </span>
+                  </div>
+                  <div style={{ fontSize: '11px', color: '#94a3b8' }}>
+                    {authUser.email || 'Cloud Synced Profile'}
+                  </div>
+                </div>
+              </div>
+              {onLogout && (
+                <button
+                  type="button"
+                  onClick={onLogout}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    borderRadius: '8px',
+                    color: '#cbd5e1',
+                    padding: '5px 10px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                  }}
+                  title="Sign out"
+                >
+                  <LogOut size={13} />
+                  <span>Sign out</span>
+                </button>
+              )}
+            </div>
+          ) : (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px dashed rgba(255, 255, 255, 0.16)',
+                borderRadius: '12px',
+                padding: '9px 13px',
+                marginBottom: '18px',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <Sparkles size={14} color="#f59e0b" />
+                <span style={{ fontSize: '12px', color: '#cbd5e1' }}>
+                  Save your parties & get a verified host badge!
+                </span>
+              </div>
+              {onOpenAuth && (
+                <button
+                  type="button"
+                  onClick={() => onOpenAuth('signin')}
+                  style={{
+                    background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                    border: 'none',
+                    borderRadius: '8px',
+                    color: '#fff',
+                    padding: '5px 12px',
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    boxShadow: '0 2px 8px rgba(239, 68, 68, 0.3)',
+                  }}
+                >
+                  <LogIn size={13} />
+                  <span>Sign In</span>
+                </button>
+              )}
+            </div>
+          )}
+
           {/* Identity Row */}
           <div
             style={{
@@ -589,6 +732,173 @@ export const Lobby: React.FC<LobbyProps> = ({
           </div>
         </div>
       </section>
+
+      {/* 3.5. MY SAVED WATCH PARTIES (PERSISTED FOR THIS HOST) */}
+      {myRooms && myRooms.length > 0 && (
+        <section
+          id="my-saved-parties"
+          style={{
+            maxWidth: '1200px',
+            margin: '0 auto 40px auto',
+            padding: '0 24px',
+            width: '100%',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <History size={18} color="#a855f7" />
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#fff', margin: 0 }}>
+                My Saved Watch Parties
+              </h2>
+              <span
+                style={{
+                  background: 'rgba(168, 85, 247, 0.2)',
+                  color: '#c084fc',
+                  border: '1px solid rgba(168, 85, 247, 0.4)',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  borderRadius: '999px',
+                  padding: '2px 8px',
+                }}
+              >
+                {myRooms.length} {myRooms.length === 1 ? 'room' : 'rooms'}
+              </span>
+            </div>
+          </div>
+
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+              gap: '16px',
+            }}
+          >
+            {myRooms.map((room) => (
+              <div
+                key={room.roomId}
+                className="glass-panel glass-panel-interactive"
+                style={{
+                  borderRadius: '14px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  border: '1px solid rgba(168, 85, 247, 0.25)',
+                  background: 'rgba(20, 15, 30, 0.75)',
+                }}
+              >
+                <div style={{ height: '130px', position: 'relative', overflow: 'hidden' }}>
+                  <img
+                    src={`https://img.youtube.com/vi/${room.currentVideoId || 'jfKfPfyJRdk'}/mqdefault.jpg`}
+                    alt={room.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '8px',
+                      left: '8px',
+                      background: 'rgba(0, 0, 0, 0.75)',
+                      backdropFilter: 'blur(4px)',
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#c084fc',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    ⭐ Host: {room.creatorUsername || username}
+                  </div>
+                  {Boolean(room.passcode) && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        right: '8px',
+                        background: 'rgba(239, 68, 68, 0.85)',
+                        backdropFilter: 'blur(4px)',
+                        padding: '3px 6px',
+                        borderRadius: '6px',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                      }}
+                    >
+                      <Lock size={10} /> Locked
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ padding: '14px', display: 'flex', flexDirection: 'column', flex: 1 }}>
+                  <div
+                    style={{
+                      fontWeight: 800,
+                      fontSize: '15px',
+                      color: '#fff',
+                      marginBottom: '6px',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                  >
+                    {room.name}
+                  </div>
+                  <div
+                    style={{
+                      fontSize: '12px',
+                      color: '#94a3b8',
+                      marginBottom: '14px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    <span>Code:</span>
+                    <code
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        padding: '2px 6px',
+                        borderRadius: '4px',
+                        color: '#38bdf8',
+                        fontWeight: 700,
+                      }}
+                    >
+                      {room.roomId}
+                    </code>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => onJoinRoom(room.roomId, username)}
+                    style={{
+                      marginTop: 'auto',
+                      padding: '9px',
+                      background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      fontSize: '13px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      boxShadow: '0 4px 12px rgba(139, 92, 246, 0.3)',
+                    }}
+                  >
+                    <LogIn size={14} /> Resume Watch Party
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* 4. ACTIVE PUBLIC WATCH PARTIES (IF ANY) */}
       {persistedRooms && persistedRooms.length > 0 && (

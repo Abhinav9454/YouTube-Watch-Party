@@ -29,6 +29,17 @@ export async function listRecentRoomsApi(): Promise<RoomEntityDto[]> {
   }
 }
 
+export async function getUserRoomsApi(username: string): Promise<RoomEntityDto[]> {
+  if (!username || !username.trim()) return [];
+  try {
+    const response = await fetch(`${API_BASE}/users/${encodeURIComponent(username.trim())}/rooms`);
+    if (!response.ok) return [];
+    return response.json();
+  } catch {
+    return [];
+  }
+}
+
 export async function getRoomApi(roomId: string): Promise<RoomState | null> {
   try {
     const response = await fetch(`${API_BASE}/rooms/${encodeURIComponent(roomId)}`);

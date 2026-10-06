@@ -83,4 +83,9 @@ public class RoomController {
     public ResponseEntity<List<ChatMessageEntity>> getChatHistory(@PathVariable String roomId) {
         return ResponseEntity.ok(roomManager.getChatHistory(roomId));
     }
+
+    @GetMapping("/users/{username}/rooms")
+    public ResponseEntity<List<RoomEntity>> getUserRooms(@PathVariable String username) {
+        return ResponseEntity.ok(roomManager.getRoomsByCreator(username));
+    }
 }

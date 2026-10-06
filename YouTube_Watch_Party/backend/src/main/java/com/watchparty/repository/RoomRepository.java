@@ -11,4 +11,5 @@ import java.util.Optional;
 public interface RoomRepository extends JpaRepository<RoomEntity, String> {
     Optional<RoomEntity> findByRoomId(String roomId);
     List<RoomEntity> findTop20ByOrderByUpdatedAtDesc();
+    List<RoomEntity> findByCreatorUsernameIgnoreCaseOrderByCreatedAtDesc(String creatorUsername);
 }

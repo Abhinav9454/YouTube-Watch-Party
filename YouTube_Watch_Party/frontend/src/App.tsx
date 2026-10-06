@@ -646,6 +646,9 @@ export function App() {
             initialRoomCode={getRoomFromUrl()}
             onJoinRoom={handleJoinRoom}
             onCreateRoom={handleCreateRoom}
+            authUser={authUser}
+            onOpenAuth={handleOpenAuth}
+            onLogout={handleLogout}
           />
         ) : isRoomLoading ? (
           <div

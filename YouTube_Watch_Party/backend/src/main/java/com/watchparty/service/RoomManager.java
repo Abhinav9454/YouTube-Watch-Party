@@ -115,6 +115,13 @@ public class RoomManager {
         return roomRepository.findTop20ByOrderByUpdatedAtDesc();
     }
 
+    public List<RoomEntity> getRoomsByCreator(String creatorUsername) {
+        if (creatorUsername == null || creatorUsername.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        return roomRepository.findByCreatorUsernameIgnoreCaseOrderByCreatedAtDesc(creatorUsername.trim());
+    }
+
     /**
      * Adds a participant to a room.
      */
