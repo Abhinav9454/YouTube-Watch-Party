@@ -1,0 +1,17 @@
+name: Render 24/7 Keep-Alive
+
+on:
+  schedule:
+    # Runs every 12 minutes (Render sleeps after 15 minutes of inactivity)
+    - cron: '*/12 * * * *'
+  workflow_dispatch: # Allows manual trigger from GitHub UI
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Backend
+        run: |
+          echo "Pinging Render Web Service..."
+          curl -sS -m 30 -I https://youtube-watch-party-r2gl.onrender.com/ || true
+          echo "Ping completed successfully!"
